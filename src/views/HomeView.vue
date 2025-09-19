@@ -1,8 +1,66 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 
 const selectedRegion = ref('São José dos Campos')
 const selectedVelocity = ref('Velocidade')
+
+const indices = ref({
+  geral: 0,
+  trafego: 0,
+  seguranca: 0,
+  acessibilidade: 0,
+  infraestrutura: 0,
+})
+
+const isLoading = ref(false)
+const lastUpdate = ref<string>('')
+let intervalId: number | null = null
+
+async function fetchIndices() {
+  try {
+    isLoading.value = true
+    // This URL is currently pointing to a local JS test server.
+    // Update it to the appropriate URL.
+    const response = await fetch('http://localhost:3001/indices')
+    const result = await response.json()
+
+    if (result.success) {
+      indices.value = result.data
+      lastUpdate.value = new Date(result.timestamp).toLocaleTimeString()
+    }
+  } catch (error) {
+    console.error('Erro ao buscar índices:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+function getIndexClass(value: number): string {
+  switch (value) {
+    case 1:
+      return 'green'
+    case 2:
+      return 'yellow'
+    case 3:
+      return 'orange'
+    case 4:
+      return 'red'
+    default:
+      return 'gray'
+  }
+}
+
+onMounted(() => {
+  fetchIndices()
+  // Update interval to fetch data every 5 seconds
+  intervalId = setInterval(fetchIndices, 5000)
+})
+
+onUnmounted(() => {
+  if (intervalId) {
+    clearInterval(intervalId)
+  }
+})
 </script>
 
 <template>
@@ -23,33 +81,41 @@ const selectedVelocity = ref('Velocidade')
       <div class="main-content">
         <!-- Indices Section -->
         <div class="indices-section">
-          <h2>Índices</h2>
+          <div class="indices-header">
+            <h2>Índices</h2>
+            <div class="status-info">
+              <span v-if="isLoading" class="loading">🔄 Carregando...</span>
+              <span v-else-if="lastUpdate" class="last-update">
+                Última atualização: {{ lastUpdate }}
+              </span>
+              <span v-else class="no-update">Nenhuma atualização ainda</span>
+            </div>
+          </div>
           <div class="indices-container">
-            <!-- General Index (Large) -->
-            <div class="index-card large-card green">
-              <div class="index-number">1</div>
+            <div :class="['index-card', 'large-card', getIndexClass(indices.geral)]">
+              <div class="index-number">{{ indices.geral }}</div>
               <div class="index-name">Geral</div>
             </div>
-            <div class="index-card small-card green">
-              <div class="index-number">1</div>
+            <div :class="['index-card', 'small-card', getIndexClass(indices.trafego)]">
+              <div class="index-number">{{ indices.trafego }}</div>
               <div class="index-name">Tráfego</div>
             </div>
-            <div class="index-card small-card yellow">
-              <div class="index-number">2</div>
+            <div :class="['index-card', 'small-card', getIndexClass(indices.seguranca)]">
+              <div class="index-number">{{ indices.seguranca }}</div>
               <div class="index-name">Segurança</div>
             </div>
-            <div class="index-card small-card orange">
-              <div class="index-number">3</div>
+            <div :class="['index-card', 'small-card', getIndexClass(indices.acessibilidade)]">
+              <div class="index-number">{{ indices.acessibilidade }}</div>
               <div class="index-name">Acessibilidade</div>
             </div>
-            <div class="index-card small-card red">
-              <div class="index-number">4</div>
+            <div :class="['index-card', 'small-card', getIndexClass(indices.infraestrutura)]">
+              <div class="index-number">{{ indices.infraestrutura }}</div>
               <div class="index-name">Infraestrutura</div>
             </div>
           </div>
         </div>
 
-        <!-- Map Section -->
+        <!-- Graphs Section -->
         <div class="graphs-section">
           <div class="graph-container">
             <h2>Mapa</h2>
@@ -207,6 +273,10 @@ h2 {
 }
 
 /* Color variants */
+.gray {
+  border-bottom-color: #9ca3af;
+}
+
 .green {
   border-bottom-color: #22c55e;
 }

@@ -10,7 +10,7 @@ export default defineConfig({
   plugins: [
     vue(),
     vueDevTools(),
-    vuetify({ autoImport: true, styles: { configFile: 'src/styles/settings.scss' }}),
+    vuetify({ autoImport: true/*, styles: { configFile: 'src/styles/settings.scss' }*/}),
   ],
   resolve: {
     alias: {

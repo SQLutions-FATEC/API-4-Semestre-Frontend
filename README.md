@@ -23,7 +23,7 @@
 #### Windows
 
 1.  Baixe o Node.js pelo site oficial e instale:
-    👉 Download Node.js
+    👉 [Download Node.js](https://nodejs.org/pt/download)
 
 ### Instalação
 

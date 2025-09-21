@@ -1,0 +1,19 @@
+@forward './__border-radius.module.scss';
+@forward './__fonts.module.scss';
+@forward './__spacers.module.scss';
+@forward './__colors.module.scss';
+@use './__fonts.module.scss' as fonts;
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+span,
+a,
+label {
+  font-family: fonts.$fontFamily !important;
+  margin-bottom: 0px;
+}

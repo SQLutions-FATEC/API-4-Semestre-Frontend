@@ -33,7 +33,7 @@
     ```
 2.  Após instalar as dependências, crie um arquivo `.env` na pasta raiz e copie o conteúdo de `.env.example`.
 
-### (Opcional) Configuração de Lint/Formatter no VSCode
+### Configuração de Lint/Formatter no VSCode
 
 1.  Se estiver usando VSCode, instale as extensões Prettier e ESLint.
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { RouterView, RouterLink } from 'vue-router'
+import logoSjc from '@/assets/logo-sjc.png'
 </script>
 
 <template>
@@ -7,7 +8,9 @@ import { RouterView, RouterLink } from 'vue-router'
     <!-- Header Global -->
     <header class="main-header">
       <div class="logo-section">
-        <div class="logo-placeholder"></div>
+        <RouterLink to="/">
+          <img :src="logoSjc" alt="Logo São José dos Campos" class="logo" />
+        </RouterLink>
       </div>
 
       <nav class="main-nav">
@@ -78,16 +81,11 @@ body {
   flex-shrink: 0;
 }
 
-.logo-placeholder {
+.logo {
   width: spacers.$logoSize;
   height: spacers.$logoSize;
-  background-color: colors.$colorPrimary;
   border-radius: borderRadius.$borderRadiusSm;
-  @include mixins.smooth-transition(all, 0.3s);
-
-  &:hover {
-    transform: scale(1.05);
-  }
+  display: block;
 }
 
 .main-nav {

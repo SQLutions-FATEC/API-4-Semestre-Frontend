@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
+import mapaSjc from '@/assets/mapa-sjc.png'
+import graficoVelocidade from '@/assets/grafico-velocidade.png'
+import graficoPorcentagem from '@/assets/grafico-porcentagem.png'
 
 const selectedRegion = ref('São José dos Campos')
 const selectedVelocity = ref('Velocidade')
@@ -119,17 +122,23 @@ onUnmounted(() => {
         <div class="graphs-section">
           <div class="graph-container">
             <h2>Mapa</h2>
-            <div class="map-placeholder yellow-bg"></div>
+            <div class="image-container">
+              <img :src="mapaSjc" alt="Mapa de São José dos Campos" class="graph-image" />
+            </div>
           </div>
-          <div class="graph-container">
+          <div class="graph-container graph-container-middle">
             <select v-model="selectedVelocity" class="velocity-dropdown">
               <option value="Velocidade">Velocidade</option>
             </select>
-            <div class="map-placeholder yellow-bg"></div>
+            <div class="image-container">
+              <img :src="graficoVelocidade" alt="Gráfico de Velocidade" class="graph-image" />
+            </div>
           </div>
           <div class="graph-container">
             <h2>Gráfico</h2>
-            <div class="map-placeholder yellow-bg"></div>
+            <div class="image-container">
+              <img :src="graficoPorcentagem" alt="Gráfico de Porcentagem" class="graph-image" />
+            </div>
           </div>
         </div>
       </div>
@@ -291,23 +300,29 @@ h2 {
 
 /* Graphs Section */
 .graphs-section {
-  height: spacers.$graphHeight;
   display: flex;
   gap: spacers.$cardGap;
+  align-items: flex-start;
+  // Remove altura fixa para permitir que as imagens definam o tamanho
 }
 
 .graph-container {
+  @include mixins.flex-column;
   flex: 1;
-  display: flex;
-  flex-direction: column;
+  gap: spacers.$spacingMd;
+  align-items: center;
 
-  // Títulos h2 dentro dos graph-containers
   h2 {
     @include fonts.heading(xsmall);
     color: colors.$colorTextSecondary;
-    margin-bottom: spacers.$spacingMd;
     font-weight: 500;
+    text-align: center;
+    width: 100%;
   }
+}
+
+.graph-container-middle {
+  flex: 1.5;
 }
 
 /* Map Section */
@@ -329,6 +344,7 @@ h2 {
   @include fonts.label(small);
   font-size: inherit;
   color: colors.$colorTextPrimary;
+  align-self: center;
 }
 
 .map-container {
@@ -338,16 +354,23 @@ h2 {
   height: spacers.$mapHeight;
 }
 
-.map-placeholder {
+.image-container {
   border-radius: borderRadius.$borderRadiusCard;
-  width: 100%;
-  height: 100%;
-  min-height: spacers.$contentPadding * 4; // 160px mínimo
+  overflow: hidden;
+  @include mixins.card-shadow(1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
-  // Garante que os placeholders sejam visíveis
-  &.yellow-bg {
-    background-color: colors.$colorBackgroundYellow;
-  }
+.graph-image {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  object-position: center;
+  border-radius: borderRadius.$borderRadiusCard;
 }
 
 /* Responsive Design */
@@ -376,6 +399,11 @@ h2 {
     flex-direction: column;
     gap: spacers.$spacingLg;
     align-items: flex-start;
+  }
+
+  .graphs-section {
+    flex-direction: column;
+    align-items: center;
   }
 }
 </style>

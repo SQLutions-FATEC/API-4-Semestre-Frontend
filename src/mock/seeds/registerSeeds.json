@@ -1,0 +1,58 @@
+[
+  {
+    "id": 1,
+    "id_rad": "RAD001",
+    "dat_hora": "2024-01-15 08:30:00",
+    "tip_vei": "Carro",
+    "vel": 65
+  },
+  {
+    "id": 2,
+    "id_rad": "RAD001",
+    "dat_hora": "2024-01-15 08:32:00",
+    "tip_vei": "Moto",
+    "vel": 75
+  },
+  {
+    "id": 3,
+    "id_rad": "RAD002",
+    "dat_hora": "2024-01-15 09:15:00",
+    "tip_vei": "Camionete",
+    "vel": 45
+  },
+  {
+    "id": 4,
+    "id_rad": "RAD003",
+    "dat_hora": "2024-01-15 10:20:00",
+    "tip_vei": "Caminhão grande",
+    "vel": 85
+  },
+  {
+    "id": 5,
+    "id_rad": "RAD004",
+    "dat_hora": "2024-01-15 11:45:00",
+    "tip_vei": "Ônibus",
+    "vel": 75
+  },
+  {
+    "id": 6,
+    "id_rad": "RAD005",
+    "dat_hora": "2024-01-15 14:30:00",
+    "tip_vei": "Van",
+    "vel": 42
+  },
+  {
+    "id": 7,
+    "id_rad": "RAD001",
+    "dat_hora": "2024-01-15 17:20:00",
+    "tip_vei": "Carro",
+    "vel": 70
+  },
+  {
+    "id": 8,
+    "id_rad": "RAD002",
+    "dat_hora": "2024-01-15 18:10:00",
+    "tip_vei": "Moto",
+    "vel": 55
+  }
+]

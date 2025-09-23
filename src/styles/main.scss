@@ -2,7 +2,9 @@
 @forward './__fonts.module.scss';
 @forward './__spacers.module.scss';
 @forward './__colors.module.scss';
+@forward './__mixins.module.scss';
 @use './__fonts.module.scss' as fonts;
+@use './__mixins.module.scss' as mixins;
 
 h1,
 h2,

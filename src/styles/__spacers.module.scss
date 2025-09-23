@@ -1,6 +1,43 @@
+$spacingNone: 0;
 $spacingXs: 0.25rem;
 $spacingSm: 0.5rem;
 $spacingMd: 0.75rem;
 $spacingLg: 1rem;
 $spacingXl: 1.5rem;
 $spacingXxl: 2rem;
+
+// Layout specific spacings
+$headerHeight: 80px;
+$logoSize: 60px;
+$logoContainerWidth: 120px;
+
+// HomeView specific spacings
+$contentMaxWidth: 1200px;
+$contentPadding: 40px;
+$contentPaddingMobile: 20px;
+$mainContentPadding: 20px;
+$indicesGap: 20px;
+$cardGap: 16px;
+$graphHeight: 350px;
+$mapHeight: 300px;
+
+// Card dimensions
+$largeCardWidth: 200px;
+$largeCardHeight: 200px;
+$smallCardWidth: 150px;
+$smallCardHeight: 120px;
+
+// Input dimensions
+$dropdownMinWidth: 200px;
+$dropdownPadding: 12px 16px;
+$buttonPadding: 12px 20px;
+$velocityDropdownPadding: 8px 12px;
+
+// Breakpoints
+$breakpointTablet: 768px;
+
+// Border widths
+$borderWidthThin: 1px;
+
+// Shadow dimensions
+$shadowInsetBlur: 10px;

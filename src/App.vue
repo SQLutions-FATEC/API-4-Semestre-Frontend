@@ -22,23 +22,26 @@ import { RouterView, RouterLink } from 'vue-router'
   </div>
 </template>
 
-<style>
+<style lang="scss">
+// Use SCSS modules (variáveis já estão disponíveis globalmente via vite.config.ts)
+
+// Reset Global
 * {
-  margin: 0;
-  padding: 0;
+  margin: spacers.$spacingNone;
+  padding: spacers.$spacingNone;
   box-sizing: border-box;
 }
 
 html,
 body {
-  margin: 0;
-  padding: 0;
+  margin: spacers.$spacingNone;
+  padding: spacers.$spacingNone;
   width: 100%;
   height: 100%;
-  font-family: 'Gantari', sans-serif;
+  font-family: fonts.$fontFamily, sans-serif;
   line-height: 1.6;
-  color: #333;
-  background-color: #f5f5f5;
+  color: colors.$colorTextPrimary;
+  background-color: colors.$colorBackgroundLight;
   /* Remove qualquer layout do template original */
   display: block !important;
   place-items: unset !important;
@@ -48,45 +51,48 @@ body {
   min-height: 100vh;
   width: 100% !important;
   max-width: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
+  margin: spacers.$spacingNone !important;
+  padding: spacers.$spacingNone !important;
   /* Remove grid layout do template original */
   display: block !important;
   grid-template-columns: none !important;
 }
 
-/* Header Styles */
+/* Header Styles using SCSS modules and mixins */
 .main-header {
-  background: linear-gradient(to bottom, black 0%, black 80%, #ff9d00 100%);
-  display: flex;
-  align-items: center;
-  padding: 0;
-  height: 80px;
-  width: 100%;
-  position: relative;
+  @include mixins.header-responsive;
+  background: linear-gradient(
+    to bottom,
+    colors.$colorPrimaryGradientStart 0%,
+    colors.$colorPrimaryGradientMid 80%,
+    colors.$colorPrimaryGradientEnd 100%
+  );
+  padding: spacers.$spacingNone;
+  height: spacers.$headerHeight;
 }
 
 .logo-section {
+  @include mixins.flex-center;
   height: 100%;
-  width: 120px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: spacers.$logoContainerWidth;
   flex-shrink: 0;
 }
 
 .logo-placeholder {
-  width: 60px;
-  height: 60px;
-  background-color: #0ea5e9;
-  border-radius: 4px;
+  width: spacers.$logoSize;
+  height: spacers.$logoSize;
+  background-color: colors.$colorPrimary;
+  border-radius: borderRadius.$borderRadiusSm;
+  @include mixins.smooth-transition(all, 0.3s);
+
+  &:hover {
+    transform: scale(1.05);
+  }
 }
 
 .main-nav {
-  display: flex;
-  align-items: center;
-  height: 100%;
-  margin-left: 40px;
+  @include mixins.nav-responsive;
+  margin-left: spacers.$spacingXxl;
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
@@ -95,36 +101,35 @@ body {
 }
 
 .nav-item {
-  color: white;
+  @include mixins.flex-center;
+  @include fonts.label(large);
+  @include mixins.smooth-transition(background-color);
+  color: colors.$colorTextWhite;
   text-decoration: none;
-  padding: 10px 50px;
-  font-size: 24px;
-  font-weight: 400;
-  border-right: 1px solid rgba(255, 255, 255, 0.2);
+  padding: spacers.$spacingSm spacers.$spacingXl;
+  border-right: 1px solid colors.$colorBorderLight;
   height: 100%;
-  display: flex;
-  align-items: center;
-  transition: background-color 0.3s;
+
+  &:hover {
+    background-color: colors.$colorBackgroundTransparent;
+  }
+
+  &.router-link-active {
+    background-color: colors.$colorBackgroundTransparentActive;
+    border-bottom: 2px solid colors.$colorBorderAccent;
+  }
 }
 
-.nav-item:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.nav-item.router-link-active {
-  background-color: rgba(255, 255, 255, 0.15);
-}
-
-/* Responsive Design */
+/* Responsive Design usando variáveis SCSS */
 @media (max-width: 768px) {
   .main-nav {
     flex-wrap: wrap;
-    margin-left: 20px;
+    margin-left: spacers.$spacingLg;
   }
 
   .nav-item {
-    font-size: 18px;
-    padding: 10px 20px;
+    @include fonts.label(medium);
+    padding: spacers.$spacingSm spacers.$spacingLg;
   }
 }
 
@@ -132,7 +137,7 @@ body {
   .main-header {
     flex-direction: column;
     height: auto;
-    padding-bottom: 10px;
+    padding-bottom: spacers.$spacingSm;
   }
 
   .logo-section {
@@ -143,12 +148,20 @@ body {
   .main-nav {
     width: 100%;
     justify-content: center;
-    margin-left: 0;
+    margin-left: spacers.$spacingNone;
+    position: static;
+    transform: none;
+    height: auto;
   }
 
   .nav-item {
     border-right: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    border-bottom: 1px solid colors.$colorBorderLight;
+    padding: spacers.$spacingMd spacers.$spacingLg;
+
+    &.router-link-active {
+      border-bottom: 2px solid colors.$colorBorderAccent;
+    }
   }
 }
 </style>

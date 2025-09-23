@@ -137,11 +137,11 @@ onUnmounted(() => {
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 h2 {
-  font-size: 18px;
+  @include fonts.heading(xsmall);
   font-weight: 500;
-  color: #333;
+  color: colors.$colorTextSecondary;
 }
 
 .home-container {
@@ -151,202 +151,209 @@ h2 {
 
 /* Main Content */
 .home-content {
-  padding: 20px 40px;
-  max-width: 1200px;
-  margin: 0 auto;
+  padding: spacers.$contentPaddingMobile spacers.$contentPadding;
+  @include mixins.content-container;
 }
 
 /* Region Section */
 .region-section {
-  margin-bottom: 0px;
+  margin-bottom: spacers.$spacingNone;
 }
 
 .region-label {
   display: block;
-  font-size: 14px;
-  color: #666;
+  @include fonts.label(small);
+  color: colors.$colorTextMuted;
 }
 
 .region-selector {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  @include mixins.flex-between;
 }
 
 .region-dropdown {
-  background-color: white;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 12px 16px;
-  font-size: 16px;
-  min-width: 200px;
-  cursor: pointer;
+  @include mixins.dropdown-base;
+  background-color: colors.$colorBackgroundWhite;
+  border: spacers.$borderWidthThin solid colors.$colorBorderGray;
+  border-radius: borderRadius.$borderRadiusSm;
+  padding: spacers.$dropdownPadding;
+  @include fonts.label(medium);
+  min-width: spacers.$dropdownMinWidth;
+  color: colors.$colorTextPrimary;
 }
 
 .export-btn {
-  background-color: white;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 12px 20px;
-  font-size: 14px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: background-color 0.3s;
-}
+  @include mixins.button-base;
+  background-color: colors.$colorBackgroundWhite;
+  border: spacers.$borderWidthThin solid colors.$colorBorderGray;
+  border-radius: borderRadius.$borderRadiusSm;
+  padding: spacers.$buttonPadding;
+  @include fonts.label(small);
+  gap: spacers.$spacingMd;
+  color: colors.$colorTextPrimary;
 
-.export-btn:hover {
-  background-color: #f8f9fa;
+  &:hover {
+    background-color: colors.$colorBackgroundHover;
+  }
 }
 
 .main-content {
-  background-color: white;
-  padding: 20px;
-  border-bottom-left-radius: 30px;
-  border-bottom-right-radius: 30px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  @include mixins.flex-column;
+  gap: spacers.$contentPadding;
+  background-color: colors.$colorBackgroundWhite;
+  padding: spacers.$mainContentPadding;
+  border-bottom-left-radius: borderRadius.$borderRadiusContent;
+  border-bottom-right-radius: borderRadius.$borderRadiusContent;
+  @include mixins.card-shadow(1);
 }
 
 /* Indices Section */
 .indices-section {
-  margin-bottom: 40px;
+  @include mixins.flex-column;
+  gap: spacers.$spacingMd;
 }
 
 .indices-container {
   display: flex;
-  gap: 20px;
+  gap: spacers.$indicesGap;
   align-items: flex-start;
-  padding: 10px;
-  border-radius: 15px;
-  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
+  padding: spacers.$spacingLg;
+  border-radius: borderRadius.$borderRadiusCard;
+  box-shadow: inset spacers.$spacingNone spacers.$spacingNone spacers.$shadowInsetBlur
+    colors.$colorShadowInset;
+}
+
+.indices-header {
+  @include mixins.flex-column;
+  gap: spacers.$spacingSm;
 }
 
 .index-card {
-  background-color: white;
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  border-bottom: 4px solid;
-  transition: transform 0.2s;
-  flex-grow: 1;
-}
-
-.index-card:hover {
-  transform: translateY(-2px);
+  @include mixins.index-card-base;
+  background-color: colors.$colorBackgroundWhite;
+  border-radius: borderRadius.$borderRadiusMd;
+  @include mixins.card-shadow(1);
 }
 
 .large-card {
-  width: 200px;
-  height: 200px;
+  width: spacers.$largeCardWidth;
+  height: spacers.$largeCardHeight;
 }
 
 .small-card {
-  width: 150px;
-  height: 120px;
+  width: spacers.$smallCardWidth;
+  height: spacers.$smallCardHeight;
 }
 
 .index-number {
-  font-size: 48px;
+  @include fonts.heading(xxlarge);
+  font-size: fonts.$fontSizeCustomXLarge;
   font-weight: bold;
-  color: #333;
-  margin-bottom: 8px;
+  color: colors.$colorTextSecondary;
+  margin-bottom: spacers.$spacingMd;
 }
 
 .small-card .index-number {
-  font-size: 36px;
-  margin-bottom: 4px;
+  @include fonts.heading(xlarge);
+  font-size: fonts.$fontSizeCustomLarge;
+  margin-bottom: spacers.$spacingSm;
 }
 
 .index-name {
-  font-size: 16px;
-  font-weight: 500;
-  color: #555;
+  @include fonts.label(medium);
+  color: colors.$colorTextTertiary;
   text-align: center;
 }
 
 .small-card .index-name {
-  font-size: 14px;
+  @include fonts.label(small);
 }
 
 /* Color variants */
 .gray {
-  border-bottom-color: #9ca3af;
+  border-bottom-color: colors.$colorStatusGray;
 }
 
 .green {
-  border-bottom-color: #22c55e;
+  border-bottom-color: colors.$colorStatusGreen;
 }
 
 .yellow {
-  border-bottom-color: #eab308;
+  border-bottom-color: colors.$colorStatusYellow;
 }
 
 .orange {
-  border-bottom-color: #f97316;
+  border-bottom-color: colors.$colorStatusOrange;
 }
 
 .red {
-  border-bottom-color: #ef4444;
+  border-bottom-color: colors.$colorStatusRed;
 }
 
 /* Graphs Section */
 .graphs-section {
-  height: 350px;
+  height: spacers.$graphHeight;
   display: flex;
-  gap: 16px;
+  gap: spacers.$cardGap;
 }
 
 .graph-container {
   flex: 1;
   display: flex;
   flex-direction: column;
+
+  // Títulos h2 dentro dos graph-containers
+  h2 {
+    @include fonts.heading(xsmall);
+    color: colors.$colorTextSecondary;
+    margin-bottom: spacers.$spacingMd;
+    font-weight: 500;
+  }
 }
 
 /* Map Section */
 .map-section {
-  padding: 24px;
+  padding: spacers.$spacingXxl spacers.$spacingSm;
 }
 
 .map-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
+  @include mixins.flex-between;
+  margin-bottom: spacers.$contentPaddingMobile;
 }
 
 .velocity-dropdown {
-  background-color: white;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 8px 12px;
-  font-size: 14px;
-  cursor: pointer;
+  @include mixins.dropdown-base;
+  background-color: colors.$colorBackgroundWhite;
+  border: spacers.$borderWidthThin solid colors.$colorBorderGray;
+  border-radius: borderRadius.$borderRadiusSm;
+  padding: spacers.$velocityDropdownPadding;
+  @include fonts.label(small);
+  font-size: inherit;
+  color: colors.$colorTextPrimary;
 }
 
 .map-container {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 16px;
-  height: 300px;
+  gap: spacers.$cardGap;
+  height: spacers.$mapHeight;
 }
 
 .map-placeholder {
-  border-radius: 15px;
-  flex: 1;
-}
+  border-radius: borderRadius.$borderRadiusCard;
+  width: 100%;
+  height: 100%;
+  min-height: spacers.$contentPadding * 4; // 160px mínimo
 
-.yellow-bg {
-  background-color: #fef08a;
+  // Garante que os placeholders sejam visíveis
+  &.yellow-bg {
+    background-color: colors.$colorBackgroundYellow;
+  }
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@media (max-width: spacers.$breakpointTablet) {
   .home-content {
-    padding: 20px;
+    padding: spacers.$contentPaddingMobile;
   }
 
   .indices-container {
@@ -357,17 +364,17 @@ h2 {
   .small-indices {
     grid-template-columns: 1fr;
     width: 100%;
-    max-width: 200px;
+    max-width: spacers.$largeCardWidth;
   }
 
   .map-container {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: spacers.$spacingLg;
   }
 
   .region-selector {
     flex-direction: column;
-    gap: 12px;
+    gap: spacers.$spacingLg;
     align-items: flex-start;
   }
 }

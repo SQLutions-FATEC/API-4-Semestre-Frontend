@@ -7,25 +7,24 @@
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .sobre-container {
   width: 100%;
 }
 
 .main-content {
-  padding: 20px 40px;
-  max-width: 1200px;
-  margin: 0 auto;
+  padding: spacers.$contentPaddingMobile spacers.$contentPadding;
+  @include mixins.content-container;
 }
 
 h1 {
-  font-size: 28px;
-  color: #333;
-  margin-bottom: 16px;
+  @include fonts.heading(large);
+  color: colors.$colorTextSecondary;
+  margin-bottom: spacers.$cardGap;
 }
 
 p {
-  font-size: 16px;
-  color: #666;
+  @include fonts.paragraph(medium);
+  color: colors.$colorTextMuted;
 }
 </style>

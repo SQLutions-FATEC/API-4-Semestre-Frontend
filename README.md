@@ -1,4 +1,3 @@
-SCRUM-23/configure-eslint-and-prettier
 # API-4-Semestre-Frontend
 
  # Frontend
@@ -133,4 +132,3 @@ src/
     ```
     SCRUM-47/update-readme
     ```
-develop-1

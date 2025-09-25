@@ -1,7 +1,7 @@
-@use 'sass:map';
-@use './__colors.module.scss' as colors;
+@use "sass:map";
+@use "./__colors.module.scss" as colors;
 
-$fontFamily: 'Inter', sans-serif;
+$fontFamily: "Inter", sans-serif;
 
 // Custom font sizes for special cases
 $fontSizeCustomXLarge: 3rem; // 48px for large index numbers
@@ -12,61 +12,49 @@ $heading-styles: (
     color: colors.$colorTextPrimary,
     font-family: $fontFamily,
     font-size: 2.5rem,
-    // 40px
     font-style: normal,
     font-weight: 600,
     line-height: 3.25rem,
-    // 52px
   ),
   xlarge: (
     color: colors.$colorTextPrimary,
     font-family: $fontFamily,
     font-size: 2rem,
-    // 32px
     font-style: normal,
     font-weight: 600,
     line-height: 2.5rem,
-    // 40px
   ),
   large: (
     color: colors.$colorTextPrimary,
     font-family: $fontFamily,
     font-size: 1.75rem,
-    // 28px
     font-style: normal,
     font-weight: 600,
     line-height: 2.5rem,
-    // 40px
   ),
   medium: (
     color: colors.$colorTextPrimary,
     font-family: $fontFamily,
     font-size: 1.5rem,
-    // 24px
     font-style: normal,
     font-weight: 600,
     line-height: 2rem,
-    // 32px
   ),
   small: (
     color: colors.$colorTextPrimary,
     font-family: $fontFamily,
     font-size: 1.25rem,
-    // 20px
     font-style: normal,
     font-weight: 600,
     line-height: 1.75rem,
-    // 28px
   ),
   xsmall: (
     color: colors.$colorTextPrimary,
     font-family: $fontFamily,
     font-size: 1.125rem,
-    // 18px
     font-style: normal,
     font-weight: 600,
     line-height: 1.5rem,
-    // 24px
   ),
 );
 
@@ -75,41 +63,33 @@ $label-styles: (
     color: colors.$colorTextPrimary,
     font-family: $fontFamily,
     font-size: 1.125rem,
-    // 18px
     font-style: normal,
     font-weight: 500,
     line-height: 1.5rem,
-    // 24px
   ),
   medium: (
     color: colors.$colorTextPrimary,
     font-family: $fontFamily,
     font-size: 1rem,
-    // 16px
     font-style: normal,
     font-weight: 500,
     line-height: 1.25rem,
-    // 20px
   ),
   small: (
     color: colors.$colorTextPrimary,
     font-family: $fontFamily,
     font-size: 0.875rem,
-    // 14px
     font-style: normal,
     font-weight: 500,
     line-height: 1rem,
-    // 16px
   ),
   xsmall: (
     color: colors.$colorTextPrimary,
     font-family: $fontFamily,
     font-size: 0.75rem,
-    // 12px
     font-style: normal,
     font-weight: 500,
     line-height: 1rem,
-    // 16px
   ),
 );
 
@@ -118,41 +98,61 @@ $paragraph-styles: (
     color: colors.$colorTextPrimary,
     font-family: $fontFamily,
     font-size: 1.125rem,
-    // 18px
     font-style: normal,
     font-weight: 400,
     line-height: 1.5rem,
-    // 24px
   ),
   medium: (
     color: colors.$colorTextPrimary,
     font-family: $fontFamily,
     font-size: 1rem,
-    // 16px
     font-style: normal,
     font-weight: 400,
     line-height: 1.25rem,
-    // 20px
   ),
   small: (
     color: colors.$colorTextPrimary,
     font-family: $fontFamily,
     font-size: 0.875rem,
-    // 14px
     font-style: normal,
     font-weight: 400,
     line-height: 1.125rem,
-    // 18px
   ),
   xsmall: (
     color: colors.$colorTextPrimary,
     font-family: $fontFamily,
     font-size: 0.75rem,
-    // 12px
     font-style: normal,
     font-weight: 400,
     line-height: 1rem,
-    // 16px
+  ),
+);
+
+// Navbar specific styles with white text
+$navbar-styles: (
+  large: (
+    color: colors.$colorTextWhite,
+    font-family: $fontFamily,
+    font-size: 1.125rem,
+    font-style: normal,
+    font-weight: 500,
+    line-height: 1.5rem,
+  ),
+  medium: (
+    color: colors.$colorTextWhite,
+    font-family: $fontFamily,
+    font-size: 1rem,
+    font-style: normal,
+    font-weight: 500,
+    line-height: 1.25rem,
+  ),
+  small: (
+    color: colors.$colorTextWhite,
+    font-family: $fontFamily,
+    font-size: 0.875rem,
+    font-style: normal,
+    font-weight: 500,
+    line-height: 1rem,
   ),
 );
 
@@ -178,6 +178,16 @@ $paragraph-styles: (
 
 @mixin paragraph($size) {
   $styles: map.get($paragraph-styles, $size);
+
+  @if $styles {
+    @each $property, $value in $styles {
+      #{$property}: $value;
+    }
+  }
+}
+
+@mixin navbar($size) {
+  $styles: map.get($navbar-styles, $size);
 
   @if $styles {
     @each $property, $value in $styles {

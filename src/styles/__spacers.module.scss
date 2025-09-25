@@ -7,37 +7,37 @@ $spacingXl: 1.5rem;
 $spacingXxl: 2rem;
 
 // Layout specific spacings
-$headerHeight: 80px;
-$logoSize: 60px;
-$logoContainerWidth: 120px;
+$headerHeight: 5rem;
+$logoSize: 3.75rem;
+$logoContainerWidth: 7.5rem;
 
 // HomeView specific spacings
-$contentMaxWidth: 1200px;
-$contentPadding: 40px;
-$contentPaddingMobile: 20px;
-$mainContentPadding: 20px;
-$indicesGap: 20px;
-$cardGap: 16px;
-$graphHeight: 350px;
-$mapHeight: 300px;
+$contentMaxWidth: 75rem;
+$contentPadding: 2.5rem;
+$contentPaddingMobile: 1.25rem;
+$mainContentPadding: 1.25rem;
+$indicesGap: 1.25rem;
+$cardGap: 1rem;
+$graphHeight: 21.875rem;
+$mapHeight: 18.75rem;
 
 // Card dimensions
-$largeCardWidth: 200px;
-$largeCardHeight: 200px;
-$smallCardWidth: 150px;
-$smallCardHeight: 120px;
+$largeCardWidth: 12.5rem;
+$largeCardHeight: 12.5rem;
+$smallCardWidth: 9.375rem;
+$smallCardHeight: 7.5rem;
 
 // Input dimensions
-$dropdownMinWidth: 200px;
-$dropdownPadding: 12px 16px;
-$buttonPadding: 12px 20px;
-$velocityDropdownPadding: 8px 12px;
+$dropdownMinWidth: 12.5rem;
+$dropdownPadding: 0.75rem 1rem;
+$buttonPadding: 0.75rem 1.25rem;
+$velocityDropdownPadding: 0.5rem 0.75rem;
 
 // Breakpoints
-$breakpointTablet: 768px;
+$breakpointTablet: 48rem;
 
 // Border widths
-$borderWidthThin: 1px;
+$borderWidthThin: 0.0625rem;
 
 // Shadow dimensions
-$shadowInsetBlur: 10px;
+$shadowInsetBlur: 0.625rem;

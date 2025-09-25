@@ -13,18 +13,18 @@
 }
 
 .main-content {
-  padding: spacers.$contentPaddingMobile spacers.$contentPadding;
-  @include mixins.content-container;
+  padding: $contentPaddingMobile $contentPadding;
+  @include content-container;
 }
 
 h1 {
-  @include fonts.heading(large);
-  color: colors.$colorTextSecondary;
-  margin-bottom: spacers.$cardGap;
+  @include heading(large);
+  color: $colorTextSecondary;
+  margin-bottom: $cardGap;
 }
 
 p {
-  @include fonts.paragraph(medium);
-  color: colors.$colorTextMuted;
+  @include paragraph(medium);
+  color: $colorTextMuted;
 }
 </style>

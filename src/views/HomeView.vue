@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-import mapaSjc from '@/assets/mapa-sjc.png'
-import graficoVelocidade from '@/assets/grafico-velocidade.png'
-import graficoPorcentagem from '@/assets/grafico-porcentagem.png'
+import { ref, onMounted, onUnmounted } from "vue";
+import mapaSjc from "@/assets/mapa-sjc.png";
+import graficoVelocidade from "@/assets/grafico-velocidade.png";
+import graficoPorcentagem from "@/assets/grafico-porcentagem.png";
 
-const selectedRegion = ref('São José dos Campos')
-const selectedVelocity = ref('Velocidade')
+const selectedRegion = ref("São José dos Campos");
+const selectedVelocity = ref("Velocidade");
 
 const indices = ref({
   geral: 0,
@@ -13,64 +13,62 @@ const indices = ref({
   seguranca: 0,
   acessibilidade: 0,
   infraestrutura: 0,
-})
+});
 
-const isLoading = ref(false)
-const lastUpdate = ref<string>('')
-let intervalId: number | null = null
+const isLoading = ref(false);
+const lastUpdate = ref<string>("");
+let intervalId: number | null = null;
 
 async function fetchIndices() {
   try {
-    isLoading.value = true
+    isLoading.value = true;
     // This URL is currently pointing to a local JS test server.
     // Update it to the appropriate URL.
-    const response = await fetch('http://localhost:3001/indices')
-    const result = await response.json()
+    const response = await fetch("http://localhost:3001/indices");
+    const result = await response.json();
 
     if (result.success) {
-      indices.value = result.data
-      lastUpdate.value = new Date(result.timestamp).toLocaleTimeString()
+      indices.value = result.data;
+      lastUpdate.value = new Date(result.timestamp).toLocaleTimeString();
     }
-  } catch (error) {
-    console.error('Erro ao buscar índices:', error)
+  } catch {
+    lastUpdate.value = "Erro de conexão - tentando novamente...";
   } finally {
-    isLoading.value = false
+    isLoading.value = false;
   }
 }
 
 function getIndexClass(value: number): string {
   switch (value) {
     case 1:
-      return 'green'
+      return "green";
     case 2:
-      return 'yellow'
+      return "yellow";
     case 3:
-      return 'orange'
+      return "orange";
     case 4:
-      return 'red'
+      return "red";
     default:
-      return 'gray'
+      return "gray";
   }
 }
 
 onMounted(() => {
-  fetchIndices()
+  fetchIndices();
   // Update interval to fetch data every 5 seconds
-  intervalId = setInterval(fetchIndices, 5000)
-})
+  intervalId = setInterval(fetchIndices, 5000);
+});
 
 onUnmounted(() => {
   if (intervalId) {
-    clearInterval(intervalId)
+    clearInterval(intervalId);
   }
-})
+});
 </script>
 
 <template>
   <div class="home-container">
-    <!-- Main Content -->
     <main class="home-content">
-      <!-- Region Selector -->
       <div class="region-section">
         <label class="region-label">Região selecionada</label>
         <div class="region-selector">
@@ -80,9 +78,7 @@ onUnmounted(() => {
           <button class="export-btn">📊 Exportar relatório</button>
         </div>
       </div>
-
       <div class="main-content">
-        <!-- Indices Section -->
         <div class="indices-section">
           <div class="indices-header">
             <h2>Índices</h2>
@@ -117,8 +113,6 @@ onUnmounted(() => {
             </div>
           </div>
         </div>
-
-        <!-- Graphs Section -->
         <div class="graphs-section">
           <div class="graph-container">
             <h2>Mapa</h2>
@@ -148,9 +142,9 @@ onUnmounted(() => {
 
 <style lang="scss" scoped>
 h2 {
-  @include fonts.heading(xsmall);
+  @include heading(xsmall);
   font-weight: 500;
-  color: colors.$colorTextSecondary;
+  color: $colorTextSecondary;
 }
 
 .home-container {
@@ -160,161 +154,161 @@ h2 {
 
 /* Main Content */
 .home-content {
-  padding: spacers.$contentPaddingMobile spacers.$contentPadding;
-  @include mixins.content-container;
+  padding: $contentPaddingMobile $contentPadding;
+  @include content-container;
 }
 
 /* Region Section */
 .region-section {
-  margin-bottom: spacers.$spacingNone;
+  margin-bottom: $spacingNone;
 }
 
 .region-label {
   display: block;
-  @include fonts.label(small);
-  color: colors.$colorTextMuted;
+  @include label(small);
+  color: $colorTextMuted;
 }
 
 .region-selector {
-  @include mixins.flex-between;
+  @include flex-between;
 }
 
 .region-dropdown {
-  @include mixins.dropdown-base;
-  background-color: colors.$colorBackgroundWhite;
-  border: spacers.$borderWidthThin solid colors.$colorBorderGray;
-  border-radius: borderRadius.$borderRadiusSm;
-  padding: spacers.$dropdownPadding;
-  @include fonts.label(medium);
-  min-width: spacers.$dropdownMinWidth;
-  color: colors.$colorTextPrimary;
+  @include dropdown-base;
+  background-color: $colorBackgroundWhite;
+  border: $borderWidthThin solid $colorBorderGray;
+  border-radius: $borderRadiusSm;
+  padding: $dropdownPadding;
+  @include label(medium);
+  min-width: $dropdownMinWidth;
+  color: $colorTextPrimary;
 }
 
 .export-btn {
-  @include mixins.button-base;
-  background-color: colors.$colorBackgroundWhite;
-  border: spacers.$borderWidthThin solid colors.$colorBorderGray;
-  border-radius: borderRadius.$borderRadiusSm;
-  padding: spacers.$buttonPadding;
-  @include fonts.label(small);
-  gap: spacers.$spacingMd;
-  color: colors.$colorTextPrimary;
+  @include button-base;
+  background-color: $colorBackgroundWhite;
+  border: $borderWidthThin solid $colorBorderGray;
+  border-radius: $borderRadiusSm;
+  padding: $buttonPadding;
+  @include label(small);
+  gap: $spacingMd;
+  color: $colorTextPrimary;
 
   &:hover {
-    background-color: colors.$colorBackgroundHover;
+    background-color: $colorBackgroundHover;
   }
 }
 
 .main-content {
-  @include mixins.flex-column;
-  gap: spacers.$contentPadding;
-  background-color: colors.$colorBackgroundWhite;
-  padding: spacers.$mainContentPadding;
-  border-bottom-left-radius: borderRadius.$borderRadiusContent;
-  border-bottom-right-radius: borderRadius.$borderRadiusContent;
-  @include mixins.card-shadow(1);
+  @include flex-column;
+  gap: $contentPadding;
+  background-color: $colorBackgroundWhite;
+  padding: $mainContentPadding;
+  border-bottom-left-radius: $borderRadiusContent;
+  border-bottom-right-radius: $borderRadiusContent;
+  @include card-shadow(1);
 }
 
 /* Indices Section */
 .indices-section {
-  @include mixins.flex-column;
-  gap: spacers.$spacingMd;
+  @include flex-column;
+  gap: $spacingMd;
 }
 
 .indices-container {
   display: flex;
-  gap: spacers.$indicesGap;
+  gap: $indicesGap;
   align-items: flex-start;
-  padding: spacers.$spacingLg;
-  border-radius: borderRadius.$borderRadiusCard;
-  box-shadow: inset spacers.$spacingNone spacers.$spacingNone spacers.$shadowInsetBlur
-    colors.$colorShadowInset;
+  padding: $spacingLg;
+  border-radius: $borderRadiusCard;
+  box-shadow: inset $spacingNone $spacingNone $shadowInsetBlur
+    $colorShadowInset;
 }
 
 .indices-header {
-  @include mixins.flex-column;
-  gap: spacers.$spacingSm;
+  @include flex-column;
+  gap: $spacingSm;
 }
 
 .index-card {
-  @include mixins.index-card-base;
-  background-color: colors.$colorBackgroundWhite;
-  border-radius: borderRadius.$borderRadiusMd;
-  @include mixins.card-shadow(1);
+  @include index-card-base;
+  background-color: $colorBackgroundWhite;
+  border-radius: $borderRadiusMd;
+  @include card-shadow(1);
 }
 
 .large-card {
-  width: spacers.$largeCardWidth;
-  height: spacers.$largeCardHeight;
+  width: $largeCardWidth;
+  height: $largeCardHeight;
 }
 
 .small-card {
-  width: spacers.$smallCardWidth;
-  height: spacers.$smallCardHeight;
+  width: $smallCardWidth;
+  height: $smallCardHeight;
 }
 
 .index-number {
-  @include fonts.heading(xxlarge);
-  font-size: fonts.$fontSizeCustomXLarge;
+  @include heading(xxlarge);
+  font-size: $fontSizeCustomXLarge;
   font-weight: bold;
-  color: colors.$colorTextSecondary;
-  margin-bottom: spacers.$spacingMd;
+  color: $colorTextSecondary;
+  margin-bottom: $spacingMd;
 }
 
 .small-card .index-number {
-  @include fonts.heading(xlarge);
-  font-size: fonts.$fontSizeCustomLarge;
-  margin-bottom: spacers.$spacingSm;
+  @include heading(xlarge);
+  font-size: $fontSizeCustomLarge;
+  margin-bottom: $spacingSm;
 }
 
 .index-name {
-  @include fonts.label(medium);
-  color: colors.$colorTextTertiary;
+  @include label(medium);
+  color: $colorTextTertiary;
   text-align: center;
 }
 
 .small-card .index-name {
-  @include fonts.label(small);
+  @include label(small);
 }
 
 /* Color variants */
 .gray {
-  border-bottom-color: colors.$colorStatusGray;
+  border-bottom-color: $colorStatusGray;
 }
 
 .green {
-  border-bottom-color: colors.$colorStatusGreen;
+  border-bottom-color: $colorStatusGreen;
 }
 
 .yellow {
-  border-bottom-color: colors.$colorStatusYellow;
+  border-bottom-color: $colorStatusYellow;
 }
 
 .orange {
-  border-bottom-color: colors.$colorStatusOrange;
+  border-bottom-color: $colorStatusOrange;
 }
 
 .red {
-  border-bottom-color: colors.$colorStatusRed;
+  border-bottom-color: $colorStatusRed;
 }
 
 /* Graphs Section */
 .graphs-section {
   display: flex;
-  gap: spacers.$cardGap;
+  gap: $cardGap;
   align-items: flex-start;
   // Remove altura fixa para permitir que as imagens definam o tamanho
 }
 
 .graph-container {
-  @include mixins.flex-column;
+  @include flex-column;
   flex: 1;
-  gap: spacers.$spacingMd;
+  gap: $spacingMd;
   align-items: center;
 
   h2 {
-    @include fonts.heading(xsmall);
-    color: colors.$colorTextSecondary;
+    @include heading(xsmall);
+    color: $colorTextSecondary;
     font-weight: 500;
     text-align: center;
     width: 100%;
@@ -327,37 +321,37 @@ h2 {
 
 /* Map Section */
 .map-section {
-  padding: spacers.$spacingXxl spacers.$spacingSm;
+  padding: $spacingXxl $spacingSm;
 }
 
 .map-header {
-  @include mixins.flex-between;
-  margin-bottom: spacers.$contentPaddingMobile;
+  @include flex-between;
+  margin-bottom: $contentPaddingMobile;
 }
 
 .velocity-dropdown {
-  @include mixins.dropdown-base;
-  background-color: colors.$colorBackgroundWhite;
-  border: spacers.$borderWidthThin solid colors.$colorBorderGray;
-  border-radius: borderRadius.$borderRadiusSm;
-  padding: spacers.$velocityDropdownPadding;
-  @include fonts.label(small);
+  @include dropdown-base;
+  background-color: $colorBackgroundWhite;
+  border: $borderWidthThin solid $colorBorderGray;
+  border-radius: $borderRadiusSm;
+  padding: $velocityDropdownPadding;
+  @include label(small);
   font-size: inherit;
-  color: colors.$colorTextPrimary;
+  color: $colorTextPrimary;
   align-self: center;
 }
 
 .map-container {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: spacers.$cardGap;
-  height: spacers.$mapHeight;
+  gap: $cardGap;
+  height: $mapHeight;
 }
 
 .image-container {
-  border-radius: borderRadius.$borderRadiusCard;
+  border-radius: $borderRadiusCard;
   overflow: hidden;
-  @include mixins.card-shadow(1);
+  @include card-shadow(1);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -370,13 +364,13 @@ h2 {
   max-height: 100%;
   object-fit: contain;
   object-position: center;
-  border-radius: borderRadius.$borderRadiusCard;
+  border-radius: $borderRadiusCard;
 }
 
 /* Responsive Design */
-@media (max-width: spacers.$breakpointTablet) {
+@media (max-width: $breakpointTablet) {
   .home-content {
-    padding: spacers.$contentPaddingMobile;
+    padding: $contentPaddingMobile;
   }
 
   .indices-container {
@@ -387,17 +381,17 @@ h2 {
   .small-indices {
     grid-template-columns: 1fr;
     width: 100%;
-    max-width: spacers.$largeCardWidth;
+    max-width: $largeCardWidth;
   }
 
   .map-container {
     grid-template-columns: 1fr;
-    gap: spacers.$spacingLg;
+    gap: $spacingLg;
   }
 
   .region-selector {
     flex-direction: column;
-    gap: spacers.$spacingLg;
+    gap: $spacingLg;
     align-items: flex-start;
   }
 

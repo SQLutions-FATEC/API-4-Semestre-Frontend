@@ -1,6 +1,43 @@
+$spacingNone: 0;
 $spacingXs: 0.25rem;
 $spacingSm: 0.5rem;
 $spacingMd: 0.75rem;
 $spacingLg: 1rem;
 $spacingXl: 1.5rem;
 $spacingXxl: 2rem;
+
+// Layout specific spacings
+$headerHeight: 5rem;
+$logoSize: 3.75rem;
+$logoContainerWidth: 7.5rem;
+
+// HomeView specific spacings
+$contentMaxWidth: 75rem;
+$contentPadding: 2.5rem;
+$contentPaddingMobile: 1.25rem;
+$mainContentPadding: 1.25rem;
+$indicesGap: 1.25rem;
+$cardGap: 1rem;
+$graphHeight: 21.875rem;
+$mapHeight: 18.75rem;
+
+// Card dimensions
+$largeCardWidth: 12.5rem;
+$largeCardHeight: 12.5rem;
+$smallCardWidth: 9.375rem;
+$smallCardHeight: 7.5rem;
+
+// Input dimensions
+$dropdownMinWidth: 12.5rem;
+$dropdownPadding: 0.75rem 1rem;
+$buttonPadding: 0.75rem 1.25rem;
+$velocityDropdownPadding: 0.5rem 0.75rem;
+
+// Breakpoints
+$breakpointTablet: 48rem;
+
+// Border widths
+$borderWidthThin: 0.0625rem;
+
+// Shadow dimensions
+$shadowInsetBlur: 0.625rem;

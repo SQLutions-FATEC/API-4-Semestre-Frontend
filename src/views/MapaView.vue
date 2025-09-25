@@ -1,14 +1,14 @@
 <template>
-  <div class="sobre-container">
+  <div class="mapa-container">
     <main class="main-content">
-      <h1>Sobre</h1>
+      <h1>Página do Mapa</h1>
       <p>Esta página será desenvolvida posteriormente.</p>
     </main>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.sobre-container {
+.mapa-container {
   width: 100%;
 }
 

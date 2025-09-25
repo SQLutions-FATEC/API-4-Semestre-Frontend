@@ -1,112 +1,158 @@
 @use "sass:map";
-@use './__colors.module.scss' as colors;
+@use "./__colors.module.scss" as colors;
 
-$fontFamily: "Rubik";
+$fontFamily: "Inter", sans-serif;
+
+// Custom font sizes for special cases
+$fontSizeCustomXLarge: 3rem; // 48px for large index numbers
+$fontSizeCustomLarge: 2.25rem; // 36px for small index numbers
 
 $heading-styles: (
-  xxlarge: (color: colors.$colorTextPrimary,
+  xxlarge: (
+    color: colors.$colorTextPrimary,
     font-family: $fontFamily,
-    font-size: 2.5rem,    // 40px
+    font-size: 2.5rem,
     font-style: normal,
     font-weight: 600,
-    line-height: 3.25rem, // 52px
+    line-height: 3.25rem,
   ),
-  xlarge: (color: colors.$colorTextPrimary,
+  xlarge: (
+    color: colors.$colorTextPrimary,
     font-family: $fontFamily,
-    font-size: 2rem,      // 32px
+    font-size: 2rem,
     font-style: normal,
     font-weight: 600,
-    line-height: 2.5rem,  // 40px
+    line-height: 2.5rem,
   ),
-  large: (color: colors.$colorTextPrimary,
+  large: (
+    color: colors.$colorTextPrimary,
     font-family: $fontFamily,
-    font-size: 1.75rem,   // 28px
+    font-size: 1.75rem,
     font-style: normal,
     font-weight: 600,
-    line-height: 2.5rem,  // 40px
+    line-height: 2.5rem,
   ),
-  medium: (color: colors.$colorTextPrimary,
+  medium: (
+    color: colors.$colorTextPrimary,
     font-family: $fontFamily,
-    font-size: 1.5rem,    // 24px
+    font-size: 1.5rem,
     font-style: normal,
     font-weight: 600,
-    line-height: 2rem,    // 32px
+    line-height: 2rem,
   ),
-  small: (color: colors.$colorTextPrimary,
+  small: (
+    color: colors.$colorTextPrimary,
     font-family: $fontFamily,
-    font-size: 1.25rem,   // 20px
+    font-size: 1.25rem,
     font-style: normal,
     font-weight: 600,
-    line-height: 1.75rem, // 28px
+    line-height: 1.75rem,
   ),
-  xsmall: (color: colors.$colorTextPrimary,
+  xsmall: (
+    color: colors.$colorTextPrimary,
     font-family: $fontFamily,
-    font-size: 1.125rem,  // 18px
+    font-size: 1.125rem,
     font-style: normal,
     font-weight: 600,
-    line-height: 1.5rem,  // 24px
+    line-height: 1.5rem,
   ),
 );
 
 $label-styles: (
-  large: (color: colors.$colorTextPrimary,
+  large: (
+    color: colors.$colorTextPrimary,
     font-family: $fontFamily,
-    font-size: 1.125rem,  // 18px
+    font-size: 1.125rem,
     font-style: normal,
     font-weight: 500,
-    line-height: 1.5rem,  // 24px
+    line-height: 1.5rem,
   ),
-  medium: (color: colors.$colorTextPrimary,
+  medium: (
+    color: colors.$colorTextPrimary,
     font-family: $fontFamily,
-    font-size: 1rem,      // 16px
+    font-size: 1rem,
     font-style: normal,
     font-weight: 500,
-    line-height: 1.25rem, // 20px
+    line-height: 1.25rem,
   ),
-  small: (color: colors.$colorTextPrimary,
+  small: (
+    color: colors.$colorTextPrimary,
     font-family: $fontFamily,
-    font-size: 0.875rem,  // 14px
+    font-size: 0.875rem,
     font-style: normal,
     font-weight: 500,
-    line-height: 1rem,    // 16px
+    line-height: 1rem,
   ),
-  xsmall: (color: colors.$colorTextPrimary,
+  xsmall: (
+    color: colors.$colorTextPrimary,
     font-family: $fontFamily,
-    font-size: 0.75rem,   // 12px
+    font-size: 0.75rem,
     font-style: normal,
     font-weight: 500,
-    line-height: 1rem,    // 16px
+    line-height: 1rem,
   ),
 );
 
 $paragraph-styles: (
-  large: (color: colors.$colorTextPrimary,
+  large: (
+    color: colors.$colorTextPrimary,
     font-family: $fontFamily,
-    font-size: 1.125rem,  // 18px
+    font-size: 1.125rem,
     font-style: normal,
     font-weight: 400,
-    line-height: 1.5rem,  // 24px
+    line-height: 1.5rem,
   ),
-  medium: (color: colors.$colorTextPrimary,
+  medium: (
+    color: colors.$colorTextPrimary,
     font-family: $fontFamily,
-    font-size: 1rem,      // 16px
+    font-size: 1rem,
     font-style: normal,
     font-weight: 400,
-    line-height: 1.25rem, // 20px
+    line-height: 1.25rem,
   ),
-  small: (color: colors.$colorTextPrimary,
+  small: (
+    color: colors.$colorTextPrimary,
     font-family: $fontFamily,
-    font-size: 0.875rem,  // 14px
+    font-size: 0.875rem,
     font-style: normal,
     font-weight: 400,
-    line-height: 1.125rem,// 18px
+    line-height: 1.125rem,
   ),
-  xsmall: (color: colors.$colorTextPrimary,
+  xsmall: (
+    color: colors.$colorTextPrimary,
     font-family: $fontFamily,
-    font-size: 0.75rem,   // 12px
+    font-size: 0.75rem,
     font-style: normal,
     font-weight: 400,
-    line-height: 1rem,    // 16px
+    line-height: 1rem,
+  ),
+);
+
+// Navbar specific styles with white text
+$navbar-styles: (
+  large: (
+    color: colors.$colorTextWhite,
+    font-family: $fontFamily,
+    font-size: 1.125rem,
+    font-style: normal,
+    font-weight: 500,
+    line-height: 1.5rem,
+  ),
+  medium: (
+    color: colors.$colorTextWhite,
+    font-family: $fontFamily,
+    font-size: 1rem,
+    font-style: normal,
+    font-weight: 500,
+    line-height: 1.25rem,
+  ),
+  small: (
+    color: colors.$colorTextWhite,
+    font-family: $fontFamily,
+    font-size: 0.875rem,
+    font-style: normal,
+    font-weight: 500,
+    line-height: 1rem,
   ),
 );
 
@@ -118,7 +164,6 @@ $paragraph-styles: (
       #{$property}: $value;
     }
   }
-
 }
 
 @mixin label($size) {
@@ -129,7 +174,6 @@ $paragraph-styles: (
       #{$property}: $value;
     }
   }
-
 }
 
 @mixin paragraph($size) {
@@ -140,5 +184,14 @@ $paragraph-styles: (
       #{$property}: $value;
     }
   }
+}
 
+@mixin navbar($size) {
+  $styles: map.get($navbar-styles, $size);
+
+  @if $styles {
+    @each $property, $value in $styles {
+      #{$property}: $value;
+    }
+  }
 }

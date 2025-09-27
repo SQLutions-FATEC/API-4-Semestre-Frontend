@@ -1,5 +1,5 @@
 import type { VehicleType } from "./VehicleType.ts";
-import type { Radar } from "./Radar";
+import type { Radar } from "./Radar.ts";
 
 export interface Register {
   id: number;

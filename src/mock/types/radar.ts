@@ -1,10 +1,10 @@
-import type { Address } from './Address';
+import type { Address } from "./Address";
 
 export interface Radar {
   id: string;
   addressId: number;
-  latitude: number; 
+  latitude: number;
   longitude: number;
-  speedLimit: number; 
+  speedLimit: number;
   address?: Address;
 }

@@ -1,4 +1,4 @@
-import type { UserLevel } from './userLevel';
+import type { UserLevel } from "./UserLevel";
 
 export interface User {
   id: number;

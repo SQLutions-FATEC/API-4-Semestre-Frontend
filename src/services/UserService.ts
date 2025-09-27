@@ -1,5 +1,5 @@
 import api from "./api";
-import type { User } from "@/mock/entities/user";
+import type { User } from "@/mock/entities/User";
 
 const userService = {
   get: (userId: number) => api.get<User>(`/user/${userId}`),

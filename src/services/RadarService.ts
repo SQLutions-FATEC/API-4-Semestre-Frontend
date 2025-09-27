@@ -1,5 +1,5 @@
 import api from "./api";
-import type { Radar } from "@/mock/entities/radar";
+import type { Radar } from "@/mock/entities/Radar.ts";
 
 const radarService = {
   get: (radarId: string) => api.get<Radar>(`/radar/${radarId}`),

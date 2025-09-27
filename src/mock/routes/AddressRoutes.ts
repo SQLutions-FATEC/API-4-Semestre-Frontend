@@ -1,6 +1,5 @@
 import addressesData from "@/mock/seeds/addressSeeds.json";
 import { APIFailureWrapper, mockFlag } from "../utils";
-import type { MirageRequest } from "../types";
 import type { Address } from "@/mock/entities/Address";
 
 const addresses: Address[] = [...addressesData];
@@ -10,18 +9,12 @@ const addressRoutes = [
     {
       method: "get",
       url: "/address",
-      result: (_request: MirageRequest) => {
-        const response = addresses.map((address) => ({
-          id: address.id,
-          addr: address.addr,
-          neighborhood: address.neighborhood,
-          region: address.region,
-        }));
+      result: (_request) => {
+        const response = addresses;
 
         return APIFailureWrapper({
-          content: { items: response, total: response.length },
-          errorMessage: "Error fetching addresses",
-          failureRate: 10,
+          content: response,
+          errorMessage: "Erro ao listar endereços",
         });
       },
     },
@@ -32,23 +25,12 @@ const addressRoutes = [
     {
       method: "get",
       url: "/address/:id",
-      result: (request: MirageRequest) => {
-        const addressId = parseInt(request.params.id);
-        const address = addresses.find((addr) => addr.id === addressId);
-
-        if (!address) {
-          return APIFailureWrapper({
-            content: null,
-            errorMessage: "Address not found",
-            specificError: { status: 404, message: "Address not found" },
-            failureRate: 5,
-          });
-        }
+      result: (request) => {
+        const address = addresses.find((addr) => addr.id === parseInt(request.params.id));
 
         return APIFailureWrapper({
           content: address,
-          errorMessage: "Error fetching address details",
-          failureRate: 10,
+          errorMessage: "Erro ao listar endereço",
         });
       },
     },
@@ -59,44 +41,21 @@ const addressRoutes = [
     {
       method: "post",
       url: "/address",
-      result: (request: MirageRequest) => {
+      result: (request) => {
         const body = JSON.parse(request.requestBody);
 
-        if (!body.addr) {
-          return APIFailureWrapper({
-            content: null,
-            errorMessage: "Address (addr) is required",
-            specificError: { status: 400, message: "Address is required" },
-            failureRate: 100,
-          });
-        }
-
-        const existingAddress = addresses.find(
-          (addr) => addr.addr.toLowerCase() === body.addr.toLowerCase()
-        );
-
-        if (existingAddress) {
-          return APIFailureWrapper({
-            content: null,
-            errorMessage: "Address already exists",
-            specificError: { status: 400, message: "Address already registered" },
-            failureRate: 100,
-          });
-        }
-
         const newAddress: Address = {
-          id: Math.max(...addresses.map((addr) => addr.id), 0) + 1,
+          id: addresses.length + 1,
           addr: body.addr,
-          neighborhood: body.neighborhood || "",
-          region: body.region || "",
+          neighborhood: body.neighborhood,
+          region: body.region,
         };
 
         addresses.push(newAddress);
 
         return APIFailureWrapper({
           content: newAddress,
-          errorMessage: "Error creating address",
-          failureRate: 15,
+          errorMessage: "Erro ao criar endereço",
         });
       },
     },
@@ -107,13 +66,12 @@ const addressRoutes = [
     {
       method: "put",
       url: "/address/:id",
-      result: (request: MirageRequest) => {
-        const addressId = parseInt(request.params.id);
+      result: (request) => {
         const body = JSON.parse(request.requestBody);
         let editedAddress: Address | undefined;
 
         addresses.forEach((address) => {
-          if (address.id === addressId) {
+          if (address.id === parseInt(request.params.id)) {
             editedAddress = address;
             address.addr = body.addr || address.addr;
             address.neighborhood = body.neighborhood || address.neighborhood;
@@ -121,19 +79,9 @@ const addressRoutes = [
           }
         });
 
-        if (!editedAddress) {
-          return APIFailureWrapper({
-            content: null,
-            errorMessage: "Address not found",
-            specificError: { status: 404, message: "Address not found" },
-            failureRate: 5,
-          });
-        }
-
         return APIFailureWrapper({
           content: editedAddress,
-          errorMessage: "Error updating address",
-          failureRate: 15,
+          errorMessage: "Erro ao editar endereço",
         });
       },
     },
@@ -144,30 +92,19 @@ const addressRoutes = [
     {
       method: "delete",
       url: "/address/:id",
-      result: (request: MirageRequest) => {
-        const addressId = parseInt(request.params.id);
-        let addressToDelete: Address | null = null;
+      result: (request) => {
+        let addressToDelete: Address | undefined;
 
-        for (let i = 0; i < addresses.length; i++) {
-          if (addresses[i].id === addressId) {
-            addressToDelete = addresses.splice(i, 1)[0];
+        for (let index = 0; index < addresses.length; index++) {
+          if (addresses[index].id === parseInt(request.params.id)) {
+            addressToDelete = addresses.splice(index, 1)[0];
             break;
           }
         }
 
-        if (!addressToDelete) {
-          return APIFailureWrapper({
-            content: null,
-            errorMessage: "Address not found",
-            specificError: { status: 404, message: "Address not found" },
-            failureRate: 5,
-          });
-        }
-
         return APIFailureWrapper({
           content: addressToDelete,
-          errorMessage: "Error deleting address",
-          failureRate: 10,
+          errorMessage: "Erro ao deletar endereço",
         });
       },
     },

@@ -3,7 +3,7 @@ import type { APIFailureWrapperParams, MockRouteParams } from "./types";
 
 export function APIFailureWrapper<T>({
   content,
-  errorMessage = "Generic error",
+  errorMessage = "Erro na requisição",
   specificError,
   failureRate = 0,
 }: APIFailureWrapperParams<T>): T | Response {

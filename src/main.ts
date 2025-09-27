@@ -8,6 +8,11 @@ import { createVuetify } from "vuetify";
 import * as components from "vuetify/components";
 import * as directives from "vuetify/directives";
 import router from "./router";
+import { makeServer } from "./mock/serverConfig";
+
+if (import.meta.env.VITE_MOCK_ENABLED === "true") {
+  makeServer();
+}
 
 const vuetify = createVuetify({
   components,

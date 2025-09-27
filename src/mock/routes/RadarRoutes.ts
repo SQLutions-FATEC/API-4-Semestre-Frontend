@@ -45,7 +45,7 @@ const radarRoutes = [
         const body = JSON.parse(request.requestBody);
 
         const newRadar: Radar = {
-          id: "CAM00" + radars.length + 1,
+          id: "CAM00" + (radars.length + 1),
           addressId: body.addressId,
           latitude: body.latitude,
           longitude: body.longitude,

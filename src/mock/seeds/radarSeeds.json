@@ -1,0 +1,51 @@
+[
+  {
+    "id": "CAM001",
+    "addressId": 1,
+    "latitude": -23.563100,
+    "longitude": -46.654200,
+    "speedLimit": 60
+  },
+  {
+    "id": "CAM002",
+    "addressId": 2,
+    "latitude": -23.555300,
+    "longitude": -46.661500,
+    "speedLimit": 50
+  },
+  {
+    "id": "CAM003",
+    "addressId": 3,
+    "latitude": -23.500000,
+    "longitude": -46.633300,
+    "speedLimit": 80
+  },
+  {
+    "id": "CAM004",
+    "addressId": 4,
+    "latitude": -22.906800,
+    "longitude": -43.172900,
+    "speedLimit": 70
+  },
+  {
+    "id": "CAM005",
+    "addressId": 5,
+    "latitude": -23.558600,
+    "longitude": -46.673300,
+    "speedLimit": 40
+  },
+  {
+    "id": "CAM006",
+    "addressId": 1,
+    "latitude": -23.561200,
+    "longitude": -46.656400,
+    "speedLimit": 60
+  },
+  {
+    "id": "CAM007",
+    "addressId": 3,
+    "latitude": -23.505000,
+    "longitude": -46.630000,
+    "speedLimit": 80
+  }
+]

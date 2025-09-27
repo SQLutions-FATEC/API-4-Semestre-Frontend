@@ -1,7 +1,7 @@
-import type { VehicleType } from './vehycleType';
-import type { Radar } from './radar';
+import type { VehicleType } from "./VehicleType.ts";
+import type { Radar } from "./Radar";
 
-export interface Register{
+export interface Register {
   id: number;
   radarId: string;
   timestamp: string;

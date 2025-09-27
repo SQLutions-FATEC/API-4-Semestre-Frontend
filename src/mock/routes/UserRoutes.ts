@@ -34,7 +34,7 @@ const userRoutes = [
 
         return APIFailureWrapper({
           content: user,
-          errorMessage: "Erro ao listar endereço",
+          errorMessage: "Erro ao listar usuário",
         });
       },
     },

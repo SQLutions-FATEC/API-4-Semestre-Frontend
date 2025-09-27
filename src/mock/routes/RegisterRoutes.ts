@@ -1,8 +1,8 @@
 import registersData from "@/mock/seeds/registerSeeds.json";
 import radars from "@/mock/seeds/radarSeeds.json";
 import { APIFailureWrapper, mockFlag } from "../utils";
-import type { Register } from "@/mock/types/Register";
-import type { VehicleType } from "@/mock/types/VehicleType";
+import type { Register } from "@/mock/entities/Register";
+import type { VehicleType } from "@/mock/entities/VehicleType";
 
 const registers: Register[] = registersData.map((register) => ({
   ...register,

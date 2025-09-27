@@ -1,7 +1,7 @@
 import radars from "@/mock/seeds/radarSeeds.json";
 import addresses from "@/mock/seeds/addressSeeds.json";
 import { APIFailureWrapper, mockFlag } from "../utils";
-import type { Radar } from "@/mock/types/Radar";
+import type { Radar } from "@/mock/entities/radar";
 
 const radarRoutes = [
   mockFlag(

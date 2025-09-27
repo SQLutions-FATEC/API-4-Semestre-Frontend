@@ -1,7 +1,7 @@
 import addressesData from "@/mock/seeds/addressSeeds.json";
 import { APIFailureWrapper, mockFlag } from "../utils";
 import type { MirageRequest } from "../types";
-import type { Address } from "@/mock/types/Address";
+import type { Address } from "@/mock/entities/Address";
 
 const addresses: Address[] = [...addressesData];
 

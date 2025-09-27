@@ -1,7 +1,7 @@
 import usersData from "@/mock/seeds/userSeeds.json";
 import { APIFailureWrapper, mockFlag } from "../utils";
 import type { User } from "@/mock/types/User";
-import type { UserLevel } from "@/mock/types/UserLevel";
+import type { UserLevel } from "@/mock/entities/UserLevel";
 
 const users: User[] = usersData.map((user) => ({
   ...user,

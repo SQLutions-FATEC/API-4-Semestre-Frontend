@@ -1,7 +1,6 @@
 import { createServer } from "miragejs";
 import addressRoutes from "./routes/AddressRoutes";
 import radarRoutes from "./routes/RadarRoutes";
-import registerRoutes from "./routes/RegisterRoutes";
 import userRoutes from "./routes/UserRoutes";
 import type { MockRouteParams } from "./types";
 
@@ -15,18 +14,13 @@ declare global {
 
 export function makeServer() {
   if (import.meta.env.MODE === "development" && !window.server) {
-    const routes: MockRouteParams[] = [
-      ...addressRoutes,
-      ...radarRoutes,
-      ...registerRoutes,
-      ...userRoutes,
-    ];
+    const routes: MockRouteParams[] = [...addressRoutes, ...radarRoutes, ...userRoutes];
 
     window.server = createServer({
       routes(this: SimpleServer) {
-        this.urlPrefix = import.meta.env.VITE_API_URL;
-        this.namespace = "/api";
         this.timing = 400;
+
+        this.urlPrefix = "http://localhost:8080";
 
         routes.forEach((route) => {
           (this as any)[route.method](route.url, (_: unknown, request: any) => {

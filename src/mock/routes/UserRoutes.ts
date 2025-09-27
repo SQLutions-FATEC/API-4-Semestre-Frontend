@@ -12,7 +12,7 @@ const userRoutes = [
   mockFlag(
     {
       method: "get",
-      url: "/users",
+      url: "/user",
       result: (_request) => {
         const response = users.map(({ password, ...user }) => user);
 
@@ -29,7 +29,7 @@ const userRoutes = [
   mockFlag(
     {
       method: "post",
-      url: "/users",
+      url: "/user",
       result: (request) => {
         const body = JSON.parse(request.requestBody);
 
@@ -66,7 +66,7 @@ const userRoutes = [
   mockFlag(
     {
       method: "put",
-      url: "/users/:id",
+      url: "/user/:id",
       result: (request) => {
         const body = JSON.parse(request.requestBody);
         let editedUser: User | undefined;

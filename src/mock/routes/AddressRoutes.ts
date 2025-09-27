@@ -9,7 +9,7 @@ const addressRoutes = [
   mockFlag(
     {
       method: "get",
-      url: "/addresses",
+      url: "/address",
       result: (_request: MirageRequest) => {
         const response = addresses.map((address) => ({
           id: address.id,
@@ -31,7 +31,7 @@ const addressRoutes = [
   mockFlag(
     {
       method: "get",
-      url: "/addresses/:id",
+      url: "/address/:id",
       result: (request: MirageRequest) => {
         const addressId = parseInt(request.params.id);
         const address = addresses.find((addr) => addr.id === addressId);
@@ -58,7 +58,7 @@ const addressRoutes = [
   mockFlag(
     {
       method: "post",
-      url: "/addresses",
+      url: "/address",
       result: (request: MirageRequest) => {
         const body = JSON.parse(request.requestBody);
 
@@ -106,7 +106,7 @@ const addressRoutes = [
   mockFlag(
     {
       method: "put",
-      url: "/addresses/:id",
+      url: "/address/:id",
       result: (request: MirageRequest) => {
         const addressId = parseInt(request.params.id);
         const body = JSON.parse(request.requestBody);
@@ -143,7 +143,7 @@ const addressRoutes = [
   mockFlag(
     {
       method: "delete",
-      url: "/addresses/:id",
+      url: "/address/:id",
       result: (request: MirageRequest) => {
         const addressId = parseInt(request.params.id);
         let addressToDelete: Address | null = null;

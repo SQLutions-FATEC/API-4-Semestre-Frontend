@@ -7,7 +7,7 @@ const radarRoutes = [
   mockFlag(
     {
       method: "get",
-      url: "/radars",
+      url: "/radar",
       result: (_request) => {
         const response = radars.map((radar) => {
           const address = addresses.find((addr) => addr.id === radar.addressId);
@@ -39,7 +39,7 @@ const radarRoutes = [
   mockFlag(
     {
       method: "get",
-      url: "/radars/:id",
+      url: "/radar/:id",
       result: (request) => {
         const radar = radars.find((r) => r.id === request.params.id);
 
@@ -83,7 +83,7 @@ const radarRoutes = [
   mockFlag(
     {
       method: "post",
-      url: "/radars",
+      url: "/radar",
       result: (request) => {
         const body = JSON.parse(request.requestBody);
 
@@ -119,7 +119,7 @@ const radarRoutes = [
   mockFlag(
     {
       method: "put",
-      url: "/radars/:id",
+      url: "/radar/:id",
       result: (request) => {
         const body = JSON.parse(request.requestBody);
         let editedRadar: Radar | null = null;
@@ -156,7 +156,7 @@ const radarRoutes = [
   mockFlag(
     {
       method: "delete",
-      url: "/radars/:id",
+      url: "/radar/:id",
       result: (request) => {
         let radarToDelete: Radar | null = null;
 

@@ -19,7 +19,7 @@ export function APIFailureWrapper<T>({
           key: specificError.message,
           context: {
             message: specificError.message,
-            additionalInfo: "Additional context details",
+            additionalInfo: "Detalhes de contexto adicionais",
           },
         }
       );
@@ -32,7 +32,7 @@ export function APIFailureWrapper<T>({
           key: errorMessage,
           context: {
             message: errorMessage,
-            additionalInfo: "Additional context details",
+            additionalInfo: "Detalhes de contexto adicionais",
           },
         }
       );

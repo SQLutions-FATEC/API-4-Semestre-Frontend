@@ -246,7 +246,7 @@ onMounted(() => {
   width: 100%;
   max-width: 100%;
   flex: 1;
-  min-height: 0;
+  min-height: $chartHeight;
   min-width: 0;
   position: relative;
   background-color: $colorBackgroundWhite;
@@ -307,6 +307,12 @@ onMounted(() => {
   }
   100% {
     transform: rotate(360deg);
+  }
+}
+
+@media (max-width: $breakpointTablet) {
+  .chart-container {
+    padding: $spacingMd;
   }
 }
 </style>

@@ -412,5 +412,19 @@ h2 {
     flex-direction: column;
     align-items: center;
   }
+
+  .graph-container {
+    width: 100%;
+    max-width: 100%;
+    flex: none;
+  }
+
+  .image-container {
+    width: 100%;
+  }
+
+  .chart-container {
+    width: 100%;
+  }
 }
 </style>

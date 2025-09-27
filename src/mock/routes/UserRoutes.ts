@@ -14,12 +14,27 @@ const userRoutes = [
       method: "get",
       url: "/user",
       result: (_request) => {
-        const response = users.map(({ password, ...user }) => user);
+        const response = users;
 
         return APIFailureWrapper({
-          content: { items: response, total: response.length },
-          errorMessage: "Error fetching users",
-          failureRate: 10,
+          content: response,
+          errorMessage: "Erro ao listar usuários",
+        });
+      },
+    },
+    "on"
+  ),
+
+  mockFlag(
+    {
+      method: "get",
+      url: "/user/:id",
+      result: (request) => {
+        const user = users.find((addr) => addr.id === parseInt(request.params.id));
+
+        return APIFailureWrapper({
+          content: user,
+          errorMessage: "Erro ao listar endereço",
         });
       },
     },
@@ -33,19 +48,10 @@ const userRoutes = [
       result: (request) => {
         const body = JSON.parse(request.requestBody);
 
-        if (users.find((u) => u.email === body.email)) {
-          return APIFailureWrapper({
-            content: null,
-            errorMessage: "Email already exists",
-            specificError: { status: 400, message: "Email already registered" },
-            failureRate: 100,
-          });
-        }
-
         const newUser: User = {
-          id: Math.max(...users.map((u) => u.id), 0) + 1,
+          id: users.length + 1,
           name: body.name,
-          level: body.level as UserLevel, // ✅ Conversão aqui
+          level: body.level as UserLevel,
           email: body.email,
           password: body.password,
         };
@@ -55,8 +61,7 @@ const userRoutes = [
 
         return APIFailureWrapper({
           content: userWithoutPassword,
-          errorMessage: "Error creating user",
-          failureRate: 15,
+          errorMessage: "Error ao criar usuário",
         });
       },
     },
@@ -86,9 +91,7 @@ const userRoutes = [
         if (!editedUser) {
           return APIFailureWrapper({
             content: null,
-            errorMessage: "User not found",
-            specificError: { status: 404, message: "User not found" },
-            failureRate: 5,
+            errorMessage: "Usuário não encontrado",
           });
         }
 
@@ -96,8 +99,30 @@ const userRoutes = [
 
         return APIFailureWrapper({
           content: userWithoutPassword,
-          errorMessage: "Error updating user",
-          failureRate: 15,
+          errorMessage: "Erro ao editar usuário",
+        });
+      },
+    },
+    "on"
+  ),
+
+  mockFlag(
+    {
+      method: "delete",
+      url: "/user/:id",
+      result: (request) => {
+        let userToDelete: User | undefined;
+
+        for (let index = 0; index < users.length; index++) {
+          if (users[index].id === parseInt(request.params.id)) {
+            userToDelete = users.splice(index, 1)[0];
+            break;
+          }
+        }
+
+        return APIFailureWrapper({
+          content: userToDelete,
+          errorMessage: "Erro ao deletar usuário",
         });
       },
     },

@@ -1,0 +1,32 @@
+[
+  {
+    "id": 1,
+    "addr": "Avenida Paulista, 1000 - São Paulo/SP",
+    "neighborhood": "Bela Vista", 
+    "region": "Centro"
+  },
+  {
+    "id": 2,
+    "addr": "Rua da Consolação, 200 - São Paulo/SP",
+    "neighborhood": "Consolação",
+    "region": "Centro"
+  },
+  {
+    "id": 3,
+    "addr": "Marginal Tietê, km 10 - São Paulo/SP",
+    "neighborhood": "Santana",
+    "region": "Zona Norte"
+  },
+  {
+    "id": 4,
+    "addr": "Avenida Brasil, 1500 - Rio de Janeiro/RJ",
+    "neighborhood": "Centro",
+    "region": "Centro"
+  },
+  {
+    "id": 5,
+    "addr": "Rua Oscar Freire, 800 - São Paulo/SP",
+    "neighborhood": "Jardins",
+    "region": "Zona Oeste"
+  }
+]

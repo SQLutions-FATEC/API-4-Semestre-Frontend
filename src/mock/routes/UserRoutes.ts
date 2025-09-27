@@ -30,7 +30,7 @@ const userRoutes = [
       method: "get",
       url: "/user/:id",
       result: (request) => {
-        const user = users.find((addr) => addr.id === parseInt(request.params.id));
+        const user = users.find((u) => u.id === parseInt(request.params.id));
 
         return APIFailureWrapper({
           content: user,

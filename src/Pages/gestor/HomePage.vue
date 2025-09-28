@@ -221,8 +221,7 @@ h2 {
   align-items: flex-start;
   padding: $spacingLg;
   border-radius: $borderRadiusCard;
-  box-shadow: inset $spacingNone $spacingNone $shadowInsetBlur
-    $colorShadowInset;
+  box-shadow: inset $spacingNone $spacingNone $shadowInsetBlur $colorShadowInset;
 }
 
 .indices-header {

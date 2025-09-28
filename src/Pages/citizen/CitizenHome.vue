@@ -15,15 +15,15 @@ const indices = ref({
 const informacoes = ref([
   {
     descricao: "Provável trânsito intenso na Av. dos Astronautas",
-    tipo: "trafego"
+    tipo: "trafego",
   },
   {
     descricao: "Semáforo com defeito na Rua XV de Novembro",
-    tipo: "infraestrutura"
+    tipo: "infraestrutura",
   },
   {
     descricao: "Obra em andamento na Via Dutra - km 142",
-    tipo: "infraestrutura"
+    tipo: "infraestrutura",
   },
 ]);
 
@@ -84,7 +84,6 @@ onUnmounted(() => {
     clearInterval(intervalId);
   }
 });
-
 </script>
 <template>
   <div class="dashboard-container">
@@ -292,7 +291,6 @@ h2 {
 .right-column {
   @include flex-column;
   gap: $spacingMd;
-
 
   h2 {
     text-align: center;

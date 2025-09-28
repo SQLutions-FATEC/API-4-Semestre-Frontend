@@ -1,8 +1,8 @@
 # API-4-Semestre-Frontend
 
- # Frontend
+# Frontend
 
- ## Tecnologias
+## Tecnologias
 
 [![Vue.js](https://img.shields.io/badge/Vue.js-35495E?style=for-the-badge&logo=vuedotjs&logoColor=4FC08D)](https://github.com/vuejs/vue) [![Vue Router](https://img.shields.io/badge/Vue_Router-35495E?style=for-the-badge&logo=vue.js&logoColor=4FC08D)](https://github.com/vuejs/router) [![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://github.com/vitejs/vite) [![MirageJS](https://img.shields.io/badge/MirageJS-FF6D70?style=for-the-badge&logo=javascript&logoColor=black)](https://github.com/miragejs/miragejs) [![Axios](https://img.shields.io/badge/Axios-5A29E4?style=for-the-badge&logo=axios&logoColor=white)](https://github.com/axios/axios) [![Pinia](https://img.shields.io/badge/Pinia-FFD859?style=for-the-badge&logo=pinia&logoColor=black)](https://github.com/vuejs/pinia) [![Sass](https://img.shields.io/badge/Sass-CC6699?style=for-the-badge&logo=sass&logoColor=white)](https://github.com/sass/sass) [![ESLint](https://img.shields.io/badge/ESLint-4B32C3?style=for-the-badge&logo=eslint&logoColor=white)](https://github.com/eslint/eslint)
 
@@ -44,34 +44,37 @@
 3.  Adicione o seguinte conteúdo ao arquivo:
     ```json
     {
-       "editor.codeActionsOnSave": {
-          "source.fixAll.eslint": "explicit"
-       },
-       "editor.formatOnSave": true,
-       "eslint.validate": ["javascript", "vue"],
-       "prettier.requireConfig": true
+      "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "explicit"
+      },
+      "editor.formatOnSave": true,
+      "eslint.validate": ["javascript", "vue"],
+      "prettier.requireConfig": true
     }
     ```
 
 ### Executando o projeto
 
--   **Com backend:**
-    ```bash
-    npm run dev
-    ```
-    > Sobe na porta 5173, conectando ao backend na porta 8080.
+- **Com backend:**
 
--   **Sem backend (dados mockados):**
-    ```bash
-    npm run mock
-    ```
-    > Sobe na porta 5173 com dados fictícios.
+  ```bash
+  npm run dev
+  ```
+
+  > Sobe na porta 5173, conectando ao backend na porta 8080.
+
+- **Sem backend (dados mockados):**
+  ```bash
+  npm run mock
+  ```
+  > Sobe na porta 5173 com dados fictícios.
 
 ---
 
 ## Build para produção
 
 Para compilar e minificar o projeto para produção, execute:
+
 ```bash
 npm run build
 ```
@@ -96,16 +99,16 @@ src/
 
 ### Benefícios da estruturação
 
-*   **Organização clara:** facilita localizar arquivos de uma mesma camada.
-*   **Manutenção simplificada:** alterações em uma camada não afetam outras.
-*   **Escalabilidade:** estrutura preparada para crescimento do projeto.
+- **Organização clara:** facilita localizar arquivos de uma mesma camada.
+- **Manutenção simplificada:** alterações em uma camada não afetam outras.
+- **Escalabilidade:** estrutura preparada para crescimento do projeto.
 
 ---
 
 ## Acordos do projeto
 
-*   Código em inglês.
-*   Todos os endpoints precisam ter um mock correspondente.
+- Código em inglês.
+- Todos os endpoints precisam ter um mock correspondente.
 
 ---
 
@@ -113,22 +116,22 @@ src/
 
 ### Commits
 
-*   **Formato:**
-    ```
-    <tipo>(<ID da tarefa no Jira>): <breve descrição em inglês>
-    ```
-*   **Exemplo:**
-    ```
-    feat(47): updates the readme with commits pattern
-    ```
+- **Formato:**
+  ```
+  <tipo>(<ID da tarefa no Jira>): <breve descrição em inglês>
+  ```
+- **Exemplo:**
+  ```
+  feat(47): updates the readme with commits pattern
+  ```
 
 ### Branches
 
-*   **Formato:**
-    ```
-    SCRUM-<ID da tarefa no Jira>/<breve descrição em inglês>
-    ```
-*   **Exemplo:**
-    ```
-    SCRUM-47/update-readme
-    ```
+- **Formato:**
+  ```
+  SCRUM-<ID da tarefa no Jira>/<breve descrição em inglês>
+  ```
+- **Exemplo:**
+  ```
+  SCRUM-47/update-readme
+  ```

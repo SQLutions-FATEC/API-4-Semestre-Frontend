@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from "vue";
 import mapaSjc from "@/assets/mapa-sjc.png";
-import graficoVelocidade from "@/assets/grafico-velocidade.png";
-import graficoPorcentagem from "@/assets/grafico-porcentagem.png";
+import BaseChart from "@/components/BaseChart.vue";
 
 const selectedRegion = ref("São José dos Campos");
 const selectedVelocity = ref("Velocidade");
@@ -17,6 +16,7 @@ const indices = ref({
 
 const isLoading = ref(false);
 const lastUpdate = ref<string>("");
+const refreshTrigger = ref(0);
 let intervalId: number | null = null;
 
 async function fetchIndices() {
@@ -38,6 +38,28 @@ async function fetchIndices() {
   }
 }
 
+async function refreshAllData() {
+  refreshTrigger.value++;
+  await fetchIndices();
+}
+
+function handleChartDataUpdated(timestamp: string) {
+  lastUpdate.value = new Date(timestamp).toLocaleTimeString();
+}
+
+function handleChartLoadingChange(loading: boolean) {
+  if (!loading && isLoading.value) {
+    setTimeout(() => {
+      isLoading.value = false;
+    }, 100);
+  }
+}
+
+function handleChartError(errorMessage: string) {
+  lastUpdate.value = errorMessage;
+  isLoading.value = false;
+}
+
 function getIndexClass(value: number): string {
   switch (value) {
     case 1:
@@ -54,9 +76,9 @@ function getIndexClass(value: number): string {
 }
 
 onMounted(() => {
-  fetchIndices();
-  // Update interval to fetch data every 5 seconds
-  intervalId = setInterval(fetchIndices, 5000);
+  refreshAllData();
+  // Update interval to fetch data every 2 seconds
+  intervalId = setInterval(refreshAllData, 2000);
 });
 
 onUnmounted(() => {
@@ -124,15 +146,26 @@ onUnmounted(() => {
             <select v-model="selectedVelocity" class="velocity-dropdown">
               <option value="Velocidade">Velocidade</option>
             </select>
-            <div class="image-container">
-              <img :src="graficoVelocidade" alt="Gráfico de Velocidade" class="graph-image" />
-            </div>
+            <BaseChart
+              type="line"
+              title="Velocidade dos veículos por horário"
+              api-endpoint="/grafico-velocidade"
+              :refresh-trigger="refreshTrigger"
+              @data-updated="handleChartDataUpdated"
+              @loading-change="handleChartLoadingChange"
+              @error="handleChartError"
+            />
           </div>
           <div class="graph-container">
-            <h2>Gráfico</h2>
-            <div class="image-container">
-              <img :src="graficoPorcentagem" alt="Gráfico de Porcentagem" class="graph-image" />
-            </div>
+            <BaseChart
+              type="doughnut"
+              title="Percentual de veículos do dia"
+              api-endpoint="/grafico-porcentagem"
+              :refresh-trigger="refreshTrigger"
+              @data-updated="handleChartDataUpdated"
+              @loading-change="handleChartLoadingChange"
+              @error="handleChartError"
+            />
           </div>
         </div>
       </div>
@@ -152,13 +185,11 @@ h2 {
   overflow: auto;
 }
 
-/* Main Content */
 .home-content {
   padding: $contentPaddingMobile $contentPadding;
   @include content-container;
 }
 
-/* Region Section */
 .region-section {
   margin-bottom: $spacingNone;
 }
@@ -209,7 +240,6 @@ h2 {
   @include card-shadow(1);
 }
 
-/* Indices Section */
 .indices-section {
   @include flex-column;
   gap: $spacingMd;
@@ -270,7 +300,6 @@ h2 {
   @include label(small);
 }
 
-/* Color variants */
 .gray {
   border-bottom-color: $colorStatusGray;
 }
@@ -291,19 +320,20 @@ h2 {
   border-bottom-color: $colorStatusRed;
 }
 
-/* Graphs Section */
 .graphs-section {
   display: flex;
   gap: $cardGap;
-  align-items: flex-start;
-  // Remove altura fixa para permitir que as imagens definam o tamanho
+  align-items: stretch;
+  width: 100%;
 }
 
 .graph-container {
   @include flex-column;
-  flex: 1;
+  flex: 1 1 0;
   gap: $spacingMd;
   align-items: center;
+  min-height: 0;
+  min-width: 0;
 
   h2 {
     @include heading(xsmall);
@@ -311,21 +341,12 @@ h2 {
     font-weight: 500;
     text-align: center;
     width: 100%;
+    flex: 0 0 auto;
   }
 }
 
 .graph-container-middle {
-  flex: 1.5;
-}
-
-/* Map Section */
-.map-section {
-  padding: $spacingXxl $spacingSm;
-}
-
-.map-header {
-  @include flex-between;
-  margin-bottom: $contentPaddingMobile;
+  flex: 1.5 1 0;
 }
 
 .velocity-dropdown {
@@ -337,14 +358,8 @@ h2 {
   @include label(small);
   font-size: inherit;
   color: $colorTextPrimary;
-  align-self: center;
-}
-
-.map-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: $cardGap;
-  height: $mapHeight;
+  align-self: flex-start;
+  flex: 0 0 auto;
 }
 
 .image-container {
@@ -354,6 +369,10 @@ h2 {
   display: flex;
   justify-content: center;
   align-items: center;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .graph-image {
@@ -383,11 +402,6 @@ h2 {
     max-width: $largeCardWidth;
   }
 
-  .map-container {
-    grid-template-columns: 1fr;
-    gap: $spacingLg;
-  }
-
   .region-selector {
     flex-direction: column;
     gap: $spacingLg;
@@ -397,6 +411,20 @@ h2 {
   .graphs-section {
     flex-direction: column;
     align-items: center;
+  }
+
+  .graph-container {
+    width: 100%;
+    max-width: 100%;
+    flex: none;
+  }
+
+  .image-container {
+    width: 100%;
+  }
+
+  .chart-container {
+    width: 100%;
   }
 }
 </style>

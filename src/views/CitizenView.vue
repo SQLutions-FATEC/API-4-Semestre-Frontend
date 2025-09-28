@@ -30,7 +30,7 @@ const informacoes = ref([
 
 async function fetchIndices() {
   try {
-    const response = await fetch("COLOCAR ENDPOINT INDICES");
+    const response = await fetch("http://localhost:5432/indexes");
     const result = await response.json();
 
     if (result.success) {

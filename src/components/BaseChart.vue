@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch, defineProps } from "vue";
+import { ref, onMounted, watch } from "vue";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -50,7 +50,6 @@ const getChartOptions = (type: string, title: string) => {
   const baseOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    // Defaults for element appearance (can be overridden per-dataset)
     elements: {
       line: {
         borderWidth: 2,

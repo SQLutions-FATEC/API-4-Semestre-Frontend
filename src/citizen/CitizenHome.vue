@@ -5,11 +5,11 @@ import mapaSjc from "@/assets/mapa-sjc.png";
 const selectedRegion = ref("São José dos Campos");
 
 const indices = ref({
-  geral: 0,
-  trafego: 0,
-  seguranca: 0,
-  acessibilidade: 0,
-  infraestrutura: 0,
+  combinedIndex: 1,
+  trafficIndex: 1,
+  securityIndex: 1,
+  acessibilidade: 1,
+  infraestrutura: 1,
 });
 
 const informacoes = ref([
@@ -27,18 +27,34 @@ const informacoes = ref([
   },
 ]);
 
+let intervalId: number | null = null;
 
 async function fetchIndices() {
   try {
-    const response = await fetch("http://localhost:5432/indexes");
+    const response = await fetch("http://localhost:5432/indexes?minutes=5");
     const result = await response.json();
 
     if (result.success) {
       indices.value = result.data;
+    } else {
+      //para caso o backend de errado
+      setDefaultIndices();
     }
   } catch {
-    alert("Erro ao buscar índices");
+    // Se houver erro na requisiçã
+    setDefaultIndices();
+    alert("Erro ao buscar índices - valores padrão aplicados");
   }
+}
+
+function setDefaultIndices() {
+  indices.value = {
+    combinedIndex: 1,
+    trafficIndex: 1,
+    securityIndex: 1,
+    acessibilidade: 2,
+    infraestrutura: 1,
+  };
 }
 
 function getIndexClass(value: number): string {
@@ -58,13 +74,18 @@ function getIndexClass(value: number): string {
 
 onMounted(() => {
   fetchIndices();
+
+  //5 min
+  intervalId = setInterval(fetchIndices, 300000);
 });
 
 onUnmounted(() => {
+  if (intervalId) {
+    clearInterval(intervalId);
+  }
 });
 
 </script>
-
 <template>
   <div class="dashboard-container">
     <main class="dashboard-content">
@@ -79,11 +100,10 @@ onUnmounted(() => {
       </div>
 
       <div class="dashboard-layout">
-        <!-- Coluna Esquerda: Índice Geral + Mapa -->
         <div class="left-column">
           <div class="geral-section">
-            <div :class="['index-card', 'geral-card', getIndexClass(indices.geral)]">
-              <div class="index-number">{{ indices.geral }}</div>
+            <div :class="['index-card', 'geral-card', getIndexClass(indices.combinedIndex)]">
+              <div class="index-number">{{ indices.combinedIndex }}</div>
               <div class="index-name">Geral</div>
             </div>
           </div>
@@ -101,12 +121,12 @@ onUnmounted(() => {
             <h2>Índices</h2>
           </div>
           <div class="indices-grid">
-            <div :class="['index-card', 'medium-card', getIndexClass(indices.trafego)]">
-              <div class="index-number">{{ indices.trafego }}</div>
+            <div :class="['index-card', 'medium-card', getIndexClass(indices.trafficIndex)]">
+              <div class="index-number">{{ indices.trafficIndex }}</div>
               <div class="index-name">Tráfego</div>
             </div>
-            <div :class="['index-card', 'medium-card', getIndexClass(indices.seguranca)]">
-              <div class="index-number">{{ indices.seguranca }}</div>
+            <div :class="['index-card', 'medium-card', getIndexClass(indices.securityIndex)]">
+              <div class="index-number">{{ indices.securityIndex }}</div>
               <div class="index-name">Segurança</div>
             </div>
             <div :class="['index-card', 'medium-card', getIndexClass(indices.acessibilidade)]">

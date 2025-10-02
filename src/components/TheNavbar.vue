@@ -1,0 +1,118 @@
+<script setup lang="ts">
+import { RouterLink } from "vue-router";
+import logoSjc from "@/assets/logo-sjc.png";
+</script>
+
+<template>
+  <header class="main-header">
+    <div class="logo-section">
+      <RouterLink to="/">
+        <img :src="logoSjc" alt="Logo São José dos Campos" class="logo" />
+      </RouterLink>
+    </div>
+
+    <nav class="main-nav">
+      <RouterLink to="/" class="nav-item">Home</RouterLink>
+      <RouterLink to="/mapa" class="nav-item">Mapa</RouterLink>
+      <RouterLink to="/sobre" class="nav-item">Sobre</RouterLink>
+      <RouterLink to="/cidadao" class="nav-item">Cidadão</RouterLink>
+    </nav>
+  </header>
+</template>
+
+<style lang="scss" scoped>
+.main-header {
+  @include header-responsive;
+  background: linear-gradient(
+    to bottom,
+    $colorPrimaryGradientStart 0%,
+    $colorPrimaryGradientMid 80%,
+    $colorPrimaryGradientEnd 100%
+  );
+  padding: $spacingNone;
+  height: $headerHeight;
+}
+
+.logo-section {
+  @include flex-center;
+  height: 100%;
+  width: $logoContainerWidth;
+  flex-shrink: 0;
+}
+
+.logo {
+  width: $logoSize;
+  height: $logoSize;
+  border-radius: $borderRadiusSm;
+  display: block;
+}
+
+.main-nav {
+  @include nav-responsive;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 50%;
+  bottom: 0;
+}
+
+.nav-item {
+  @include flex-center;
+  @include navbar(large);
+  @include smooth-transition(background-color);
+  text-decoration: none;
+  padding: $spacingSm $spacingXl;
+  border-right: 1px solid $colorBorderLight;
+  height: 100%;
+
+  &:hover {
+    background-color: $colorBackgroundTransparent;
+  }
+
+  &.router-link-active {
+    background-color: $colorBackgroundTransparentActive;
+    border-bottom: 2px solid $colorBorderAccent;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-nav {
+    flex-wrap: wrap;
+  }
+
+  .nav-item {
+    @include navbar(medium);
+    padding: $spacingSm $spacingLg;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-header {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .logo-section {
+    width: 100%;
+    height: 60px;
+  }
+
+  .main-nav {
+    width: 100%;
+    justify-content: center;
+    position: static;
+    transform: none;
+    height: auto;
+  }
+
+  .nav-item {
+    border-right: none;
+    border-bottom: 1px solid $colorBorderLight;
+    padding: $spacingMd $spacingLg;
+
+    &.router-link-active {
+      border-bottom: 2px solid $colorBorderAccent;
+    }
+  }
+}
+</style>

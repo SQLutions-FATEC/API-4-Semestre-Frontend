@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "name": "Admin User",
+    "level": "Admin",
+    "email": "admin@radar.com",
+    "password": "admin123"
+  },
+  {
+    "id": 2,
+    "name": "Manager User",
+    "level": "Manager",
+    "email": "manager@radar.com",
+    "password": "manager123"
+  },
+  {
+    "id": 3,
+    "name": "Operator User",
+    "level": "Manager",
+    "email": "operator@radar.com",
+    "password": "operator123"
+  }
+]

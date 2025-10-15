@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from "vue";
 import mapaSjc from "@/assets/mapa-sjc.png";
+import { IndexData, indexService } from "@/services/indexService";
+import { onMounted, ref } from "vue";
 
 const selectedRegion = ref("São José dos Campos");
 
@@ -13,35 +14,27 @@ const indices = ref({
 });
 
 const informacoes = ref([
-  {
-    descricao: "Provável trânsito intenso na Av. dos Astronautas",
-    tipo: "trafego",
-  },
-  {
-    descricao: "Semáforo com defeito na Rua XV de Novembro",
-    tipo: "infraestrutura",
-  },
-  {
-    descricao: "Obra em andamento na Via Dutra - km 142",
-    tipo: "infraestrutura",
-  },
+  { descricao: "Provável trânsito intenso na Av. dos Astronautas", tipo: "trafego" },
+  { descricao: "Semáforo com defeito na Rua XV de Novembro", tipo: "infraestrutura" },
+  { descricao: "Obra em andamento na Via Dutra - km 142", tipo: "infraestrutura" },
 ]);
-
-let intervalId: number | null = null;
 
 async function fetchIndices() {
   try {
-    const response = await fetch("http://localhost:5432/indexes?minutes=5");
-    const result = await response.json();
+    let result: IndexData;
+    // Se futuramente adicionar suporte a regiões no backend
+    // use getRegionIndex(selectedRegion.value, 5)
+    result = await indexService.getCityIndex(5);
 
-    if (result.success) {
-      indices.value = result.data;
-    } else {
-      //para caso o backend de errado
-      setDefaultIndices();
-    }
-  } catch {
-    // Se houver erro na requisiçã
+    indices.value = {
+      combinedIndex: result.combinedIndex,
+      trafficIndex: result.trafficIndex,
+      securityIndex: result.securityIndex,
+      acessibilidade: 1, // valor fixo por enquanto
+      infraestrutura: 1, // valor fixo por enquanto
+    };
+  } catch (error) {
+    console.error("Erro ao buscar índices:", error);
     setDefaultIndices();
     alert("Erro ao buscar índices - valores padrão aplicados");
   }
@@ -74,17 +67,9 @@ function getIndexClass(value: number): string {
 
 onMounted(() => {
   fetchIndices();
-
-  //5 min
-  intervalId = setInterval(fetchIndices, 300000);
-});
-
-onUnmounted(() => {
-  if (intervalId) {
-    clearInterval(intervalId);
-  }
 });
 </script>
+
 <template>
   <div class="dashboard-container">
     <main class="dashboard-content">
@@ -114,7 +99,6 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- Coluna Central: Índices -->
         <div class="center-column">
           <div class="indices-header">
             <h2>Índices</h2>
@@ -139,7 +123,6 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- Coluna Direita: Informações -->
         <div class="right-column">
           <h2>Informações</h2>
           <div class="info-cards">
@@ -152,5 +135,5 @@ onUnmounted(() => {
     </main>
   </div>
 </template>
-<style lang="scss" scoped src="@/Pages/citizen/CitizenHomeStyle.scss">
-</style>
+
+<style lang="scss" scoped src="@/Pages/citizen/CitizenHomeStyle.scss"></style>

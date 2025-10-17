@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import mapaSjc from "@/assets/mapa-sjc.png";
-import { IndexData, indexService } from "@/services/indexService";
+import { indexService, type IndexData } from "@/services/IndexService";
 import { onMounted, ref } from "vue";
 
 const selectedRegion = ref("São José dos Campos");

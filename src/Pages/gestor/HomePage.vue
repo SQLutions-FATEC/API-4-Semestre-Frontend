@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from "vue";
 import mapaSjc from "@/assets/mapa-sjc.png";
 import BaseChart from "@/components/BaseChart/BaseChart.vue";
+import { indexService, type IndexData } from "@/services/IndexService";
+import { onMounted, onUnmounted, ref } from "vue";
 
 const selectedRegion = ref("São José dos Campos");
 const selectedVelocity = ref("Velocidade");
@@ -22,16 +23,22 @@ let intervalId: number | null = null;
 async function fetchIndices() {
   try {
     isLoading.value = true;
-    // This URL is currently pointing to a local JS test server.
-    // Update it to the appropriate URL.
-    const response = await fetch("http://localhost:3001/indices");
-    const result = await response.json();
 
-    if (result.success) {
-      indices.value = result.data;
-      lastUpdate.value = new Date(result.timestamp).toLocaleTimeString();
-    }
-  } catch {
+    const result: IndexData = await indexService.getCityIndex(5);
+
+    console.log("Resposta do backend:", result); // <-- log para verificação
+
+    indices.value = {
+      geral: result.combinedIndex,
+      trafego: result.trafficIndex,
+      seguranca: result.securityIndex,
+      acessibilidade: 2,
+      infraestrutura: 1,
+    };
+
+    lastUpdate.value = new Date().toLocaleTimeString();
+  } catch (error) {
+    console.error("Erro ao buscar índices:", error);
     lastUpdate.value = "Erro de conexão - tentando novamente...";
   } finally {
     isLoading.value = false;
@@ -39,6 +46,7 @@ async function fetchIndices() {
 }
 
 async function refreshAllData() {
+  if (isLoading.value) return;
   refreshTrigger.value++;
   await fetchIndices();
 }
@@ -77,14 +85,11 @@ function getIndexClass(value: number): string {
 
 onMounted(() => {
   refreshAllData();
-  // Update interval to fetch data every 2 seconds
-  intervalId = setInterval(refreshAllData, 2000);
+  intervalId = setInterval(refreshAllData, 20000); // atualiza a cada 20s
 });
 
 onUnmounted(() => {
-  if (intervalId) {
-    clearInterval(intervalId);
-  }
+  if (intervalId) clearInterval(intervalId);
 });
 </script>
 
@@ -173,5 +178,4 @@ onUnmounted(() => {
   </div>
 </template>
 
-<style lang="scss" scoped src="@/Pages/gestor/HomePageStyle.scss">
-</style>
+<style lang="scss" scoped src="@/Pages/gestor/HomePageStyle.scss"></style>

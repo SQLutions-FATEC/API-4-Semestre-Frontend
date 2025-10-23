@@ -24,10 +24,11 @@ export const indexService = {
   },
 
   // Pega o índice de um ou mais radares pelo ID
-  async getRadarIndexes(radarIds: number[], minutes = 5): Promise<IndexData> {
-    const response = await api.get(`/index/radar`, {
-      params: { minutes, radarIds },
-    });
-    return response.data;
-  },
+async getRadarIndexes(radarIds: string[], minutes = 5): Promise<IndexData> {
+  const response = await api.get(`/index/radar`, {
+    params: { minutes, radars: radarIds },
+  });
+  return response.data;
+}
+
 };

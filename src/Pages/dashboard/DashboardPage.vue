@@ -5,6 +5,7 @@ import BaseChart from "@/components/BaseChart/BaseChart.vue";
 
 const selectedRegion = ref("São José dos Campos");
 const selectedVelocity = ref("Velocidade");
+const selectedVehicleType = ref("Carros");
 
 const indices = ref({
   geral: 0,
@@ -97,41 +98,78 @@ onUnmounted(() => {
           <select v-model="selectedRegion" class="region-dropdown">
             <option value="São José dos Campos">São José dos Campos</option>
           </select>
-          <button class="export-btn">📊 Exportar relatório</button>
         </div>
       </div>
       <div class="main-content">
         <div class="graphs-section">
+          <div class="info-link-container">
+            <a href="#" class="info-link">Como as informações são calculadas?</a>
+          </div>
+        </div>
+        <div class="graphs-section">
+          <div class="graph-container graph-container-size-large vehicles-volume-container">
+            <div class="graph-container-header">
+              <h2>Velocidade dos veículos por horário</h2>
+              <select v-model="selectedVelocity" class="velocity-dropdown">
+                <option value="Velocidade">Velocidade</option>
+              </select>
+            </div>
+            <div class="chart-container">
+              <BaseChart
+                type="line"
+                title="Volume de veículos"
+                api-endpoint="/grafico-velocidade"
+                :refresh-trigger="refreshTrigger"
+                @data-updated="handleChartDataUpdated"
+                @loading-change="handleChartLoadingChange"
+                @error="handleChartError"
+              />
+            </div>
+          </div>
+          <div class="graph-container">
+            <div class="graph-container-header">
+              <h2>Porcentagem de veículos do dia</h2>
+            </div>
+            <div class="chart-container">
+              <BaseChart
+                type="doughnut"
+                title="Percentual de veículos do dia"
+                api-endpoint="/grafico-porcentagem"
+                :refresh-trigger="refreshTrigger"
+                @data-updated="handleChartDataUpdated"
+                @loading-change="handleChartLoadingChange"
+                @error="handleChartError"
+              />
+            </div>
+          </div>
+        </div>
+        <div class="graphs-section">
+          <div class="graph-container graph-container-size-large vehicles-volume-container">
+            <div class="graph-container-header">
+              <h2>Volume de Veículos</h2>
+              <select v-model="selectedVehicleType" class="velocity-dropdown">
+                <option value="Carros">Carros</option>
+                <option value="Caminhões">Caminhões</option>
+                <option value="Motocicletas">Motocicletas</option>
+              </select>
+            </div>
+            <div class="chart-container">
+              <BaseChart
+                type="line"
+                title="Volume de veículos"
+                api-endpoint="/grafico-velocidade"
+                :refresh-trigger="refreshTrigger"
+                @data-updated="handleChartDataUpdated"
+                @loading-change="handleChartLoadingChange"
+                @error="handleChartError"
+              />
+            </div>
+          </div>
           <div class="graph-container">
             <h2>Mapa</h2>
             <div class="image-container">
               <img :src="mapaSjc" alt="Mapa de São José dos Campos" class="graph-image" />
             </div>
-          </div>
-          <div class="graph-container graph-container-middle vehicles-volume-container">
-            <select v-model="selectedVelocity" class="vehicle-type-dropdown">
-              <option value="Velocidade">Velocidade</option>
-            </select>
-            <BaseChart
-              type="line"
-              title="Volume de veículos"
-              api-endpoint="/grafico-velocidade"
-              :refresh-trigger="refreshTrigger"
-              @data-updated="handleChartDataUpdated"
-              @loading-change="handleChartLoadingChange"
-              @error="handleChartError"
-            />
-          </div>
-          <div class="graph-container">
-            <BaseChart
-              type="doughnut"
-              title="Percentual de veículos do dia"
-              api-endpoint="/grafico-porcentagem"
-              :refresh-trigger="refreshTrigger"
-              @data-updated="handleChartDataUpdated"
-              @loading-change="handleChartLoadingChange"
-              @error="handleChartError"
-            />
           </div>
         </div>
         <div class="indices-section">
@@ -142,6 +180,12 @@ onUnmounted(() => {
             <div :class="['index-card', 'large-card', getIndexClass(indices.geral)]">
               <div class="index-name">Leituras totais</div>
               <div class="index-number">99999</div>
+              <div class="comparison-text">+30% comparado a ontem</div>
+            </div>
+            <div :class="['index-card', 'large-card', getIndexClass(indices.geral)]">
+              <div class="index-name">Velocidade média geral</div>
+              <div class="index-number">150 km/h</div>
+              <div class="comparison-text">-15% comparado a ontem</div>
             </div>
             <div :class="['index-card', 'large-card', getIndexClass(indices.geral)]">
               <h3>Velocidade mais rápida</h3>
@@ -150,17 +194,6 @@ onUnmounted(() => {
               <a>Av. Antônio Antônio (região Sul)</a>
               <h3>Hora</h3>
               <a>12:00:00</a>
-            </div>
-            <div :class="['index-card', 'large-card', getIndexClass(indices.geral)]">
-              <div class="index-name">Velocidade média de todos os veículos</div>
-              <div class="index-number">150 km/h</div>
-            </div>
-            <div :class="['index-card', 'large-card', getIndexClass(indices.geral)]">
-              <div class="index-name">Radares com mais leturas</div>
-              <a>1950 - Av. Antônio Antônio</a>
-              <a>1020 - Av. São João</a>
-              <a>1005 - Av. São Francisco</a>
-              <a>950 - Av. São Pedro</a>
             </div>
           </div>
         </div>

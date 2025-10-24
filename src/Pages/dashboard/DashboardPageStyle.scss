@@ -64,6 +64,12 @@ h2 {
   @include card-shadow(1);
 }
 
+.info-link-container {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+}
+
 .indices-section {
   @include flex-column;
   gap: $spacingMd;
@@ -161,13 +167,40 @@ h2 {
     color: $colorTextSecondary;
     font-weight: 500;
     text-align: center;
-    width: 100%;
     flex: 0 0 auto;
   }
 }
 
-.graph-container-middle {
+.graph-container-size-medium {
   flex: 1.5 1 0;
+}
+
+.graph-container-size-large {
+  flex: 2 1 0;
+}
+
+.graph-container-header {
+  display: flex;
+  width: 100%;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.chart-container {
+  width: 100%;
+  max-width: 100%;
+  flex: 1;
+  min-height: $chartHeight;
+  min-width: 0;
+  position: relative;
+  background-color: $colorBackgroundWhite;
+  border-radius: $borderRadiusCard;
+  @include card-shadow(1);
+  padding: $spacingLg;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
 
 .velocity-dropdown {

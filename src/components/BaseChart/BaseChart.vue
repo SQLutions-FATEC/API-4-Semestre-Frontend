@@ -219,24 +219,22 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="chart-container">
-    <div v-if="isLoading" class="chart-loading">
-      <div class="loading-spinner"></div>
-      <span>Carregando gráfico...</span>
-    </div>
+  <div v-if="isLoading" class="chart-loading">
+    <div class="loading-spinner"></div>
+    <span>Carregando gráfico...</span>
+  </div>
 
-    <div v-else-if="error" class="chart-error">
-      <span>❌ {{ error }}</span>
-    </div>
+  <div v-else-if="error" class="chart-error">
+    <span>❌ {{ error }}</span>
+  </div>
 
-    <div v-else-if="chartData" class="chart-content">
-      <Line v-if="props.type === 'line'" :data="chartData" :options="chartOptions" />
-      <Doughnut v-if="props.type === 'doughnut'" :data="chartData" :options="chartOptions" />
-    </div>
+  <div v-else-if="chartData" class="chart-content">
+    <Line v-if="props.type === 'line'" :data="chartData" :options="chartOptions" />
+    <Doughnut v-if="props.type === 'doughnut'" :data="chartData" :options="chartOptions" />
+  </div>
 
-    <div v-else class="chart-empty">
-      <span>Nenhum dado disponível</span>
-    </div>
+  <div v-else class="chart-empty">
+    <span>Nenhum dado disponível</span>
   </div>
 </template>
 

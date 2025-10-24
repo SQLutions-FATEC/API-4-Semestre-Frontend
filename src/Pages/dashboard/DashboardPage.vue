@@ -2,63 +2,58 @@
 import { ref, onMounted, onUnmounted } from "vue";
 import mapaSjc from "@/assets/mapa-sjc.png";
 import BaseChart from "@/components/BaseChart/BaseChart.vue";
+import { indexService, type IndexData } from "@/services/IndexService";
 
 const selectedRegion = ref("São José dos Campos");
 const selectedVelocity = ref("Velocidade");
 const selectedVehicleType = ref("Carros");
 
-const indices = ref({
-  geral: 0,
-  trafego: 0,
-  seguranca: 0,
-  acessibilidade: 0,
-  infraestrutura: 0,
-});
-
 const isLoading = ref(false);
 const lastUpdate = ref<string>("");
 const refreshTrigger = ref(0);
+const indexData = ref<IndexData | null>(null);
 let intervalId: number | null = null;
 
-async function fetchIndices() {
+async function fetchIndexData() {
   try {
-    isLoading.value = true;
-    // This URL is currently pointing to a local JS test server.
-    // Update it to the appropriate URL.
-    const response = await fetch("http://localhost:3001/indices");
-    const result = await response.json();
-
-    if (result.success) {
-      indices.value = result.data;
-      lastUpdate.value = new Date(result.timestamp).toLocaleTimeString();
-    }
+    const data = await indexService.getCityIndex(5);
+    indexData.value = data;
+    return true; // Success
   } catch {
-    lastUpdate.value = "Erro de conexão - tentando novamente...";
-  } finally {
-    isLoading.value = false;
+    indexData.value = null;
+    return false; // Failed
   }
 }
 
 async function refreshAllData() {
+  isLoading.value = true;
   refreshTrigger.value++;
-  await fetchIndices();
-}
 
-function handleChartDataUpdated(timestamp: string) {
-  lastUpdate.value = new Date(timestamp).toLocaleTimeString();
-}
+  // Try to fetch index data
+  const indexDataSuccess = await fetchIndexData();
 
-function handleChartLoadingChange(loading: boolean) {
-  if (!loading && isLoading.value) {
-    setTimeout(() => {
-      isLoading.value = false;
-    }, 100);
+  // Update lastUpdate based on success of the operation
+  if (indexDataSuccess) {
+    lastUpdate.value = new Date().toLocaleTimeString();
+  } else {
+    lastUpdate.value = "Erro de conexão com o servidor";
   }
+
+  isLoading.value = false;
 }
 
-function handleChartError(errorMessage: string) {
-  lastUpdate.value = errorMessage;
-  isLoading.value = false;
+function handleChartDataUpdated() {
+  // Charts update successfully, but we don't override lastUpdate
+  // since we want to show the unified update time
+}
+
+function handleChartLoadingChange() {
+  // Chart loading state changes, but we manage loading centrally
+}
+
+function handleChartError() {
+  // Chart errors don't override the main lastUpdate
+  // The unified refreshAllData will handle error states
 }
 
 function getIndexClass(value: number): string {
@@ -78,8 +73,8 @@ function getIndexClass(value: number): string {
 
 onMounted(() => {
   refreshAllData();
-  // Update interval to fetch data every 2 seconds
-  intervalId = setInterval(refreshAllData, 2000);
+  // Update all data every 10 seconds
+  intervalId = setInterval(refreshAllData, 10000);
 });
 
 onUnmounted(() => {
@@ -103,7 +98,33 @@ onUnmounted(() => {
       <div class="main-content">
         <div class="graphs-section">
           <div class="info-link-container">
+             <div class="status-info">
+              <span v-if="isLoading" class="loading">🔄 Carregando...</span>
+              <span v-else-if="lastUpdate" class="last-update">
+                Última atualização: {{ lastUpdate }}
+              </span>
+              <span v-else class="no-update">Nenhuma atualização ainda</span>
+            </div>
             <a href="#" class="info-link">Como as informações são calculadas?</a>
+          </div>
+        </div>
+        <div class="indices-section">
+          <div class="indices-header">
+            <h2>Índices</h2>
+          </div>
+          <div class="indices-container">
+            <div :class="['index-card', 'large-card', getIndexClass(indexData?.combinedIndex || 0)]">
+              <div class="index-number">{{ indexData?.combinedIndex || 0 }}</div>
+              <div class="index-name">Geral</div>
+            </div>
+            <div :class="['index-card', 'small-card', getIndexClass(indexData?.trafficIndex || 0)]">
+              <div class="index-number">{{ indexData?.trafficIndex || 0 }}</div>
+              <div class="index-name">Tráfego</div>
+            </div>
+            <div :class="['index-card', 'small-card', getIndexClass(indexData?.securityIndex || 0)]">
+              <div class="index-number">{{ indexData?.securityIndex || 0 }}</div>
+              <div class="index-name">Segurança</div>
+            </div>
           </div>
         </div>
         <div class="graphs-section">
@@ -177,17 +198,17 @@ onUnmounted(() => {
             <h2>Informações Diárias</h2>
           </div>
           <div class="daily-infos-container">
-            <div :class="['index-card', 'large-card', getIndexClass(indices.geral)]">
+            <div :class="['index-card', 'large-card', getIndexClass(0)]">
               <div class="index-name">Leituras totais</div>
               <div class="index-number">99999</div>
               <div class="comparison-text">+30% comparado a ontem</div>
             </div>
-            <div :class="['index-card', 'large-card', getIndexClass(indices.geral)]">
+            <div :class="['index-card', 'large-card', getIndexClass(0)]">
               <div class="index-name">Velocidade média geral</div>
               <div class="index-number">150 km/h</div>
               <div class="comparison-text">-15% comparado a ontem</div>
             </div>
-            <div :class="['index-card', 'large-card', getIndexClass(indices.geral)]">
+            <div :class="['index-card', 'large-card', getIndexClass(0)]">
               <h3>Velocidade mais rápida</h3>
               <a>200 km/h</a>
               <h3>Local</h3>

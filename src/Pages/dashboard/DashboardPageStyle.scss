@@ -67,7 +67,7 @@ h2 {
 .info-link-container {
   width: 100%;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
 }
 
 .indices-section {
@@ -79,6 +79,20 @@ h2 {
   display: flex;
   gap: $indicesGap;
   align-items: flex-start;
+}
+
+.indices-section {
+  @include flex-column;
+  gap: $spacingMd;
+}
+
+.indices-container {
+  display: flex;
+  gap: $indicesGap;
+  align-items: flex-start;
+  padding: $spacingLg;
+  border-radius: $borderRadiusCard;
+  box-shadow: inset $spacingNone $spacingNone $shadowInsetBlur $colorShadowInset;
 }
 
 .indices-header {

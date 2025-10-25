@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, computed } from "vue";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -10,8 +10,9 @@ import {
   Tooltip,
   Legend,
   ArcElement,
+  BarElement,
 } from "chart.js";
-import { Line, Doughnut } from "vue-chartjs";
+import { Line, Doughnut, Bar } from "vue-chartjs";
 
 ChartJS.register(
   CategoryScale,
@@ -21,14 +22,16 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  ArcElement
+  ArcElement,
+  BarElement
 );
 
 interface Props {
-  type: "line" | "doughnut";
+  type: "line" | "doughnut" | "bar";
   title: string;
   apiEndpoint: string;
   refreshTrigger?: number;
+  chartData?: object; // Para passar dados diretamente
 }
 
 const props = defineProps<Props>();
@@ -40,11 +43,15 @@ const emit = defineEmits<{
 }>();
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const chartData = ref<any>(null);
+const internalChartData = ref<any>(null);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const chartOptions = ref<any>({});
 const isLoading = ref(false);
 const error = ref<string>("");
+
+const finalChartData = computed(() => {
+  return props.chartData || internalChartData.value;
+});
 
 const getChartOptions = (type: string, title: string) => {
   const baseOptions = {
@@ -97,6 +104,34 @@ const getChartOptions = (type: string, title: string) => {
           max: 140,
           ticks: {
             stepSize: 20,
+          },
+        },
+      },
+    };
+  }
+
+  if (type === "bar") {
+    return {
+      ...baseOptions,
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: "Horário",
+          },
+          ticks: {
+            maxTicksLimit: 24,
+            autoSkip: false,
+          },
+        },
+        y: {
+          title: {
+            display: true,
+            text: "Volume de Veículos",
+          },
+          beginAtZero: true,
+          ticks: {
+            stepSize: 1000,
           },
         },
       },
@@ -160,6 +195,17 @@ const processChartData = (rawData: any) => {
     };
   }
 
+  if (props.type === "bar") {
+    return {
+      labels: rawData.labels,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      datasets: rawData.datasets.map((dataset: any) => ({
+        ...dataset,
+        ...vehicleStyles[dataset.label as keyof typeof vehicleStyles],
+      })),
+    };
+  }
+
   if (props.type === "doughnut") {
     return {
       labels: rawData.labels,
@@ -177,6 +223,10 @@ const processChartData = (rawData: any) => {
 };
 
 const fetchChartData = async () => {
+  if (props.chartData) {
+    return;
+  }
+
   try {
     isLoading.value = true;
     error.value = "";
@@ -186,7 +236,7 @@ const fetchChartData = async () => {
     const result = await response.json();
 
     if (result.success) {
-      chartData.value = processChartData(result.data);
+      internalChartData.value = processChartData(result.data);
       emit("dataUpdated", result.timestamp);
     } else {
       error.value = "Erro ao carregar dados do gráfico";
@@ -201,13 +251,27 @@ const fetchChartData = async () => {
   }
 };
 
-watch(() => props.apiEndpoint, fetchChartData);
+watch(() => props.apiEndpoint, () => {
+  if (!props.chartData) {
+    fetchChartData();
+  }
+});
+
+watch(() => props.chartData, (newData) => {
+  if (newData) {
+    emit("dataUpdated", new Date().toISOString());
+  }
+});
 
 watch(
   () => props.refreshTrigger,
   () => {
     if (props.refreshTrigger) {
-      fetchChartData();
+      if (props.chartData) {
+        emit("dataUpdated", new Date().toISOString());
+      } else {
+        fetchChartData();
+      }
     }
   }
 );
@@ -228,9 +292,10 @@ onMounted(() => {
     <span>❌ {{ error }}</span>
   </div>
 
-  <div v-else-if="chartData" class="chart-content">
-    <Line v-if="props.type === 'line'" :data="chartData" :options="chartOptions" />
-    <Doughnut v-if="props.type === 'doughnut'" :data="chartData" :options="chartOptions" />
+  <div v-else-if="finalChartData" class="chart-content">
+    <Line v-if="props.type === 'line'" :data="finalChartData" :options="chartOptions" />
+    <Doughnut v-if="props.type === 'doughnut'" :data="finalChartData" :options="chartOptions" />
+    <Bar v-if="props.type === 'bar'" :data="finalChartData" :options="chartOptions" />
   </div>
 
   <div v-else class="chart-empty">

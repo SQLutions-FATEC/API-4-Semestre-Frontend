@@ -1,18 +1,68 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, computed, watch } from "vue";
 import mapaSjc from "@/assets/mapa-sjc.png";
 import BaseChart from "@/components/BaseChart/BaseChart.vue";
 import { indexService, type IndexData } from "@/services/IndexService";
+import readingService, { type VehicleTypeHourlyData } from "@/services/ReadingService";
 
 const selectedRegion = ref("São José dos Campos");
 const selectedVelocity = ref("Velocidade");
-const selectedVehicleType = ref("Carros");
+const selectedVehicleType = ref("Todos");
 
 const isLoading = ref(false);
 const lastUpdate = ref<string>("");
 const refreshTrigger = ref(0);
 const indexData = ref<IndexData | null>(null);
+const vehicleData = ref<VehicleTypeHourlyData[] | null>(null);
+const availableRegions = ref<string[]>([
+  "São José dos Campos",
+  "Norte",
+  "Sul",
+  "Leste",
+  "Oeste",
+  "Centro",
+  "Sudeste",
+  "São Francisco Xavier"
+]);
+const availableVehicleTypes = ref<string[]>([
+  "Todos",
+  "Caminhão grande",
+  "Camionete",
+  "Carro",
+  "Indefinido",
+  "Moto",
+  "Ônibus",
+  "Van"
+]);
 let intervalId: number | null = null;
+
+async function fetchVehicleData() {
+  try {
+    // Data fixa: 2025-08-05, apenas variando as horas
+    const fixedDate = "2025-08-05";
+    const startTime = `${fixedDate}T00:00:00`; // Início do dia
+    const endTime = `${fixedDate}T23:59:59`;   // Final do dia
+
+    const params = {
+      startTime,
+      endTime,
+      ...(selectedVehicleType.value !== "Todos" && {
+        vehicleType: selectedVehicleType.value
+      }),
+      ...(selectedRegion.value !== "São José dos Campos" && {
+        regions: [selectedRegion.value]
+      })
+    };
+
+    const response = await readingService.getHourlyCount(params);
+    vehicleData.value = response.data;
+
+    return true;
+  } catch {
+    vehicleData.value = null;
+    return false;
+  }
+}
 
 async function fetchIndexData() {
   try {
@@ -29,11 +79,12 @@ async function refreshAllData() {
   isLoading.value = true;
   refreshTrigger.value++;
 
-  // Try to fetch index data
-  const indexDataSuccess = await fetchIndexData();
+  const [indexDataSuccess, vehicleDataSuccess] = await Promise.all([
+    fetchIndexData(),
+    fetchVehicleData()
+  ]);
 
-  // Update lastUpdate based on success of the operation
-  if (indexDataSuccess) {
+  if (indexDataSuccess || vehicleDataSuccess) {
     lastUpdate.value = new Date().toLocaleTimeString();
   } else {
     lastUpdate.value = "Erro de conexão com o servidor";
@@ -56,6 +107,50 @@ function handleChartError() {
   // The unified refreshAllData will handle error states
 }
 
+const chartDataForVolume = computed(() => {
+  if (!vehicleData.value || vehicleData.value.length === 0) return null;
+
+  const selectedData = selectedVehicleType.value === "Todos"
+    ? vehicleData.value.find(item => item.vehicleType === "Todos")
+    : vehicleData.value[0];
+
+  if (!selectedData) return null;
+
+  const labels = selectedData.data.map(item => {
+    const date = new Date(item.hour);
+    return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  });
+
+  const data = selectedData.data.map(item => item.vehicleCount);
+
+  const getVehicleColor = (vehicleType: string) => {
+    const colors = {
+      "Todos": { bg: "rgba(107, 114, 128, 0.7)", border: "#6b7280" },
+      "Carro": { bg: "rgba(59, 130, 246, 0.7)", border: "#3b82f6" },
+      "Moto": { bg: "rgba(34, 197, 94, 0.7)", border: "#22c55e" },
+      "Ônibus": { bg: "rgba(239, 68, 68, 0.7)", border: "#ef4444" },
+      "Caminhão grande": { bg: "rgba(168, 85, 247, 0.7)", border: "#a855f7" },
+      "Camionete": { bg: "rgba(245, 158, 11, 0.7)", border: "#f59e0b" },
+      "Van": { bg: "rgba(236, 72, 153, 0.7)", border: "#ec4899" },
+      "Indefinido": { bg: "rgba(156, 163, 175, 0.7)", border: "#9ca3af" }
+    };
+    return colors[vehicleType as keyof typeof colors] || colors["Indefinido"];
+  };
+
+  const color = getVehicleColor(selectedVehicleType.value);
+
+  return {
+    labels,
+    datasets: [{
+      label: selectedVehicleType.value,
+      data,
+      backgroundColor: color.bg,
+      borderColor: color.border,
+      borderWidth: 2
+    }]
+  };
+});
+
 function getIndexClass(value: number): string {
   switch (value) {
     case 1:
@@ -71,10 +166,14 @@ function getIndexClass(value: number): string {
   }
 }
 
+watch(selectedVehicleType, () => {
+  fetchVehicleData();
+});
+
 onMounted(() => {
   refreshAllData();
-  // Update all data every 10 seconds
-  intervalId = setInterval(refreshAllData, 10000);
+  // Update all data every 10 minutes
+  intervalId = setInterval(refreshAllData, 600000);
 });
 
 onUnmounted(() => {
@@ -90,8 +189,14 @@ onUnmounted(() => {
       <div class="region-section">
         <label class="region-label">Região selecionada</label>
         <div class="region-selector">
-          <select v-model="selectedRegion" class="region-dropdown">
-            <option value="São José dos Campos">São José dos Campos</option>
+          <select v-model="selectedRegion" class="region-dropdown" @change="refreshAllData">
+            <option
+              v-for="region in availableRegions"
+              :key="region"
+              :value="region"
+            >
+              {{ region }}
+            </option>
           </select>
         </div>
       </div>
@@ -169,21 +274,31 @@ onUnmounted(() => {
             <div class="graph-container-header">
               <h2>Volume de Veículos</h2>
               <select v-model="selectedVehicleType" class="velocity-dropdown">
-                <option value="Carros">Carros</option>
-                <option value="Caminhões">Caminhões</option>
-                <option value="Motocicletas">Motocicletas</option>
+                <option
+                  v-for="vehicleType in availableVehicleTypes"
+                  :key="vehicleType"
+                  :value="vehicleType"
+                >
+                  {{ vehicleType }}
+                </option>
               </select>
             </div>
             <div class="chart-container">
-              <BaseChart
-                type="line"
-                title="Volume de veículos"
-                api-endpoint="/grafico-velocidade"
-                :refresh-trigger="refreshTrigger"
-                @data-updated="handleChartDataUpdated"
-                @loading-change="handleChartLoadingChange"
-                @error="handleChartError"
-              />
+              <div v-if="chartDataForVolume" class="volume-chart">
+                <BaseChart
+                  type="bar"
+                  title="Volume de veículos por horário"
+                  api-endpoint=""
+                  :chart-data="chartDataForVolume"
+                  :refresh-trigger="refreshTrigger"
+                  @data-updated="handleChartDataUpdated"
+                  @loading-change="handleChartLoadingChange"
+                  @error="handleChartError"
+                />
+              </div>
+              <div v-else class="chart-loading">
+                <span>Carregando dados do volume...</span>
+              </div>
             </div>
           </div>
           <div class="graph-container">

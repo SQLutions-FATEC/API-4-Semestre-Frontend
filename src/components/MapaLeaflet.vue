@@ -10,9 +10,9 @@ import { onMounted, onBeforeUnmount, watch } from 'vue';
 
 const props = defineProps({
     regionData: { type: Array, required: true },
-    radarData: { type: Array, required: true },
+    radarData: { type: Array, required: false, default: () => [] },
     regionColorMap: { type: Object, required: true },
-    iconeCamera: { type: String, required: true },
+    iconeCamera: { type: String, required: false, default: '' },
 });
 const emit = defineEmits(['region-selected']);
 

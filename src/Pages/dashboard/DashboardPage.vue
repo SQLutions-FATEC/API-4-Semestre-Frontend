@@ -8,11 +8,32 @@ import readingService, { type ReadingData } from "@/services/ReadingService";
 const selectedRegion = ref("São José dos Campos");
 const selectedVehicleType = ref("Todos");
 
-const isLoading = ref(false);
+const isLoadingIndex = ref(false);
+const isLoadingVehicleData = ref(false);
 const lastUpdate = ref<string>("");
 const refreshTrigger = ref(0);
 const indexData = ref<IndexData | null>(null);
 const vehicleData = ref<ReadingData[] | null>(null);
+
+const VEHICLE_COLORS = {
+  "Carro": { bg: "rgba(59, 130, 246, 0.7)", border: "#3b82f6" },           // Azul
+  "Moto": { bg: "rgba(34, 197, 94, 0.7)", border: "#22c55e" },             // Verde
+  "Caminhão grande": { bg: "rgba(239, 68, 68, 0.7)", border: "#ef4444" },  // Vermelho
+  "Ônibus": { bg: "rgba(245, 158, 11, 0.7)", border: "#f59e0b" },          // Amarelo/Laranja
+  "Camionete": { bg: "rgba(168, 85, 247, 0.7)", border: "#a855f7" },       // Roxo
+  "Van": { bg: "rgba(236, 72, 153, 0.7)", border: "#ec4899" },             // Rosa
+  "Indefinido": { bg: "rgba(107, 114, 128, 0.7)", border: "#6b7280" },     // Cinza
+  "Todos": { bg: "rgba(107, 114, 128, 0.7)", border: "#6b7280" }           // Cinza
+} as const;
+
+const getVehicleColorWithOpacity = (vehicleType: string, opacity: number = 0.7) => {
+  const color = VEHICLE_COLORS[vehicleType as keyof typeof VEHICLE_COLORS] || VEHICLE_COLORS["Indefinido"];
+  return {
+    bg: color.bg.replace(/0\.\d+/, opacity.toString()),
+    border: color.border
+  };
+};
+
 const availableRegions = ref<string[]>([
   "São José dos Campos",
   "Norte",
@@ -36,6 +57,7 @@ const availableVehicleTypes = ref<string[]>([
 let intervalId: number | null = null;
 
 async function fetchVehicleData() {
+  isLoadingVehicleData.value = true;
   try {
     const params = {
       minutes: 1440 // 24 horas
@@ -52,14 +74,19 @@ async function fetchVehicleData() {
     }
 
     vehicleData.value = response.data;
+
+    lastUpdate.value = new Date().toLocaleTimeString();
     return true;
   } catch {
     vehicleData.value = null;
     return false;
+  } finally {
+    isLoadingVehicleData.value = false;
   }
 }
 
 async function fetchIndexData() {
+  isLoadingIndex.value = true;
   try {
     let data: IndexData;
     if (selectedRegion.value === "São José dos Campos") {
@@ -68,15 +95,18 @@ async function fetchIndexData() {
       data = await indexService.getRegionIndex(selectedRegion.value);
     }
     indexData.value = data;
+
+    lastUpdate.value = new Date().toLocaleTimeString();
     return true;
   } catch {
     indexData.value = null;
     return false;
+  } finally {
+    isLoadingIndex.value = false;
   }
 }
 
 async function refreshAllData() {
-  isLoading.value = true;
   refreshTrigger.value++;
 
   const [indexDataSuccess, vehicleDataSuccess] = await Promise.all([
@@ -84,17 +114,21 @@ async function refreshAllData() {
     fetchVehicleData()
   ]);
 
-  if (indexDataSuccess || vehicleDataSuccess) {
-    lastUpdate.value = new Date().toLocaleTimeString();
-  } else {
+  if (!indexDataSuccess && !vehicleDataSuccess) {
     lastUpdate.value = "Erro de conexão com o servidor";
   }
+}
 
-  isLoading.value = false;
+function resetAllData() {
+  indexData.value = null;
+  vehicleData.value = null;
+  lastUpdate.value = "";
+  isLoadingIndex.value = true;
+  isLoadingVehicleData.value = true;
 }
 
 const chartDataForVolume = computed(() => {
-  if (!vehicleData.value || vehicleData.value.length === 0) return null;
+  if (!vehicleData.value || vehicleData.value.length === 0 || isLoadingVehicleData.value) return null;
 
   const processedData = vehicleData.value.map(item => {
     const startTime = new Date(item.startTime);
@@ -120,17 +154,7 @@ const chartDataForVolume = computed(() => {
   const data = processedData.map(item => item.vehicleCount);
 
   const getVehicleColor = (vehicleType: string) => {
-    const colors = {
-      "Carro": { bg: "rgba(59, 130, 246, 0.7)", border: "#3b82f6" },           // Azul
-      "Moto": { bg: "rgba(34, 197, 94, 0.7)", border: "#22c55e" },             // Verde
-      "Caminhão grande": { bg: "rgba(239, 68, 68, 0.7)", border: "#ef4444" },  // Vermelho
-      "Ônibus": { bg: "rgba(245, 158, 11, 0.7)", border: "#f59e0b" },          // Amarelo/Laranja
-      "Camionete": { bg: "rgba(168, 85, 247, 0.7)", border: "#a855f7" },       // Roxo
-      "Van": { bg: "rgba(236, 72, 153, 0.7)", border: "#ec4899" },             // Rosa
-      "Indefinido": { bg: "rgba(107, 114, 128, 0.7)", border: "#6b7280" },     // Cinza
-      "Todos": { bg: "rgba(107, 114, 128, 0.7)", border: "#6b7280" }           // Cinza
-    };
-    return colors[vehicleType as keyof typeof colors] || colors["Indefinido"];
+    return VEHICLE_COLORS[vehicleType as keyof typeof VEHICLE_COLORS] || VEHICLE_COLORS["Indefinido"];
   };
 
   const color = getVehicleColor(selectedVehicleType.value);
@@ -148,7 +172,7 @@ const chartDataForVolume = computed(() => {
 });
 
 const chartDataForSpeed = computed(() => {
-  if (!vehicleData.value || vehicleData.value.length === 0) return null;
+  if (!vehicleData.value || vehicleData.value.length === 0 || isLoadingVehicleData.value) return null;
 
   const processedData = vehicleData.value.map(item => {
     const startTime = new Date(item.startTime);
@@ -171,8 +195,8 @@ const chartDataForSpeed = computed(() => {
     datasets: [{
       label: 'Velocidade Média',
       data,
-      backgroundColor: "rgba(59, 130, 246, 0.1)",
-      borderColor: "#3b82f6",
+      backgroundColor: getVehicleColorWithOpacity("Carro", 0.1).bg,
+      borderColor: VEHICLE_COLORS["Carro"].border,
       borderWidth: 2,
       tension: 0.4
     }]
@@ -180,7 +204,7 @@ const chartDataForSpeed = computed(() => {
 });
 
 const chartDataForPercentage = computed(() => {
-  if (!vehicleData.value || vehicleData.value.length === 0) return null;
+  if (!vehicleData.value || vehicleData.value.length === 0 || isLoadingVehicleData.value) return null;
 
   const totalCounts: Record<string, number> = {};
 
@@ -202,16 +226,7 @@ const chartDataForPercentage = computed(() => {
   );
 
   const getStandardVehicleColor = (vehicleType: string) => {
-    const vehicleColors = {
-      "Carro": "#3b82f6",           // Azul
-      "Moto": "#22c55e",            // Verde
-      "Caminhão grande": "#ef4444", // Vermelho
-      "Ônibus": "#f59e0b",          // Amarelo/Laranja
-      "Camionete": "#a855f7",       // Roxo
-      "Van": "#ec4899",             // Rosa
-      "Indefinido": "#6b7280"       // Cinza
-    };
-    return vehicleColors[vehicleType as keyof typeof vehicleColors] || "#6b7280";
+    return VEHICLE_COLORS[vehicleType as keyof typeof VEHICLE_COLORS]?.border || VEHICLE_COLORS["Indefinido"].border;
   };
 
   const colors = labels.map(label => getStandardVehicleColor(label));
@@ -229,13 +244,13 @@ const chartDataForPercentage = computed(() => {
 });
 
 const totalReadings = computed(() => {
-  if (!vehicleData.value || vehicleData.value.length === 0) return 0;
+  if (!vehicleData.value || vehicleData.value.length === 0 || isLoadingVehicleData.value) return 0;
 
   return vehicleData.value.reduce((total, item) => total + item.totalReadings, 0);
 });
 
 const averageSpeedGeneral = computed(() => {
-  if (!vehicleData.value || vehicleData.value.length === 0) return 0;
+  if (!vehicleData.value || vehicleData.value.length === 0 || isLoadingVehicleData.value) return 0;
 
   let totalWeightedSpeed = 0;
   let totalReadings = 0;
@@ -248,6 +263,10 @@ const averageSpeedGeneral = computed(() => {
   if (totalReadings === 0) return 0;
 
   return Math.round((totalWeightedSpeed / totalReadings) * 100) / 100;
+});
+
+const hasDataStillLoading = computed(() => {
+  return isLoadingIndex.value || isLoadingVehicleData.value;
 });
 
 function getIndexClass(value: number): string {
@@ -266,8 +285,8 @@ function getIndexClass(value: number): string {
 }
 
 watch(selectedRegion, () => {
-  fetchVehicleData();
-  fetchIndexData();
+  resetAllData();
+  refreshAllData();
 });
 
 onMounted(() => {
@@ -304,11 +323,14 @@ onUnmounted(() => {
         <div class="graphs-section">
           <div class="info-link-container">
              <div class="status-info">
-              <span v-if="isLoading" class="loading">🔄 Carregando...</span>
-              <span v-else-if="lastUpdate" class="last-update">
+              <span v-if="!lastUpdate" class="loading">🔄 Aguardando dados...</span>
+              <span v-else-if="lastUpdate === 'Erro de conexão com o servidor'" class="error-update">{{ lastUpdate }}</span>
+              <span v-else class="last-update">
                 Última atualização: {{ lastUpdate }}
+                <span v-if="hasDataStillLoading" class="loading-indicator">
+                  • ⏳ Alguns dados ainda carregando...
+                </span>
               </span>
-              <span v-else class="no-update">Nenhuma atualização ainda</span>
             </div>
             <a href="#" class="info-link">Como as informações são calculadas?</a>
           </div>
@@ -318,17 +340,24 @@ onUnmounted(() => {
             <h2>Índices</h2>
           </div>
           <div class="indices-container">
-            <div :class="['index-card', 'large-card', getIndexClass(indexData?.combinedIndex || 0)]">
-              <div class="index-number">{{ indexData?.combinedIndex || 0 }}</div>
-              <div class="index-name">Geral</div>
+            <div v-if="isLoadingIndex" class="indices-loading">
+              <div class="chart-loading">
+                <span>🔄 Carregando índices...</span>
+              </div>
             </div>
-            <div :class="['index-card', 'small-card', getIndexClass(indexData?.trafficIndex || 0)]">
-              <div class="index-number">{{ indexData?.trafficIndex || 0 }}</div>
-              <div class="index-name">Tráfego</div>
-            </div>
-            <div :class="['index-card', 'small-card', getIndexClass(indexData?.securityIndex || 0)]">
-              <div class="index-number">{{ indexData?.securityIndex || 0 }}</div>
-              <div class="index-name">Segurança</div>
+            <div v-else class="indices-loaded">
+              <div :class="['index-card', 'large-card', getIndexClass(indexData?.combinedIndex || 0)]">
+                <div class="index-number">{{ indexData?.combinedIndex || 0 }}</div>
+                <div class="index-name">Geral</div>
+              </div>
+              <div :class="['index-card', 'small-card', getIndexClass(indexData?.trafficIndex || 0)]">
+                <div class="index-number">{{ indexData?.trafficIndex || 0 }}</div>
+                <div class="index-name">Tráfego</div>
+              </div>
+              <div :class="['index-card', 'small-card', getIndexClass(indexData?.securityIndex || 0)]">
+                <div class="index-number">{{ indexData?.securityIndex || 0 }}</div>
+                <div class="index-name">Segurança</div>
+              </div>
             </div>
           </div>
         </div>
@@ -344,7 +373,7 @@ onUnmounted(() => {
                 />
               </div>
               <div v-else class="chart-loading">
-                <span>Carregando dados de velocidade...</span>
+                <span>🔄 Carregando dados de velocidade...</span>
               </div>
             </div>
           </div>
@@ -359,7 +388,7 @@ onUnmounted(() => {
                 />
               </div>
               <div v-else class="chart-loading">
-                <span>Carregando dados de porcentagem...</span>
+                <span>🔄 Carregando dados de porcentagem...</span>
               </div>
             </div>
           </div>
@@ -387,7 +416,7 @@ onUnmounted(() => {
                 />
               </div>
               <div v-else class="chart-loading">
-                <span>Carregando dados do volume...</span>
+                <span>🔄 Carregando dados do volume...</span>
               </div>
             </div>
           </div>

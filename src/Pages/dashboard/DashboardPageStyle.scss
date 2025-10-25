@@ -87,12 +87,15 @@ h2 {
 }
 
 .indices-container {
-  display: flex;
-  gap: $indicesGap;
-  align-items: flex-start;
   padding: $spacingLg;
   border-radius: $borderRadiusCard;
   box-shadow: inset $spacingNone $spacingNone $shadowInsetBlur $colorShadowInset;
+}
+
+.indices-loaded {
+  display: flex;
+  gap: $indicesGap;
+  align-items: flex-start;
 }
 
 .indices-header {
@@ -298,5 +301,26 @@ h2 {
 
   .chart-container {
     width: 100%;
+  }
+}
+
+// Estilos para loading e status
+.status-info {
+  .loading-indicator {
+    color: $colorTextMuted;
+    font-size: 0.9em;
+    margin-left: 8px;
+  }
+}
+
+.indices-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 120px;
+
+  .chart-loading {
+    text-align: center;
+    color: $colorTextMuted;
   }
 }

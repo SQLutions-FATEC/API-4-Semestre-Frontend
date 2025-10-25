@@ -1,5 +1,5 @@
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
 import iconeCamera from "@/assets/cam2.png";
 import MapaLeaflet from "@/components/MapaLeaflet.vue";
@@ -16,6 +16,40 @@ const regionColorMap = {
   default: "#a9a9a9", // Cinza Escuro (DarkGray)
 };
 
+// --- interfaces ---
+
+interface vehicleTypeCounts {
+  [key: string]: number;
+}
+
+interface readings {
+  endtime:string;
+  readings: number;
+  totalreadings: number;
+  averageSpeed: number;
+  maxSpeed: number;
+  minSpeed: number;
+  index: number;
+  vehicleTypeCounts: vehicleTypeCounts;
+}
+
+interface citySummary {
+  name: string;
+  overall: number;
+  traffic: number;
+  security: number;
+  estado: string;
+  ListaCarros: vehicleTypeCounts;
+}
+
+ interface regionProps {
+  name: string;
+  overall: number;
+  traffic: number;
+  security: number;
+  estado: string;
+  ListaCarros: vehicleTypeCounts;
+ }
 // --- Estado dos Radares e Regioes (Dados da API) ---
 
 const radarData = ref([]);
@@ -26,14 +60,14 @@ const isLoading = ref(true);
 const error = ref(null);
 
 // --- Refs para os dados da região clicada (Vão ser preenchidos pelo evento do mapa) ---
-const nomeRegiaoClicada = ref("");
-const indiceGeral = ref(0);
-const indiceTrafego = ref(0);
-const indiceSeguranca = ref(0);
-const estadoRegiao = ref("");
-const ListaCarros = ref(null);
+const nomeRegiaoClicada = ref(<string | null>(null));
+const indiceGeral = ref(<number | null>(null));
+const indiceTrafego = ref(<number | null>(null));
+const indiceSeguranca = ref(<number | null>(null));
+const estadoRegiao = ref(<string | null>(null));
+const ListaCarros = ref(<vehicleTypeCounts | null>null);
 
-const citySummaryData = ref(null);
+const citySummaryData = ref(<citySummary | null>null);
 
 // --- Para os dados do gráfico de pizza ---
 const piechartSeries = computed(() => {
@@ -81,8 +115,8 @@ const pieChartOption = computed(() => {
 });
 
 // --- Função auxiliar para buscar e processar o resumo da cidade (usada no Promise.all) ---
-function fetchCitySummaryPromise() {
-  return new Promise((resolve, reject) => {
+function fetchCitySummaryPromise(): Promise<boolean> {
+  return new Promise<boolean>((resolve, reject) => {
     (async () => {
       try {
         // 1. Busca dos Índices
@@ -100,8 +134,8 @@ function fetchCitySummaryPromise() {
         const dataVehicleReadings = await responseVehicle.json();
 
         // 3. AGREGAR A CONTAGEM DE VEÍCULOS
-        let totalVehicleCounts = {};
-        dataVehicleReadings.forEach((reading) => {
+        let totalVehicleCounts: vehicleTypeCounts = {};
+        dataVehicleReadings.forEach((reading: readings) => {
           if (reading.vehicleTypeCounts) {
             for (const type in reading.vehicleTypeCounts) {
               const count = reading.vehicleTypeCounts[type];
@@ -111,6 +145,7 @@ function fetchCitySummaryPromise() {
         });
 
         // 4. Formata e DEFINE os dados de resumo
+
         citySummaryData.value = {
           name: "Cidade Inteira",
           overall: dataIndex.combinedIndex,
@@ -123,7 +158,7 @@ function fetchCitySummaryPromise() {
         // Resolve a promise
         resolve(true);
       } catch (err) {
-        Console.error("Falha ao buscar resumo da cidade:", err);
+        console.error("Falha ao buscar resumo da cidade:", err);
         citySummaryData.value = null;
         reject(err);
       }
@@ -145,7 +180,7 @@ function showCitySummary() {
 }
 
 // --- Função para lidar com o evento do Mapa Leaflet ---
-function handleRegionSelected(regionProps) {
+function handleRegionSelected(regionProps: regionProps | null) {
   if (regionProps) {
     // Recebe os dados da região clicada no componente filho
     nomeRegiaoClicada.value = regionProps.name;
@@ -172,7 +207,7 @@ async function fetchData() {
   error.value = null;
   errorRadars.value = null;
 
-  const promises = [
+  const promises : [Promise<Response>, Promise<boolean>, Promise<Response>] = [
     fetch("http://localhost:8080/regions"),
     fetchCitySummaryPromise(),
     fetch("http://localhost:8080/radars"),
@@ -196,7 +231,7 @@ async function fetchData() {
     radarData.value = await responseRadars.json(); // <-- Este é o passo crucial
     isLoadingRadars.value = false;
   } catch (err) {
-    Console.error("Falha ao buscar dados do mapa:", err);
+    console.error("Falha ao buscar dados do mapa:", err);
   }
 }
 

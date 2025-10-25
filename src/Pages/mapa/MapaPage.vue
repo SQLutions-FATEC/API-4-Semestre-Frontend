@@ -1,4 +1,3 @@
-
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
 import iconeCamera from "@/assets/cam2.png";
@@ -23,7 +22,7 @@ interface vehicleTypeCounts {
 }
 
 interface readings {
-  endtime:string;
+  endtime: string;
   readings: number;
   totalreadings: number;
   averageSpeed: number;
@@ -42,14 +41,14 @@ interface citySummary {
   ListaCarros: vehicleTypeCounts;
 }
 
- interface regionProps {
+interface regionProps {
   name: string;
   overall: number;
   traffic: number;
   security: number;
   estado: string;
   ListaCarros: vehicleTypeCounts;
- }
+}
 // --- Estado dos Radares e Regioes (Dados da API) ---
 
 const radarData = ref([]);
@@ -60,11 +59,11 @@ const isLoading = ref(true);
 const error = ref(null);
 
 // --- Refs para os dados da região clicada (Vão ser preenchidos pelo evento do mapa) ---
-const nomeRegiaoClicada = ref(<string | null>(null));
-const indiceGeral = ref(<number | null>(null));
-const indiceTrafego = ref(<number | null>(null));
-const indiceSeguranca = ref(<number | null>(null));
-const estadoRegiao = ref(<string | null>(null));
+const nomeRegiaoClicada = ref(<string | null>null);
+const indiceGeral = ref(<number | null>null);
+const indiceTrafego = ref(<number | null>null);
+const indiceSeguranca = ref(<number | null>null);
+const estadoRegiao = ref(<string | null>null);
 const ListaCarros = ref(<vehicleTypeCounts | null>null);
 
 const citySummaryData = ref(<citySummary | null>null);
@@ -151,7 +150,12 @@ function fetchCitySummaryPromise(): Promise<boolean> {
           overall: dataIndex.combinedIndex,
           traffic: dataIndex.trafficIndex,
           security: dataIndex.securityIndex,
-          estado: (dataIndex.trafficIndex + dataIndex.securityIndex) / 2 == 1 ? "Ótimo" : (dataIndex.trafficIndex + dataIndex.securityIndex) / 2 <= 3 ? "Bom" : "Ruim",
+          estado:
+            (dataIndex.trafficIndex + dataIndex.securityIndex) / 2 == 1
+              ? "Ótimo"
+              : (dataIndex.trafficIndex + dataIndex.securityIndex) / 2 <= 3
+                ? "Bom"
+                : "Ruim",
           ListaCarros: totalVehicleCounts,
         };
 
@@ -175,7 +179,21 @@ function showCitySummary() {
     indiceSeguranca.value = citySummaryData.value.security;
     estadoRegiao.value = citySummaryData.value.estado;
     ListaCarros.value = citySummaryData.value.ListaCarros;
+  }
+}
 
+function getIndexClass(value: number): string {
+  switch (value) {
+    case 1:
+      return "green";
+    case 2:
+      return "yellow";
+    case 3:
+      return "orange";
+    case 4:
+      return "red";
+    default:
+      return "gray";
   }
 }
 
@@ -207,7 +225,7 @@ async function fetchData() {
   error.value = null;
   errorRadars.value = null;
 
-  const promises : [Promise<Response>, Promise<boolean>, Promise<Response>] = [
+  const promises: [Promise<Response>, Promise<boolean>, Promise<Response>] = [
     fetch("http://localhost:8080/regions"),
     fetchCitySummaryPromise(),
     fetch("http://localhost:8080/radars"),
@@ -224,7 +242,6 @@ async function fetchData() {
     regionData.value = await responseRegions.json();
     isLoading.value = false; // 3. Processa a resposta do Resumo da Cidade
 
-
     if (!responseRadars.ok) {
       throw new Error(`Erro HTTP Radares: ${responseRadars.status} ${responseRadars.statusText}`);
     }
@@ -238,7 +255,6 @@ async function fetchData() {
 onMounted(() => {
   fetchData();
 });
-
 </script>
 
 <template>
@@ -319,17 +335,17 @@ onMounted(() => {
         </div>
 
         <div class="right-column">
-          <div class="index-card green">
+          <div :class="['index-card', getIndexClass(indiceGeral!)]">
             <span class="index-number">{{ indiceGeral ?? "-" }}</span>
             <span class="index-name">Geral</span>
           </div>
 
-          <div class="index-card gray">
+          <div :class="['index-card', getIndexClass(indiceTrafego!)]">
             <span class="index-number">{{ indiceTrafego ?? "-" }}</span>
             <span class="index-name">Tráfego</span>
           </div>
 
-          <div class="index-card yellow">
+          <div :class="['index-card', getIndexClass(indiceSeguranca!)]">
             <span class="index-number">{{ indiceSeguranca ?? "-" }}</span>
             <span class="index-name">Segurança</span>
           </div>

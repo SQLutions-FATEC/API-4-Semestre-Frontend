@@ -6,7 +6,6 @@ import { indexService, type IndexData } from "@/services/IndexService";
 import readingService, { type ReadingData } from "@/services/ReadingService";
 
 const selectedRegion = ref("São José dos Campos");
-const selectedVelocity = ref("Velocidade");
 const selectedVehicleType = ref("Todos");
 
 const isLoading = ref(false);
@@ -62,12 +61,17 @@ async function fetchVehicleData() {
 
 async function fetchIndexData() {
   try {
-    const data = await indexService.getCityIndex(5);
+    let data: IndexData;
+    if (selectedRegion.value === "São José dos Campos") {
+      data = await indexService.getCityIndex();
+    } else {
+      data = await indexService.getRegionIndex(selectedRegion.value);
+    }
     indexData.value = data;
-    return true; // Success
+    return true;
   } catch {
     indexData.value = null;
-    return false; // Failed
+    return false;
   }
 }
 
@@ -87,20 +91,6 @@ async function refreshAllData() {
   }
 
   isLoading.value = false;
-}
-
-function handleChartDataUpdated() {
-  // Charts update successfully, but we don't override lastUpdate
-  // since we want to show the unified update time
-}
-
-function handleChartLoadingChange() {
-  // Chart loading state changes, but we manage loading centrally
-}
-
-function handleChartError() {
-  // Chart errors don't override the main lastUpdate
-  // The unified refreshAllData will handle error states
 }
 
 const chartDataForVolume = computed(() => {
@@ -131,14 +121,14 @@ const chartDataForVolume = computed(() => {
 
   const getVehicleColor = (vehicleType: string) => {
     const colors = {
-      "Todos": { bg: "rgba(107, 114, 128, 0.7)", border: "#6b7280" },
-      "Carro": { bg: "rgba(59, 130, 246, 0.7)", border: "#3b82f6" },
-      "Moto": { bg: "rgba(34, 197, 94, 0.7)", border: "#22c55e" },
-      "Ônibus": { bg: "rgba(239, 68, 68, 0.7)", border: "#ef4444" },
-      "Caminhão grande": { bg: "rgba(168, 85, 247, 0.7)", border: "#a855f7" },
-      "Camionete": { bg: "rgba(245, 158, 11, 0.7)", border: "#f59e0b" },
-      "Van": { bg: "rgba(236, 72, 153, 0.7)", border: "#ec4899" },
-      "Indefinido": { bg: "rgba(156, 163, 175, 0.7)", border: "#9ca3af" }
+      "Carro": { bg: "rgba(59, 130, 246, 0.7)", border: "#3b82f6" },           // Azul
+      "Moto": { bg: "rgba(34, 197, 94, 0.7)", border: "#22c55e" },             // Verde
+      "Caminhão grande": { bg: "rgba(239, 68, 68, 0.7)", border: "#ef4444" },  // Vermelho
+      "Ônibus": { bg: "rgba(245, 158, 11, 0.7)", border: "#f59e0b" },          // Amarelo/Laranja
+      "Camionete": { bg: "rgba(168, 85, 247, 0.7)", border: "#a855f7" },       // Roxo
+      "Van": { bg: "rgba(236, 72, 153, 0.7)", border: "#ec4899" },             // Rosa
+      "Indefinido": { bg: "rgba(107, 114, 128, 0.7)", border: "#6b7280" },     // Cinza
+      "Todos": { bg: "rgba(107, 114, 128, 0.7)", border: "#6b7280" }           // Cinza
     };
     return colors[vehicleType as keyof typeof colors] || colors["Indefinido"];
   };
@@ -155,6 +145,109 @@ const chartDataForVolume = computed(() => {
       borderWidth: 2
     }]
   };
+});
+
+const chartDataForSpeed = computed(() => {
+  if (!vehicleData.value || vehicleData.value.length === 0) return null;
+
+  const processedData = vehicleData.value.map(item => {
+    const startTime = new Date(item.startTime);
+    const hourLabel = `${startTime.getHours().toString().padStart(2, '0')}:00`;
+
+    return {
+      hour: hourLabel,
+      averageSpeed: item.averageSpeed,
+      timestamp: startTime.getTime()
+    };
+  });
+
+  processedData.sort((a, b) => a.timestamp - b.timestamp);
+
+  const labels = processedData.map(item => item.hour);
+  const data = processedData.map(item => Math.round(item.averageSpeed * 100) / 100);
+
+  return {
+    labels,
+    datasets: [{
+      label: 'Velocidade Média',
+      data,
+      backgroundColor: "rgba(59, 130, 246, 0.1)",
+      borderColor: "#3b82f6",
+      borderWidth: 2,
+      tension: 0.4
+    }]
+  };
+});
+
+const chartDataForPercentage = computed(() => {
+  if (!vehicleData.value || vehicleData.value.length === 0) return null;
+
+  const totalCounts: Record<string, number> = {};
+
+  vehicleData.value.forEach(item => {
+    Object.entries(item.vehicleTypeCounts).forEach(([vehicleType, count]) => {
+      if (count && count > 0) {
+        totalCounts[vehicleType] = (totalCounts[vehicleType] || 0) + count;
+      }
+    });
+  });
+
+  const grandTotal = Object.values(totalCounts).reduce((sum, count) => sum + count, 0);
+
+  if (grandTotal === 0) return null;
+
+  const labels = Object.keys(totalCounts);
+  const data = Object.values(totalCounts).map(count =>
+    Math.round((count / grandTotal) * 100 * 100) / 100
+  );
+
+  const getStandardVehicleColor = (vehicleType: string) => {
+    const vehicleColors = {
+      "Carro": "#3b82f6",           // Azul
+      "Moto": "#22c55e",            // Verde
+      "Caminhão grande": "#ef4444", // Vermelho
+      "Ônibus": "#f59e0b",          // Amarelo/Laranja
+      "Camionete": "#a855f7",       // Roxo
+      "Van": "#ec4899",             // Rosa
+      "Indefinido": "#6b7280"       // Cinza
+    };
+    return vehicleColors[vehicleType as keyof typeof vehicleColors] || "#6b7280";
+  };
+
+  const colors = labels.map(label => getStandardVehicleColor(label));
+
+  return {
+    labels,
+    datasets: [{
+      label: 'Porcentagem de Veículos',
+      data,
+      backgroundColor: colors,
+      borderWidth: 2,
+      borderColor: "#ffffff"
+    }]
+  };
+});
+
+const totalReadings = computed(() => {
+  if (!vehicleData.value || vehicleData.value.length === 0) return 0;
+
+  return vehicleData.value.reduce((total, item) => total + item.totalReadings, 0);
+});
+
+const averageSpeedGeneral = computed(() => {
+  if (!vehicleData.value || vehicleData.value.length === 0) return 0;
+
+  let totalWeightedSpeed = 0;
+  let totalReadings = 0;
+
+  vehicleData.value.forEach(item => {
+    totalWeightedSpeed += item.averageSpeed * item.totalReadings;
+    totalReadings += item.totalReadings;
+  });
+
+  if (totalReadings === 0) return 0;
+
+  return Math.round((totalWeightedSpeed / totalReadings) * 100) / 100;
 });
 
 function getIndexClass(value: number): string {
@@ -174,6 +267,7 @@ function getIndexClass(value: number): string {
 
 watch(selectedRegion, () => {
   fetchVehicleData();
+  fetchIndexData();
 });
 
 onMounted(() => {
@@ -240,45 +334,39 @@ onUnmounted(() => {
         </div>
         <div class="graphs-section">
           <div class="graph-container graph-container-size-large vehicles-volume-container">
-            <div class="graph-container-header">
-              <h2>Velocidade dos veículos por horário</h2>
-              <select v-model="selectedVelocity" class="velocity-dropdown">
-                <option value="Velocidade">Velocidade</option>
-              </select>
-            </div>
             <div class="chart-container">
-              <BaseChart
-                type="line"
-                title="Volume de veículos"
-                api-endpoint="/grafico-velocidade"
-                :refresh-trigger="refreshTrigger"
-                @data-updated="handleChartDataUpdated"
-                @loading-change="handleChartLoadingChange"
-                @error="handleChartError"
-              />
+              <div v-if="chartDataForSpeed" class="volume-chart">
+                <BaseChart
+                  type="line"
+                  title="Velocidade média por horário"
+                  :chart-data="chartDataForSpeed"
+                  :refresh-trigger="refreshTrigger"
+                />
+              </div>
+              <div v-else class="chart-loading">
+                <span>Carregando dados de velocidade...</span>
+              </div>
             </div>
           </div>
           <div class="graph-container">
-            <div class="graph-container-header">
-              <h2>Porcentagem de veículos do dia</h2>
-            </div>
             <div class="chart-container">
-              <BaseChart
-                type="doughnut"
-                title="Percentual de veículos do dia"
-                api-endpoint="/grafico-porcentagem"
-                :refresh-trigger="refreshTrigger"
-                @data-updated="handleChartDataUpdated"
-                @loading-change="handleChartLoadingChange"
-                @error="handleChartError"
-              />
+              <div v-if="chartDataForPercentage" class="volume-chart">
+                <BaseChart
+                  type="doughnut"
+                  title="Distribuição de tipos de veículos"
+                  :chart-data="chartDataForPercentage"
+                  :refresh-trigger="refreshTrigger"
+                />
+              </div>
+              <div v-else class="chart-loading">
+                <span>Carregando dados de porcentagem...</span>
+              </div>
             </div>
           </div>
         </div>
         <div class="graphs-section">
           <div class="graph-container graph-container-size-large vehicles-volume-container">
             <div class="graph-container-header">
-              <h2>Volume de Veículos</h2>
               <select v-model="selectedVehicleType" class="velocity-dropdown">
                 <option
                   v-for="vehicleType in availableVehicleTypes"
@@ -294,12 +382,8 @@ onUnmounted(() => {
                 <BaseChart
                   type="bar"
                   title="Volume de veículos por horário"
-                  api-endpoint=""
                   :chart-data="chartDataForVolume"
                   :refresh-trigger="refreshTrigger"
-                  @data-updated="handleChartDataUpdated"
-                  @loading-change="handleChartLoadingChange"
-                  @error="handleChartError"
                 />
               </div>
               <div v-else class="chart-loading">
@@ -321,12 +405,12 @@ onUnmounted(() => {
           <div class="daily-infos-container">
             <div :class="['index-card', 'large-card', getIndexClass(0)]">
               <div class="index-name">Leituras totais</div>
-              <div class="index-number">99999</div>
+              <div class="index-number">{{ totalReadings.toLocaleString() }}</div>
               <div class="comparison-text">+30% comparado a ontem</div>
             </div>
             <div :class="['index-card', 'large-card', getIndexClass(0)]">
               <div class="index-name">Velocidade média geral</div>
-              <div class="index-number">150 km/h</div>
+              <div class="index-number">{{ averageSpeedGeneral }} km/h</div>
               <div class="comparison-text">-15% comparado a ontem</div>
             </div>
             <div :class="['index-card', 'large-card', getIndexClass(0)]">

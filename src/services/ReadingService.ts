@@ -31,13 +31,13 @@ export interface VehicleDataParams {
 const readingService = {
   // Para quando uma região específica é selecionada
   getRegionData: (params?: VehicleDataParams) => {
-    const requestParams: Record<string, string | string[]> = {};
+    const requestParams: Record<string, string> = {};
 
     if (params?.minutes) {
       requestParams.minutes = params.minutes.toString();
     }
     if (params?.regions && params.regions.length > 0) {
-      requestParams.regions = params.regions;
+      requestParams.regions = params.regions[0];
     }
 
     return api.get<ReadingData[]>("/reading/address/region", {

@@ -29,18 +29,11 @@ ChartJS.register(
 interface Props {
   type: "line" | "doughnut" | "bar";
   title: string;
-  apiEndpoint: string;
   refreshTrigger?: number;
   chartData?: object; // Para passar dados diretamente
 }
 
 const props = defineProps<Props>();
-
-const emit = defineEmits<{
-  dataUpdated: [timestamp: string];
-  loadingChange: [isLoading: boolean];
-  error: [errorMessage: string];
-}>();
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const internalChartData = ref<any>(null);
@@ -91,7 +84,6 @@ const getChartOptions = (type: string, title: string) => {
             text: "Horário",
           },
           ticks: {
-            maxTicksLimit: 17,
             autoSkip: false,
           },
         },
@@ -99,11 +91,6 @@ const getChartOptions = (type: string, title: string) => {
           title: {
             display: true,
             text: "Velocidade (km/h)",
-          },
-          min: 0,
-          max: 140,
-          ticks: {
-            stepSize: 20,
           },
         },
       },
@@ -120,7 +107,6 @@ const getChartOptions = (type: string, title: string) => {
             text: "Horário",
           },
           ticks: {
-            maxTicksLimit: 24,
             autoSkip: false,
           },
         },
@@ -155,127 +141,26 @@ const getChartOptions = (type: string, title: string) => {
   return baseOptions;
 };
 
-const getVehicleStyles = () => ({
-  Carro: {
-    borderColor: "#3b82f6",
-    backgroundColor: "rgba(59, 130, 246, 0.1)",
-  },
-  Ônibus: {
-    borderColor: "#ef4444",
-    backgroundColor: "rgba(239, 68, 68, 0.1)",
-  },
-  Moto: {
-    borderColor: "#22c55e",
-    backgroundColor: "rgba(34, 197, 94, 0.1)",
-  },
-  Indefinido: {
-    borderColor: "#6b7280",
-    backgroundColor: "rgba(107, 114, 128, 0.1)",
-  },
-});
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const processChartData = (rawData: any) => {
-  if (!rawData) return null;
-
-  const vehicleStyles = getVehicleStyles();
-
-  if (props.type === "line") {
-    return {
-      labels: rawData.labels,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      datasets: rawData.datasets.map((dataset: any) => ({
-        ...dataset,
-        ...vehicleStyles[dataset.label as keyof typeof vehicleStyles],
-        tension: 0.4,
-      })),
-    };
-  }
-
-  if (props.type === "bar") {
-    return {
-      labels: rawData.labels,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      datasets: rawData.datasets.map((dataset: any) => ({
-        ...dataset,
-        ...vehicleStyles[dataset.label as keyof typeof vehicleStyles],
-      })),
-    };
-  }
-
-  if (props.type === "doughnut") {
-    return {
-      labels: rawData.labels,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      datasets: rawData.datasets.map((dataset: any) => ({
-        ...dataset,
-        backgroundColor: ["#3b82f6", "#ef4444", "#22c55e", "#6b7280"],
-        borderWidth: 2,
-        borderColor: "#ffffff",
-      })),
-    };
-  }
-
-  return rawData;
-};
-
-const fetchChartData = async () => {
-  if (props.chartData) {
-    return;
-  }
-
-  try {
-    isLoading.value = true;
-    error.value = "";
-    emit("loadingChange", true);
-
-    const response = await fetch(`http://localhost:3001${props.apiEndpoint}`);
-    const result = await response.json();
-
-    if (result.success) {
-      internalChartData.value = processChartData(result.data);
-      emit("dataUpdated", result.timestamp);
-    } else {
-      error.value = "Erro ao carregar dados do gráfico";
-      emit("error", error.value);
-    }
-  } catch {
-    error.value = "Erro de conexão com o servidor";
-    emit("error", error.value);
-  } finally {
-    isLoading.value = false;
-    emit("loadingChange", false);
-  }
-};
-
-watch(() => props.apiEndpoint, () => {
-  if (!props.chartData) {
-    fetchChartData();
-  }
-});
-
 watch(() => props.chartData, (newData) => {
   if (newData) {
-    emit("dataUpdated", new Date().toISOString());
+    isLoading.value = false;
+    error.value = "";
+  } else {
+    internalChartData.value = null;
   }
 });
 
 watch(
   () => props.refreshTrigger,
   () => {
-    if (props.refreshTrigger) {
-      if (props.chartData) {
-        emit("dataUpdated", new Date().toISOString());
-      } else {
-        fetchChartData();
-      }
+    if (props.refreshTrigger && props.chartData) {
+      // Force re-render if needed
     }
   }
 );
 
 onMounted(() => {
   chartOptions.value = getChartOptions(props.type, props.title);
-  fetchChartData();
 });
 </script>
 

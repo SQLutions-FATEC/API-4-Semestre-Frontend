@@ -29,7 +29,6 @@ export interface VehicleDataParams {
 }
 
 const readingService = {
-  // Para quando uma região específica é selecionada
   getRegionData: (params?: VehicleDataParams) => {
     const requestParams: Record<string, string> = {};
 
@@ -39,13 +38,15 @@ const readingService = {
     if (params?.regions && params.regions.length > 0) {
       requestParams.regions = params.regions[0];
     }
+    if (params?.timestamp) {
+      requestParams.timestamp = params.timestamp;
+    }
 
     return api.get<ReadingData[]>("/reading/address/region", {
       params: requestParams
     });
   },
 
-  // Para quando "São José dos Campos" (cidade inteira) é selecionada
   getCityData: (params?: VehicleDataParams) => {
     const requestParams: Record<string, string> = {};
 

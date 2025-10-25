@@ -4,16 +4,19 @@ import mapaSjc from "@/assets/mapa-sjc.png";
 import BaseChart from "@/components/BaseChart/BaseChart.vue";
 import { indexService, type IndexData } from "@/services/IndexService";
 import readingService, { type ReadingData } from "@/services/ReadingService";
+import dailyDataService, { type DailyComparison } from "@/services/DailyDataService";
 
 const selectedRegion = ref("São José dos Campos");
 const selectedVehicleType = ref("Todos");
 
 const isLoadingIndex = ref(false);
 const isLoadingVehicleData = ref(false);
+const isLoadingDailyData = ref(false);
 const lastUpdate = ref<string>("");
 const refreshTrigger = ref(0);
 const indexData = ref<IndexData | null>(null);
 const vehicleData = ref<ReadingData[] | null>(null);
+const dailyData = ref<DailyComparison | null>(null);
 
 const VEHICLE_COLORS = {
   "Carro": { bg: "rgba(59, 130, 246, 0.7)", border: "#3b82f6" },           // Azul
@@ -106,15 +109,34 @@ async function fetchIndexData() {
   }
 }
 
+async function fetchDailyData() {
+  isLoadingDailyData.value = true;
+  try {
+    const data = await dailyDataService.getDailyComparison(selectedRegion.value);
+    dailyData.value = data;
+
+    if (!lastUpdate.value || data.today.totalReadings > 0) {
+      lastUpdate.value = new Date().toLocaleTimeString();
+    }
+    return true;
+  } catch {
+    dailyData.value = null;
+    return false;
+  } finally {
+    isLoadingDailyData.value = false;
+  }
+}
+
 async function refreshAllData() {
   refreshTrigger.value++;
 
-  const [indexDataSuccess, vehicleDataSuccess] = await Promise.all([
+  const [indexDataSuccess, vehicleDataSuccess, dailyDataSuccess] = await Promise.all([
     fetchIndexData(),
-    fetchVehicleData()
+    fetchVehicleData(),
+    fetchDailyData()
   ]);
 
-  if (!indexDataSuccess && !vehicleDataSuccess) {
+  if (!indexDataSuccess && !vehicleDataSuccess && !dailyDataSuccess) {
     lastUpdate.value = "Erro de conexão com o servidor";
   }
 }
@@ -122,9 +144,11 @@ async function refreshAllData() {
 function resetAllData() {
   indexData.value = null;
   vehicleData.value = null;
+  dailyData.value = null;
   lastUpdate.value = "";
   isLoadingIndex.value = true;
   isLoadingVehicleData.value = true;
+  isLoadingDailyData.value = true;
 }
 
 const chartDataForVolume = computed(() => {
@@ -243,30 +267,36 @@ const chartDataForPercentage = computed(() => {
   };
 });
 
-const totalReadings = computed(() => {
-  if (!vehicleData.value || vehicleData.value.length === 0 || isLoadingVehicleData.value) return 0;
-
-  return vehicleData.value.reduce((total, item) => total + item.totalReadings, 0);
-});
-
-const averageSpeedGeneral = computed(() => {
-  if (!vehicleData.value || vehicleData.value.length === 0 || isLoadingVehicleData.value) return 0;
-
-  let totalWeightedSpeed = 0;
-  let totalReadings = 0;
-
-  vehicleData.value.forEach(item => {
-    totalWeightedSpeed += item.averageSpeed * item.totalReadings;
-    totalReadings += item.totalReadings;
-  });
-
-  if (totalReadings === 0) return 0;
-
-  return Math.round((totalWeightedSpeed / totalReadings) * 100) / 100;
-});
-
 const hasDataStillLoading = computed(() => {
-  return isLoadingIndex.value || isLoadingVehicleData.value;
+  return isLoadingIndex.value || isLoadingVehicleData.value || isLoadingDailyData.value;
+});
+
+const todayTotalReadings = computed(() => {
+  return dailyData.value?.today.totalReadings || 0;
+});
+
+const todayAverageSpeed = computed(() => {
+  const speed = dailyData.value?.today.averageSpeed || 0;
+  return Math.round(speed * 100) / 100;
+});
+
+const todayMaxSpeed = computed(() => {
+  const speed = dailyData.value?.today.maxSpeed || 0;
+  return Math.round(speed * 100) / 100;
+});
+
+const readingsComparison = computed(() => {
+  if (!dailyData.value || dailyData.value.today.totalReadings === 0) return "Dados não disponíveis";
+  if (dailyData.value.yesterday.totalReadings === 0) return "Comparação não disponível";
+  const change = dailyData.value.readingsChange;
+  return change >= 0 ? `+${change}%` : `${change}%`;
+});
+
+const speedComparison = computed(() => {
+  if (!dailyData.value || dailyData.value.today.averageSpeed === 0) return "Dados não disponíveis";
+  if (dailyData.value.yesterday.averageSpeed === 0) return "Comparação não disponível";
+  const change = dailyData.value.speedChange;
+  return change >= 0 ? `+${change}%` : `${change}%`;
 });
 
 function getIndexClass(value: number): string {
@@ -308,7 +338,7 @@ onUnmounted(() => {
       <div class="region-section">
         <label class="region-label">Região selecionada</label>
         <div class="region-selector">
-          <select v-model="selectedRegion" class="region-dropdown" @change="refreshAllData">
+          <select v-model="selectedRegion" class="region-dropdown">
             <option
               v-for="region in availableRegions"
               :key="region"
@@ -431,24 +461,29 @@ onUnmounted(() => {
           <div class="indices-header">
             <h2>Informações Diárias</h2>
           </div>
-          <div class="daily-infos-container">
+          <div v-if="isLoadingDailyData" class="indices-loading">
+            <div class="chart-loading">
+              <span>🔄 Carregando dados diários...</span>
+            </div>
+          </div>
+          <div v-else class="daily-infos-container">
             <div :class="['index-card', 'large-card', getIndexClass(0)]">
               <div class="index-name">Leituras totais</div>
-              <div class="index-number">{{ totalReadings.toLocaleString() }}</div>
-              <div class="comparison-text">+30% comparado a ontem</div>
+              <div class="index-number">{{ todayTotalReadings.toLocaleString() }}</div>
+              <div class="comparison-text">{{ readingsComparison }} comparado a ontem</div>
             </div>
             <div :class="['index-card', 'large-card', getIndexClass(0)]">
               <div class="index-name">Velocidade média geral</div>
-              <div class="index-number">{{ averageSpeedGeneral }} km/h</div>
-              <div class="comparison-text">-15% comparado a ontem</div>
+              <div class="index-number">{{ todayAverageSpeed }} km/h</div>
+              <div class="comparison-text">{{ speedComparison }} comparado a ontem</div>
             </div>
             <div :class="['index-card', 'large-card', getIndexClass(0)]">
               <h3>Velocidade mais rápida</h3>
-              <a>200 km/h</a>
+              <a>{{ todayMaxSpeed }} km/h</a>
               <h3>Local</h3>
-              <a>Av. Antônio Antônio (região Sul)</a>
+              <a>Não disponível</a>
               <h3>Hora</h3>
-              <a>12:00:00</a>
+              <a>Não disponível</a>
             </div>
           </div>
         </div>

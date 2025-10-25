@@ -253,6 +253,11 @@ h2 {
   border-radius: $borderRadiusCard;
 }
 
+.volume-chart {
+  width: 100%;
+  height: 100%;
+}
+
 /* Responsive Design */
 @media (max-width: $breakpointTablet) {
   .home-content {

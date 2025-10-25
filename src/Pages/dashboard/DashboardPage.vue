@@ -3,7 +3,7 @@ import { ref, onMounted, onUnmounted, computed, watch } from "vue";
 import mapaSjc from "@/assets/mapa-sjc.png";
 import BaseChart from "@/components/BaseChart/BaseChart.vue";
 import { indexService, type IndexData } from "@/services/IndexService";
-import readingService, { type VehicleTypeHourlyData } from "@/services/ReadingService";
+import readingService, { type ReadingData } from "@/services/ReadingService";
 
 const selectedRegion = ref("São José dos Campos");
 const selectedVelocity = ref("Velocidade");
@@ -13,7 +13,7 @@ const isLoading = ref(false);
 const lastUpdate = ref<string>("");
 const refreshTrigger = ref(0);
 const indexData = ref<IndexData | null>(null);
-const vehicleData = ref<VehicleTypeHourlyData[] | null>(null);
+const vehicleData = ref<ReadingData[] | null>(null);
 const availableRegions = ref<string[]>([
   "São José dos Campos",
   "Norte",
@@ -38,25 +38,21 @@ let intervalId: number | null = null;
 
 async function fetchVehicleData() {
   try {
-    // Data fixa: 2025-08-05, apenas variando as horas
-    const fixedDate = "2025-08-05";
-    const startTime = `${fixedDate}T00:00:00`; // Início do dia
-    const endTime = `${fixedDate}T23:59:59`;   // Final do dia
-
     const params = {
-      startTime,
-      endTime,
-      ...(selectedVehicleType.value !== "Todos" && {
-        vehicleType: selectedVehicleType.value
-      }),
-      ...(selectedRegion.value !== "São José dos Campos" && {
-        regions: [selectedRegion.value]
-      })
+      minutes: 1440 // 24 horas
     };
 
-    const response = await readingService.getHourlyCount(params);
-    vehicleData.value = response.data;
+    let response;
+    if (selectedRegion.value === "São José dos Campos") {
+      response = await readingService.getCityData(params);
+    } else {
+      response = await readingService.getRegionData({
+        ...params,
+        regions: [selectedRegion.value]
+      });
+    }
 
+    vehicleData.value = response.data;
     return true;
   } catch {
     vehicleData.value = null;
@@ -110,18 +106,28 @@ function handleChartError() {
 const chartDataForVolume = computed(() => {
   if (!vehicleData.value || vehicleData.value.length === 0) return null;
 
-  const selectedData = selectedVehicleType.value === "Todos"
-    ? vehicleData.value.find(item => item.vehicleType === "Todos")
-    : vehicleData.value[0];
+  const processedData = vehicleData.value.map(item => {
+    const startTime = new Date(item.startTime);
+    const hourLabel = `${startTime.getHours().toString().padStart(2, '0')}:00`;
 
-  if (!selectedData) return null;
+    let vehicleCount: number;
+    if (selectedVehicleType.value === "Todos") {
+      vehicleCount = item.totalReadings;
+    } else {
+      vehicleCount = item.vehicleTypeCounts[selectedVehicleType.value as keyof typeof item.vehicleTypeCounts] || 0;
+    }
 
-  const labels = selectedData.data.map(item => {
-    const date = new Date(item.hour);
-    return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    return {
+      hour: hourLabel,
+      vehicleCount,
+      timestamp: startTime.getTime()
+    };
   });
 
-  const data = selectedData.data.map(item => item.vehicleCount);
+  processedData.sort((a, b) => a.timestamp - b.timestamp);
+
+  const labels = processedData.map(item => item.hour);
+  const data = processedData.map(item => item.vehicleCount);
 
   const getVehicleColor = (vehicleType: string) => {
     const colors = {
@@ -166,7 +172,7 @@ function getIndexClass(value: number): string {
   }
 }
 
-watch(selectedVehicleType, () => {
+watch(selectedRegion, () => {
   fetchVehicleData();
 });
 

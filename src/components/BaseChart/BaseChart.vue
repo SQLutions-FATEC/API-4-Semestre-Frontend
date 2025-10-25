@@ -130,9 +130,6 @@ const getChartOptions = (type: string, title: string) => {
             text: "Volume de Veículos",
           },
           beginAtZero: true,
-          ticks: {
-            stepSize: 1000,
-          },
         },
       },
     };

@@ -159,9 +159,17 @@ function fetchCitySummaryPromise(): Promise<boolean> {
           ListaCarros: totalVehicleCounts,
         };
 
+        nomeRegiaoClicada.value = citySummaryData.value.name;
+        indiceGeral.value = citySummaryData.value.overall;
+        indiceTrafego.value = citySummaryData.value.traffic;
+        indiceSeguranca.value = citySummaryData.value.security;
+        estadoRegiao.value = citySummaryData.value.estado;
+        ListaCarros.value = citySummaryData.value.ListaCarros;
+
         // Resolve a promise
         resolve(true);
       } catch (err) {
+        // eslint-disable-next-line no-console
         console.error("Falha ao buscar resumo da cidade:", err);
         citySummaryData.value = null;
         reject(err);
@@ -233,6 +241,7 @@ async function fetchData() {
 
   try {
     // 1. Executa todas as chamadas EM PARALELO
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [responseRegions, _, responseRadars] = await Promise.all(promises);
 
     // 2. Processa a resposta das Regiões
@@ -248,6 +257,7 @@ async function fetchData() {
     radarData.value = await responseRadars.json(); // <-- Este é o passo crucial
     isLoadingRadars.value = false;
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error("Falha ao buscar dados do mapa:", err);
   }
 }

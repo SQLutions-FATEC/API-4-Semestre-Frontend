@@ -1,4 +1,6 @@
 
+@use "sass:color";
+
 .page-title {
   @include heading(large);
   font-weight: 600;
@@ -80,7 +82,7 @@ h2 {
   transition: background-color 0.2s ease;
 
   &:hover:not(:disabled) {
-    background-color: darken($colorStatusGreen, 10%);
+    background-color: color.scale($colorStatusGreen, $lightness: -20%);
   }
 
   &:disabled {

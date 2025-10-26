@@ -324,3 +324,94 @@ h2 {
     color: $colorTextMuted;
   }
 }
+
+// Estilos para o filtro de data/hora
+.datetime-filter-section {
+  margin: $spacingLg 0;
+  padding: $spacingMd;
+  background-color: $colorBackgroundWhite;
+  border: $borderWidthThin solid $colorBorderGray;
+  border-radius: $borderRadiusSm;
+}
+
+.datetime-filter-header {
+  @include flex-between;
+  margin-bottom: $spacingMd;
+
+  h3 {
+    @include heading(xsmall);
+    font-weight: 500;
+    color: $colorTextPrimary;
+    margin: 0;
+  }
+}
+
+.reset-button {
+  @include button-base;
+  background-color: $colorBackgroundWhite;
+  border: $borderWidthThin solid $colorBorderGray;
+  border-radius: $borderRadiusSm;
+  padding: $spacingSm $spacingMd;
+  @include label(small);
+  color: $colorTextPrimary;
+  cursor: pointer;
+
+  &:hover {
+    background-color: $colorBackgroundHover;
+  }
+}
+
+.datetime-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacingMd;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.datetime-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: $spacingSm;
+
+  label {
+    @include label(small);
+    color: $colorTextMuted;
+    font-weight: 500;
+  }
+}
+
+.datetime-input {
+  @include dropdown-base;
+  background-color: $colorBackgroundWhite;
+  border: $borderWidthThin solid $colorBorderGray;
+  border-radius: $borderRadiusSm;
+  padding: $dropdownPadding;
+  @include label(medium);
+  color: $colorTextPrimary;
+
+  &:focus {
+    outline: none;
+    border-color: $colorPrimary;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+  }
+}
+
+.filter-status {
+  margin-top: $spacingMd;
+  padding: $spacingSm $spacingMd;
+  background-color: rgba(59, 130, 246, 0.1);
+  border: $borderWidthThin solid rgba(59, 130, 246, 0.2);
+  border-radius: $borderRadiusSm;
+  @include label(small);
+  color: $colorTextPrimary;
+  font-weight: 500;
+
+  .default-period {
+    color: $colorTextMuted;
+    font-weight: normal;
+    margin-left: $spacingSm;
+  }
+}

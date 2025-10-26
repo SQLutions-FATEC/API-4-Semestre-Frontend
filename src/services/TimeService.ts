@@ -27,31 +27,23 @@ class TimeService {
     return Math.floor(diffInMs / (1000 * 60));
   }
 
-  getSameTimeYesterdayTimestamp(serverTime: string): string {
-    const currentTime = new Date(serverTime);
-    const yesterdaySameTime = new Date(currentTime);
-    yesterdaySameTime.setDate(yesterdaySameTime.getDate() - 1);
+  get24HoursAgoTimestamp(serverTime: string): string {
+    const dateTimePart = serverTime.split('T')[0];
+    const timePart = serverTime.split('T')[1].split('.')[0];
 
-    // Manter exatamente o mesmo horário de ontem
-    return yesterdaySameTime.toISOString().slice(0, 19);
+    const currentDate = new Date(dateTimePart + 'T00:00:00Z');
+    const previousDate = new Date(currentDate.getTime() - (24 * 60 * 60 * 1000));
+
+    const previousDateStr = previousDate.toISOString().split('T')[0];
+
+    return `${previousDateStr}T${timePart}`;
   }
 
-  getPreviousDayEndTimestamp(serverTime: string): string {
-    const currentTime = new Date(serverTime);
-    const previousDay = new Date(currentTime);
-    previousDay.setDate(previousDay.getDate() - 1);
-    previousDay.setHours(23, 59, 59, 0);
 
-    return previousDay.toISOString().slice(0, 19);
-  }
+  convertDateTimeToServerFormat(dateTime: string): string {
+    const cleanDateTime = dateTime.replace(/[+-]\d{2}:\d{2}|Z$/g, '');
 
-  getPreviousDayStartTimestamp(serverTime: string): string {
-    const currentTime = new Date(serverTime);
-    const previousDay = new Date(currentTime);
-    previousDay.setDate(previousDay.getDate() - 1);
-    previousDay.setHours(0, 0, 0, 0);
-
-    return previousDay.toISOString();
+    return cleanDateTime.includes('T') ? cleanDateTime.slice(0, 19) : cleanDateTime;
   }
 }
 

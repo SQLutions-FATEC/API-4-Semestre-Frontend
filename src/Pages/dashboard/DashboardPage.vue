@@ -5,9 +5,16 @@ import BaseChart from "@/components/BaseChart/BaseChart.vue";
 import { indexService, type IndexData } from "@/services/IndexService";
 import readingService, { type ReadingData } from "@/services/ReadingService";
 import dailyDataService, { type DailyComparison } from "@/services/DailyDataService";
+import timeService, { type TimeData } from "@/services/TimeService";
 
 const selectedRegion = ref("São José dos Campos");
 const selectedVehicleType = ref("Todos");
+
+const startDateTime = ref<string>("");
+const endDateTime = ref<string>("");
+const serverTimeData = ref<TimeData | null>(null);
+const isDateTimeFilterActive = ref(false);
+const userHasModifiedDateTime = ref(false); // Rastreia se usuário modificou os filtros
 
 const isLoadingIndex = ref(false);
 const isLoadingVehicleData = ref(false);
@@ -59,12 +66,92 @@ const availableVehicleTypes = ref<string[]>([
 ]);
 let intervalId: number | null = null;
 
+async function loadServerTimeData() {
+  try {
+    serverTimeData.value = await timeService.getServerTime();
+
+    if (serverTimeData.value && !userHasModifiedDateTime.value) {
+      initializeDateTimePickers();
+    }
+  } catch {
+    // Erro silencioso - continuar com comportamento padrão
+  }
+}
+
+function initializeDateTimePickers() {
+  if (!serverTimeData.value) return;
+
+  endDateTime.value = formatDateTimeLocal(serverTimeData.value.currentServerTime);
+
+  const endDate = new Date(serverTimeData.value.currentServerTime);
+  const startDate = new Date(endDate.getTime() - (24 * 60 * 60 * 1000));
+  startDateTime.value = formatDateTimeLocal(startDate.toISOString());
+
+  isDateTimeFilterActive.value = true;
+}
+
+function formatDateTimeLocal(timestamp: string): string {
+  const date = new Date(timestamp);
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+function getQueryParams() {
+  if (startDateTime.value && endDateTime.value) {
+    const start = new Date(startDateTime.value);
+    const end = new Date(endDateTime.value);
+    const diffInMinutes = Math.floor((end.getTime() - start.getTime()) / (1000 * 60));
+
+    return {
+      indexMinutes: userHasModifiedDateTime.value ? Math.min(diffInMinutes, 1440) : 5,
+      dataMinutes: diffInMinutes,
+      timestamp: timeService.convertDateTimeToServerFormat(endDateTime.value)
+    };
+  }
+
+  return {
+    indexMinutes: 5,
+    dataMinutes: 1440,
+    timestamp: undefined
+  };
+}
+
+watch(startDateTime, (newStart, oldStart) => {
+  if (newStart !== oldStart && oldStart !== undefined && oldStart !== "") {
+    userHasModifiedDateTime.value = true;
+    refreshAllData();
+  }
+});
+
+watch(endDateTime, (newEnd, oldEnd) => {
+  if (newEnd !== oldEnd && oldEnd !== undefined && oldEnd !== "") {
+    userHasModifiedDateTime.value = true;
+    refreshAllData();
+  }
+});
+
+function resetDateTimeFilters() {
+  userHasModifiedDateTime.value = false;
+  initializeDateTimePickers();
+  refreshAllData();
+}
+
 async function fetchVehicleData() {
   isLoadingVehicleData.value = true;
   try {
-    const params = {
-      minutes: 1440 // 24 horas
+    const queryParams = getQueryParams();
+    const params: { minutes: number; timestamp?: string } = {
+      minutes: queryParams.dataMinutes
     };
+
+    if (queryParams.timestamp) {
+      params.timestamp = queryParams.timestamp;
+    }
 
     let response;
     if (selectedRegion.value === "São José dos Campos") {
@@ -91,11 +178,12 @@ async function fetchVehicleData() {
 async function fetchIndexData() {
   isLoadingIndex.value = true;
   try {
+    const queryParams = getQueryParams();
     let data: IndexData;
     if (selectedRegion.value === "São José dos Campos") {
-      data = await indexService.getCityIndex();
+      data = await indexService.getCityIndex({ minutes: queryParams.indexMinutes });
     } else {
-      data = await indexService.getRegionIndex(selectedRegion.value);
+      data = await indexService.getRegionIndex(selectedRegion.value, { minutes: queryParams.indexMinutes });
     }
     indexData.value = data;
 
@@ -316,12 +404,16 @@ function getIndexClass(value: number): string {
 
 watch(selectedRegion, () => {
   resetAllData();
+  userHasModifiedDateTime.value = false;
+  if (serverTimeData.value) {
+    initializeDateTimePickers();
+  }
   refreshAllData();
 });
 
-onMounted(() => {
+onMounted(async () => {
+  await loadServerTimeData();
   refreshAllData();
-  // Update all data every 10 minutes
   intervalId = setInterval(refreshAllData, 600000);
 });
 
@@ -347,6 +439,43 @@ onUnmounted(() => {
               {{ region }}
             </option>
           </select>
+        </div>
+      </div>
+
+      <div class="datetime-filter-section">
+        <div class="datetime-filter-header">
+          <h3>Filtro de Data/Hora</h3>
+          <button type="button" class="reset-button" @click="resetDateTimeFilters">
+            Resetar
+          </button>
+        </div>
+        <div class="datetime-inputs">
+          <div class="datetime-input-group">
+            <label for="start-datetime">Data/Hora Inicial:</label>
+            <input
+              id="start-datetime"
+              v-model="startDateTime"
+              type="datetime-local"
+              class="datetime-input"
+              :min="serverTimeData ? formatDateTimeLocal(serverTimeData.firstDate) : ''"
+              :max="serverTimeData ? formatDateTimeLocal(serverTimeData.lastDate) : ''"
+            >
+          </div>
+          <div class="datetime-input-group">
+            <label for="end-datetime">Data/Hora Final:</label>
+            <input
+              id="end-datetime"
+              v-model="endDateTime"
+              type="datetime-local"
+              class="datetime-input"
+              :min="serverTimeData ? formatDateTimeLocal(serverTimeData.firstDate) : ''"
+              :max="serverTimeData ? formatDateTimeLocal(serverTimeData.lastDate) : ''"
+            >
+          </div>
+        </div>
+        <div v-if="startDateTime && endDateTime" class="filter-status">
+          ⏰ Período ativo: {{ startDateTime }} até {{ endDateTime }}
+          <span v-if="!userHasModifiedDateTime" class="default-period">(padrão: 24h)</span>
         </div>
       </div>
       <div class="main-content">

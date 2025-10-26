@@ -64,9 +64,10 @@ class DailyDataService {
 
       const minutesFromStartOfDay = timeService.getMinutesFromStartOfDay(currentTime);
 
-      const yesterdaySameTimeTimestamp = timeService.getSameTimeYesterdayTimestamp(currentTime);
+      // Timestamp de exatamente 24 horas atrás
+      const twentyFourHoursAgoTimestamp = timeService.get24HoursAgoTimestamp(currentTime);
 
-      return await this.fetchDailyDataWithServerTime(region, minutesFromStartOfDay, yesterdaySameTimeTimestamp);
+      return await this.fetchDailyDataWithServerTime(region, minutesFromStartOfDay, twentyFourHoursAgoTimestamp);
     } catch {
       return await this.fetchDailyDataFallback(region);
     }
@@ -75,7 +76,7 @@ class DailyDataService {
   private async fetchDailyDataWithServerTime(
     region: string,
     minutesFromStartOfDay: number,
-    yesterdaySameTimeTimestamp: string
+    twentyFourHoursAgoTimestamp: string
   ): Promise<DailyComparison> {
     try {
       let todayData: ReadingData[];
@@ -87,7 +88,7 @@ class DailyDataService {
           readingService.getCityData({ minutes: minutesFromStartOfDay }),
           readingService.getCityData({
             minutes: minutesFromStartOfDay,
-            timestamp: yesterdaySameTimeTimestamp
+            timestamp: twentyFourHoursAgoTimestamp
           })
         ]);
 
@@ -103,7 +104,7 @@ class DailyDataService {
           readingService.getRegionData({
             regions: [region],
             minutes: minutesFromStartOfDay,
-            timestamp: yesterdaySameTimeTimestamp
+            timestamp: twentyFourHoursAgoTimestamp
           })
         ]);
 

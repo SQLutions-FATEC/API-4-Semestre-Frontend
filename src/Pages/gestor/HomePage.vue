@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
-import MapaLeaflet from "@/components/MapaLeaflet.vue";
 import iconeCamera from "@/assets/cam2.png";
+import MapaLeaflet from "@/components/MapaLeaflet.vue";
+import IndiceModal from "@/components/Modals/IndiceModal.vue";
+import { computed, onMounted, ref } from "vue";
 
 // --- Mapa de Cores ---
 const regionColorMap = {
@@ -289,7 +290,7 @@ function getIndexClass(value: number): string {
     case 3:
       return "orange";
     case 4:
-      return "dark-red";;
+      return "dark-red";
     case 5:
       return "red";
     default:
@@ -350,6 +351,14 @@ async function fetchData() {
   }
 }
 
+const modalAberto = ref(false);
+const tipoModal = ref<"trafego" | "seguranca" | "geral">("trafego");
+
+function abrirModal(tipo: "trafego" | "seguranca" | "geral") {
+  tipoModal.value = tipo;
+  modalAberto.value = true;
+}
+
 onMounted(() => {
   fetchData();
 });
@@ -369,21 +378,34 @@ onMounted(() => {
       <div class="main-content">
         <div class="indices-section">
           <div class="indices-header">
-            <h2>Índices</h2>
+            <h2>Níveis</h2>
           </div>
           <div class="indices-container">
-            <div :class="['index-card', 'large-card', getIndexClass(indiceGeral!)]">
+            <div
+              :class="['index-card', 'large-card', getIndexClass(indiceGeral!)]"
+              @click="abrirModal('trafego')"
+            >
               <div class="index-number">{{ indiceGeral }}</div>
               <div class="index-name">Geral</div>
             </div>
-            <div :class="['index-card', 'small-card', getIndexClass(indiceTrafego!)]">
+
+            <div
+              :class="['index-card', 'small-card', getIndexClass(indiceTrafego!)]"
+              @click="abrirModal('trafego')"
+            >
               <div class="index-number">{{ indiceTrafego }}</div>
               <div class="index-name">Tráfego</div>
             </div>
-            <div :class="['index-card', 'small-card', getIndexClass(indiceSeguranca!)]">
+
+            <div
+              :class="['index-card', 'small-card', getIndexClass(indiceSeguranca!)]"
+              @click="abrirModal('seguranca')"
+            >
               <div class="index-number">{{ indiceSeguranca }}</div>
               <div class="index-name">Segurança</div>
             </div>
+
+            <IndiceModal v-model="modalAberto" :tipo="tipoModal" />
           </div>
         </div>
         <div class="graphs-section">

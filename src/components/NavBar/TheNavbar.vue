@@ -13,6 +13,7 @@ import logoSjc from "@/assets/logo-sjc.png";
 
     <nav class="main-nav">
       <RouterLink to="/" class="nav-item">Home</RouterLink>
+      <RouterLink to="/dashboards" class="nav-item">Dashboard</RouterLink>
       <RouterLink to="/mapa" class="nav-item">Mapa</RouterLink>
       <RouterLink to="/sobre" class="nav-item">Sobre</RouterLink>
       <RouterLink to="/cidadao" class="nav-item">Cidadão</RouterLink>

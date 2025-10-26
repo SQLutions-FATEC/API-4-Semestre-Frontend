@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import axios from "axios";
-import { computed, onMounted, ref } from "vue";
+import { computed, ref } from "vue";
 
 defineProps<{
   modelValue: boolean;
@@ -22,38 +21,6 @@ const corAtual = computed(() => coresNivel[abaSelecionada.value].cor);
 
 function fechar() {
   emit("update:modelValue", false);
-}
-
-// ----------------- NÍVEIS -----------------
-const trafegoIndex = ref(0);
-const segurancaIndex = ref(0);
-const geralIndex = ref(0);
-
-async function fetchCityLevels() {
-  try {
-    const response = await axios.get("/api/index/city", { params: { minutes: 60 } });
-    // Exemplo de retorno:
-    // { traffic: number, safety: number, city: number }
-    trafegoIndex.value = response.data.traffic ?? 0;
-    segurancaIndex.value = response.data.safety ?? 0;
-    geralIndex.value = response.data.city ?? 0;
-  } catch (error) {
-    console.error("Erro ao buscar níveis da cidade:", error);
-    trafegoIndex.value = 0;
-    segurancaIndex.value = 0;
-    geralIndex.value = 0;
-  }
-}
-
-onMounted(() => {
-  fetchCityLevels();
-});
-
-function getLabel(index: number) {
-  if (index <= 1) return "Ótimo";
-  if (index === 2) return "Bom";
-  if (index === 3) return "Moderado";
-  return "Crítico";
 }
 </script>
 

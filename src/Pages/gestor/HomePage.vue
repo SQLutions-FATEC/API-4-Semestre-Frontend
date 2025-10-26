@@ -1,71 +1,284 @@
 <script setup lang="ts">
-import mapaSjc from "@/assets/mapa-sjc.png";
-import BaseChart from "@/components/BaseChart/BaseChart.vue";
-import { indexService, type IndexData } from "@/services/IndexService";
-import { onMounted, onUnmounted, ref } from "vue";
+import { ref, onMounted, computed } from "vue";
+import MapaLeaflet from "@/components/MapaLeaflet.vue";
+import iconeCamera from "@/assets/cam2.png";
 
-const selectedRegion = ref("São José dos Campos");
-const selectedVelocity = ref("Velocidade");
+// --- Mapa de Cores ---
+const regionColorMap = {
+  Norte: "#e6194B", // Vermelho
+  Leste: "#3cb44b", // Verde
+  Centro: "#ffe119", // Amarelo
+  Sul: "#4363d8", // Azul
+  Sudeste: "#f58231", // Laranja
+  Oeste: "#911eb4", // Roxo
+  "São Francisco Xavier": "#46f0f0", // Ciano
+  default: "#a9a9a9", // Cinza Escuro (DarkGray)
+};
 
-const indices = ref({
-  geral: 0,
-  trafego: 0,
-  seguranca: 0,
-  acessibilidade: 0,
-  infraestrutura: 0,
+// --- interfaces ---
+
+interface vehicleTypeCounts {
+  [key: string]: number;
+}
+
+interface speedTime {
+  [key: string]: number;
+}
+
+interface readings {
+  endTime: string;
+  readings: number;
+  totalreadings: number;
+  averageSpeed: number;
+  maxSpeed: number;
+  minSpeed: number;
+  index: number;
+  vehicleTypeCounts: vehicleTypeCounts;
+}
+
+interface citySummary {
+  name: string;
+  overall: number;
+  traffic: number;
+  security: number;
+  estado: string;
+  ListaCarros: vehicleTypeCounts;
+}
+
+interface regionProps {
+  name: string;
+  overall: number;
+  traffic: number;
+  security: number;
+  estado: string;
+  ListaCarros: vehicleTypeCounts;
+}
+// --- Estado dos Radares e Regioes (Dados da API) ---
+
+const radarData = ref([]);
+const isLoadingRadars = ref(true);
+const errorRadars = ref(null);
+const regionData = ref([]);
+const isLoading = ref(true);
+const error = ref(null);
+
+// --- Refs para os dados da região clicada (Vão ser preenchidos pelo evento do mapa) ---
+const nomeRegiaoClicada = ref(<string | null>null);
+const indiceGeral = ref(<number | null>null);
+const indiceTrafego = ref(<number | null>null);
+const indiceSeguranca = ref(<number | null>null);
+const estadoRegiao = ref(<string | null>null);
+const ListaCarros = ref(<vehicleTypeCounts | null>null);
+const ListaSpeedTime = ref(<speedTime | null>null);
+const ListaSpeedMax = ref(<speedTime | null>null);
+
+const citySummaryData = ref(<citySummary | null>null);
+
+const linechartSeries = computed(() => {
+  if (!ListaSpeedTime.value) return [];
+  return [
+    {
+      name: "Velocidade Média",
+      data: Object.entries(ListaSpeedTime.value!).map(([time, speed]) => ({
+        x: time,
+        y: speed,
+      })),
+    },
+    {
+      name: "Velocidade Máxima",
+      data: Object.entries(ListaSpeedMax.value!).map(([time, speed]) => ({
+        x: time,
+        y: speed,
+      })),
+    },
+  ];
 });
 
-const isLoading = ref(false);
-const lastUpdate = ref<string>("");
-const refreshTrigger = ref(0);
-let intervalId: number | null = null;
+const lineChartOption = computed(() => {
+  return {
+    chart: {
+      type: "line",
+      toolbar: {
+        show: false,
+      },
+      zoom: {
+        enabled: true,
+      },
+    },
+    title: {
+      text: `Velocidade durannte a ultima hora`,
+      align: "center",
+      style: {
+        fontSize: "16px",
+        color: "#333",
+      },
+    },
 
-async function fetchIndices() {
-  try {
-    isLoading.value = true;
+    xaxis: {
+      type: "category",
+      title: {
+        text: "Tempo",
+      },
+    },
+    yaxis: {
+      title: {
+        text: "Velocidade (km/h)",
+      },
+    },
+    stroke: {
+      curve: "smooth",
+    },
+    legend: {
+      position: "top",
+      horizontalAlign: "center",
+    },
+  };
+});
 
-    const result: IndexData = await indexService.getCityIndex(5);
+// --- Para os dados do gráfico de pizza ---
+const piechartSeries = computed(() => {
+  if (!ListaCarros.value) return [];
+  return Object.values(ListaCarros.value);
+});
 
-    console.log("Resposta do backend:", result); // <-- log para verificação
+// ... (Restante do pieChartOption) ...
+const pieChartOption = computed(() => {
+  const labels = ListaCarros.value ? Object.keys(ListaCarros.value) : [];
 
-    indices.value = {
-      geral: result.combinedIndex,
-      trafego: result.trafficIndex,
-      seguranca: result.securityIndex,
-      acessibilidade: 2,
-      infraestrutura: 1,
-    };
+  return {
+    chart: {
+      type: "pie",
+    },
+    labels: labels,
 
-    lastUpdate.value = new Date().toLocaleTimeString();
-  } catch (error) {
-    console.error("Erro ao buscar índices:", error);
-    lastUpdate.value = "Erro de conexão - tentando novamente...";
-  } finally {
-    isLoading.value = false;
+    title: {
+      text: `Distribuição (${nomeRegiaoClicada.value || "Geral"})`,
+      align: "center",
+      style: {
+        fontSize: "16px",
+        color: "#333",
+      },
+    },
+
+    legend: {
+      position: "bottom",
+      horizontalAlign: "center",
+      offsetY: 5,
+    },
+
+    responsive: [
+      {
+        breakpoint: 480,
+        options: {
+          legend: {
+            position: "bottom",
+            fontSize: "10px",
+          },
+        },
+      },
+    ],
+  };
+});
+
+// --- Função auxiliar para buscar e processar o resumo da cidade (usada no Promise.all) ---
+function fetchCitySummaryPromise(): Promise<boolean> {
+  return new Promise<boolean>((resolve, reject) => {
+    (async () => {
+      try {
+        // 1. Busca dos Índices
+        const responseIndex = await fetch("http://localhost:8080/index?minutes=10");
+        if (!responseIndex.ok) {
+          throw new Error(`Erro HTTP Índices: ${responseIndex.status}`);
+        }
+        const dataIndex = await responseIndex.json();
+
+        // 2. Busca das Leituras de Veículos
+        const responseVehicle = await fetch("http://localhost:8080/reading?minutes=60");
+        if (!responseVehicle.ok) {
+          throw new Error(`Erro HTTP Veículos: ${responseVehicle.status}`);
+        }
+        const dataVehicleReadings = await responseVehicle.json();
+
+        // 3. AGREGAR A CONTAGEM DE VEÍCULOS
+        let totalVehicleCounts: vehicleTypeCounts = {};
+        dataVehicleReadings.forEach((reading: readings) => {
+          if (reading.vehicleTypeCounts) {
+            for (const type in reading.vehicleTypeCounts) {
+              const count = reading.vehicleTypeCounts[type];
+              totalVehicleCounts[type] = (totalVehicleCounts[type] || 0) + count;
+            }
+          }
+        });
+
+        let SpeedsTimeMax: speedTime = {};
+        dataVehicleReadings.forEach((reading: readings) => {
+          if (reading.maxSpeed && reading.endTime) {
+            const timePart = reading.endTime.split("T")[1];
+
+            const speedInt = Math.trunc(reading.maxSpeed);
+
+            SpeedsTimeMax[timePart] = speedInt;
+          }
+        });
+        ListaSpeedMax.value = SpeedsTimeMax;
+
+        let SpeedsTime: speedTime = {};
+        dataVehicleReadings.forEach((reading: readings) => {
+          if (reading.averageSpeed && reading.endTime) {
+            const timePart = reading.endTime.split("T")[1];
+
+            const speedInt = Math.trunc(reading.averageSpeed);
+
+            SpeedsTime[timePart] = speedInt;
+          }
+        });
+        ListaSpeedTime.value = SpeedsTime;
+
+        // 4. Formata e DEFINE os dados de resumo
+
+        citySummaryData.value = {
+          name: "Cidade Inteira",
+          overall: dataIndex.combinedIndex,
+          traffic: dataIndex.trafficIndex,
+          security: dataIndex.securityIndex,
+          estado:
+            (dataIndex.trafficIndex + dataIndex.securityIndex) / 2 == 1
+              ? "Ótimo"
+              : (dataIndex.trafficIndex + dataIndex.securityIndex) / 2 <= 3
+                ? "Bom"
+                : "Ruim",
+          ListaCarros: totalVehicleCounts,
+        };
+
+        nomeRegiaoClicada.value = citySummaryData.value.name;
+        indiceGeral.value = citySummaryData.value.overall;
+        indiceTrafego.value = citySummaryData.value.traffic;
+        indiceSeguranca.value = citySummaryData.value.security;
+        estadoRegiao.value = citySummaryData.value.estado;
+        ListaCarros.value = citySummaryData.value.ListaCarros;
+
+        // Resolve a promise
+        resolve(true);
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error("Falha ao buscar resumo da cidade:", err);
+        citySummaryData.value = null;
+        reject(err);
+      }
+    })();
+  });
+}
+
+function showCitySummary() {
+  if (citySummaryData.value) {
+    // Aplica os dados do resumo da cidade nas refs do dashboard
+    nomeRegiaoClicada.value = citySummaryData.value.name;
+    indiceGeral.value = citySummaryData.value.overall;
+    indiceTrafego.value = citySummaryData.value.traffic;
+    indiceSeguranca.value = citySummaryData.value.security;
+    estadoRegiao.value = citySummaryData.value.estado;
+    ListaCarros.value = citySummaryData.value.ListaCarros;
   }
-}
-
-async function refreshAllData() {
-  if (isLoading.value) return;
-  refreshTrigger.value++;
-  await fetchIndices();
-}
-
-function handleChartDataUpdated(timestamp: string) {
-  lastUpdate.value = new Date(timestamp).toLocaleTimeString();
-}
-
-function handleChartLoadingChange(loading: boolean) {
-  if (!loading && isLoading.value) {
-    setTimeout(() => {
-      isLoading.value = false;
-    }, 100);
-  }
-}
-
-function handleChartError(errorMessage: string) {
-  lastUpdate.value = errorMessage;
-  isLoading.value = false;
 }
 
 function getIndexClass(value: number): string {
@@ -83,13 +296,61 @@ function getIndexClass(value: number): string {
   }
 }
 
-onMounted(() => {
-  refreshAllData();
-  intervalId = setInterval(refreshAllData, 20000); // atualiza a cada 20s
-});
+// --- Função para lidar com o evento do Mapa Leaflet ---
+function handleRegionSelected(regionProps: regionProps | null) {
+  if (regionProps) {
+    // Recebe os dados da região clicada no componente filho
+    nomeRegiaoClicada.value = regionProps.name;
+    indiceGeral.value = regionProps.overall;
+    indiceTrafego.value = regionProps.traffic;
+    indiceSeguranca.value = regionProps.security;
+    estadoRegiao.value = regionProps.estado;
+    ListaCarros.value = regionProps.ListaCarros;
+  } else {
+    // Se a região for desclicada (clique no mapa vazio)
+    nomeRegiaoClicada.value = null;
+    indiceGeral.value = null;
+    indiceTrafego.value = null;
+    indiceSeguranca.value = null;
+    estadoRegiao.value = null;
+    ListaCarros.value = null;
+  }
+}
 
-onUnmounted(() => {
-  if (intervalId) clearInterval(intervalId);
+// --- Lógica de Chamadas de API ---
+async function fetchData() {
+  isLoading.value = true;
+  isLoadingRadars.value = true;
+  error.value = null;
+  errorRadars.value = null;
+
+  const promises: [Promise<Response>, Promise<boolean>] = [
+    fetch("http://localhost:8080/regions"),
+    fetchCitySummaryPromise(),
+  ];
+
+  try {
+    // 1. Executa todas as chamadas EM PARALELO
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [responseRegions, _] = await Promise.all(promises);
+
+    // 2. Processa a resposta das Regiões
+    if (!responseRegions.ok) {
+      throw new Error(`Erro HTTP Regiões: ${responseRegions.status} ${responseRegions.statusText}`);
+    }
+    regionData.value = await responseRegions.json();
+    isLoading.value = false; // 3. Processa a resposta do Resumo da Cidade
+
+    radarData.value = [];
+    isLoadingRadars.value = false;
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("Falha ao buscar dados do mapa:", err);
+  }
+}
+
+onMounted(() => {
+  fetchData();
 });
 </script>
 
@@ -97,11 +358,10 @@ onUnmounted(() => {
   <div class="home-container">
     <main class="home-content">
       <div class="region-section">
-        <label class="region-label">Região selecionada</label>
         <div class="region-selector">
-          <select v-model="selectedRegion" class="region-dropdown">
-            <option value="São José dos Campos">São José dos Campos</option>
-          </select>
+          <button class="export-btn" :disabled="!citySummaryData" @click="showCitySummary">
+            Ver Resumo da Cidade
+          </button>
           <button class="export-btn">📊 Exportar relatório</button>
         </div>
       </div>
@@ -109,34 +369,19 @@ onUnmounted(() => {
         <div class="indices-section">
           <div class="indices-header">
             <h2>Índices</h2>
-            <div class="status-info">
-              <span v-if="isLoading" class="loading">🔄 Carregando...</span>
-              <span v-else-if="lastUpdate" class="last-update">
-                Última atualização: {{ lastUpdate }}
-              </span>
-              <span v-else class="no-update">Nenhuma atualização ainda</span>
-            </div>
           </div>
           <div class="indices-container">
-            <div :class="['index-card', 'large-card', getIndexClass(indices.geral)]">
-              <div class="index-number">{{ indices.geral }}</div>
+            <div :class="['index-card', 'large-card', getIndexClass(indiceGeral!)]">
+              <div class="index-number">{{ indiceGeral }}</div>
               <div class="index-name">Geral</div>
             </div>
-            <div :class="['index-card', 'small-card', getIndexClass(indices.trafego)]">
-              <div class="index-number">{{ indices.trafego }}</div>
+            <div :class="['index-card', 'small-card', getIndexClass(indiceTrafego!)]">
+              <div class="index-number">{{ indiceTrafego }}</div>
               <div class="index-name">Tráfego</div>
             </div>
-            <div :class="['index-card', 'small-card', getIndexClass(indices.seguranca)]">
-              <div class="index-number">{{ indices.seguranca }}</div>
+            <div :class="['index-card', 'small-card', getIndexClass(indiceSeguranca!)]">
+              <div class="index-number">{{ indiceSeguranca }}</div>
               <div class="index-name">Segurança</div>
-            </div>
-            <div :class="['index-card', 'small-card', getIndexClass(indices.acessibilidade)]">
-              <div class="index-number">{{ indices.acessibilidade }}</div>
-              <div class="index-name">Acessibilidade</div>
-            </div>
-            <div :class="['index-card', 'small-card', getIndexClass(indices.infraestrutura)]">
-              <div class="index-number">{{ indices.infraestrutura }}</div>
-              <div class="index-name">Infraestrutura</div>
             </div>
           </div>
         </div>
@@ -144,32 +389,64 @@ onUnmounted(() => {
           <div class="graph-container">
             <h2>Mapa</h2>
             <div class="image-container">
-              <img :src="mapaSjc" alt="Mapa de São José dos Campos" class="graph-image" />
+              <div class="image-container map-wrapper">
+                <MapaLeaflet
+                  v-if="!isLoading && !isLoadingRadars && regionData.length > 0"
+                  :region-data="regionData"
+                  :radar-data="radarData"
+                  :region-color-map="regionColorMap"
+                  :icone-camera="iconeCamera"
+                  @region-selected="handleRegionSelected"
+                />
+                <div
+                  v-else
+                  style="
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100%;
+                    color: #888;
+                    flex-direction: column;
+                  "
+                >
+                  <span v-if="isLoading || isLoadingRadars">Carregando dados do mapa...</span>
+                  <span v-else-if="error || errorRadars">Erro ao carregar dados.</span>
+                  <span v-else-if="regionData.length === 0">Nenhuma região encontrada.</span>
+                </div>
+              </div>
             </div>
           </div>
           <div class="graph-container graph-container-middle">
-            <select v-model="selectedVelocity" class="velocity-dropdown">
-              <option value="Velocidade">Velocidade</option>
-            </select>
-            <BaseChart
-              type="line"
-              title="Velocidade dos veículos por horário"
-              api-endpoint="/grafico-velocidade"
-              :refresh-trigger="refreshTrigger"
-              @data-updated="handleChartDataUpdated"
-              @loading-change="handleChartLoadingChange"
-              @error="handleChartError"
-            />
+            <h2>Porcentagem de veiculos da ultima Hora</h2>
+            <div class="chart-container" style="height: 300px; width: 100%">
+              <ApexCharts
+                v-if="piechartSeries.length > 0"
+                type="pie"
+                height="100%"
+                :options="pieChartOption"
+                :series="piechartSeries"
+              />
+
+              <div
+                v-else
+                style="
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  height: 100%;
+                  color: #888;
+                "
+              >
+                <span>Selecione uma região ou sem dados de contagem.</span>
+              </div>
+            </div>
           </div>
           <div class="graph-container">
-            <BaseChart
-              type="doughnut"
-              title="Percentual de veículos do dia"
-              api-endpoint="/grafico-porcentagem"
-              :refresh-trigger="refreshTrigger"
-              @data-updated="handleChartDataUpdated"
-              @loading-change="handleChartLoadingChange"
-              @error="handleChartError"
+            <ApexCharts
+              type="line"
+              height="100%"
+              :options="lineChartOption"
+              :series="linechartSeries"
             />
           </div>
         </div>

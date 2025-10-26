@@ -1,19 +1,247 @@
-.mapa-container {
+
+@use "sass:color";
+
+.page-title {
+  @include heading(large);
+  font-weight: 600;
+  color: $colorTextPrimary;
+  margin-bottom: $spacingLg;
+}
+
+.center-column {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  h3 {
+    margin-bottom: $spacingMd;
+    text-align: center;
+  }
+}
+.map-wrapper {
+  flex: 1;
+  min-height: 500px;
+  width: 100%;
+  display: flex;
+  border: 1px solid $colorBorderGray;
+  border-radius: $borderRadiusCard;
+  overflow: hidden;
+}
+
+#mapa-principal {
+  height: 100%;
   width: 100%;
 }
 
-.main-content {
-  padding: $contentPaddingMobile $contentPadding;
-  @include content-container;
+:deep(.leaflet-interactive) {
+  cursor: pointer;
 }
 
-h1 {
-  @include heading(large);
+.mapa-principal {
+  height: 600px;
+  width: 100%;
+}
+
+h2 {
+  @include heading(xsmall);
+  font-weight: 500;
   color: $colorTextSecondary;
-  margin-bottom: $cardGap;
+  margin-bottom: $spacingMd;
 }
 
-p {
-  @include paragraph(medium);
-  color: $colorTextMuted;
+.dashboard-container {
+  width: 100%;
+  overflow: auto;
+}
+
+/* Main Content */
+.dashboard-content {
+  padding: $contentPaddingMobile $contentPadding;
+}
+
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  gap: $contentPadding;
+  background-color: $colorBackgroundWhite;
+  padding: $mainContentPadding;
+  border-radius: $borderRadiusContent;
+  @include card-shadow(1);
+}
+
+
+.summary-button {
+  margin-top: $spacingMd;
+  padding: $spacingSm $spacingMd;
+  background-color: $colorStatusGreen;
+  color: $colorBackgroundWhite;
+  border: none;
+  border-radius: $borderRadiusSm;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background-color: color.scale($colorStatusGreen, $lightness: -20%);
+  }
+
+  &:disabled {
+    background-color: $colorStatusGray;
+    cursor: not-allowed;
+  }
+}
+
+.left-column {
+  @include flex-column;
+  gap: $spacingLg;
+}
+
+.widget-card {
+  background-color: $colorBackgroundWhite;
+  border-radius: $borderRadiusMd;
+  padding: $spacingLg;
+  @include card-shadow(1);
+  width: 100%;
+
+  .info-content p {
+    @include label(medium);
+    color: $colorTextPrimary;
+    line-height: 1.6;
+
+    span {
+      font-weight: 600;
+      color: $colorTextSecondary;
+    }
+  }
+
+  .chart-container {
+    width: 100%;
+    max-width: 250px;
+    margin: 0 auto;
+
+    img {
+      width: 100%;
+      height: auto;
+    }
+  }
+}
+
+
+/* Coluna Central (Nova) */
+.center-column {
+  @include flex-column;
+  height: 100%;
+}
+
+
+.image-container {
+  border-radius: $borderRadiusCard;
+  overflow: hidden;
+  @include card-shadow(1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+/* Wrapper para o componente do mapa */
+.map-wrapper {
+  width: 100%;
+  height: 100%;
+  min-height: 600px;
+
+  :deep(> *) {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+
+/* Coluna Direita (Nova) */
+.right-column {
+  @include flex-column;
+  gap: $spacingLg;
+}
+
+
+
+.index-card {
+  @include index-card-base;
+  background-color: $colorBackgroundWhite;
+  border-radius: $borderRadiusMd;
+  @include card-shadow(1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacingSm;
+  border-bottom: 4px solid;
+  padding: $spacingMd;
+  min-height: 120px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    @include card-shadow(2);
+    transform: translateY(-2px);
+  }
+}
+
+.index-number {
+  @include heading(xxlarge);
+  font-size: $fontSizeCustomXLarge;
+  font-weight: bold;
+  color: $colorTextSecondary;
+}
+
+.index-name {
+  @include label(medium);
+  color: $colorTextTertiary;
+  text-align: center;
+  font-weight: 500;
+}
+
+.gray {
+  border-bottom-color: $colorStatusGray;
+}
+.green {
+  border-bottom-color: $colorStatusGreen;
+}
+.yellow {
+  border-bottom-color: $colorStatusYellow;
+}
+.orange {
+  border-bottom-color: $colorStatusOrange;
+}
+.red {
+  border-bottom-color: $colorStatusRed;
+}
+
+
+/* DESIGN RESPONSIVO */
+@media (max-width: $breakpointTablet) {
+  .dashboard-layout {
+    grid-template-columns: 1fr;
+    gap: $spacingXl;
+  }
+
+  .map-wrapper {
+    min-height: 400px;
+  }
+
+  .right-column {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $spacingMd;
+  }
+}
+
+@media (max-width: 480px) {
+  .right-column {
+    grid-template-columns: 1fr;
+  }
+
+  .widget-card .chart-container {
+    max-width: 200px;
+  }
 }

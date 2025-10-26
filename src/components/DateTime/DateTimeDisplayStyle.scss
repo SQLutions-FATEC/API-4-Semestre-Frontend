@@ -1,0 +1,22 @@
+.datetime-display {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  color: #ccc;
+  font-family: Arial, sans-serif;
+  font-size: 0.9rem;
+  line-height: 1.2;
+}
+
+.date-label {
+  font-size: 0.8rem;
+  color: #aaa;
+  align-self: center;
+}
+
+.datetime-value {
+  color: white;
+  font-weight: 500;
+  white-space: nowrap;
+  align-self: center;
+}

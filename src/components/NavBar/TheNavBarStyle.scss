@@ -7,8 +7,13 @@
     $colorPrimaryGradientMid 80%,
     $colorPrimaryGradientEnd 100%
   );
-  padding: $spacingNone;
   height: $headerHeight;
+
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 $spacingLg;
 }
 
 .logo-section {

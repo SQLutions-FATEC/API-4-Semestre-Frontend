@@ -189,7 +189,6 @@ function showCitySummary() {
     ListaCarros.value = citySummaryData.value.ListaCarros;
   }
 }
-
 function getIndexClass(value: number): string {
   switch (value) {
     case 1:
@@ -199,6 +198,8 @@ function getIndexClass(value: number): string {
     case 3:
       return "orange";
     case 4:
+      return "dark-red";;
+    case 5:
       return "red";
     default:
       return "gray";

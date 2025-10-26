@@ -711,12 +711,12 @@ onUnmounted(() => {
               <div class="comparison-text">{{ speedComparison }} comparado a ontem</div>
             </div>
             <div :class="['index-card', 'large-card', getIndexClass(0)]">
-              <h3>Velocidade mais rápida</h3>
-              <a>{{ todayMaxSpeed }} km/h</a>
-              <h3>Local</h3>
+              <div class="index-name">Velocidade mais alta</div>
+              <div class="index-number">{{ todayMaxSpeed }} km/h</div>
+              <!-- <h3>Local</h3>
               <a>Não disponível</a>
               <h3>Hora</h3>
-              <a>Não disponível</a>
+              <a>Não disponível</a> -->
             </div>
           </div>
         </div>

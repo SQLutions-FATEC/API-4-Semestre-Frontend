@@ -31,7 +31,6 @@ function fechar() {
     @update:model-value="emit('update:modelValue', $event)"
   >
     <VCard elevation="8" class="rounded-lg pa-4">
-      <!-- Cabeçalho -->
       <div class="d-flex align-center justify-space-between mb-3">
         <div class="d-flex align-center">
           <h2 class="ml-3 mb-0" :style="{ color: corAtual }">Nível de {{ tituloAtual }}</h2>
@@ -39,16 +38,13 @@ function fechar() {
         <VBtn icon="mdi-close" variant="text" @click="fechar" />
       </div>
 
-      <!-- Abas -->
       <VTabs v-model="abaSelecionada" background-color="transparent" grow>
         <VTab value="trafego">Tráfego</VTab>
         <VTab value="seguranca">Segurança</VTab>
         <VTab value="geral">Geral</VTab>
       </VTabs>
 
-      <!-- Conteúdo -->
       <VWindow v-model="abaSelecionada">
-        <!-- TRÁFEGO -->
         <VWindowItem value="trafego">
           <div class="pa-4">
             <h3 class="text-h6 mb-2">Cálculo do Nível de Tráfego</h3>
@@ -58,7 +54,6 @@ function fechar() {
             </p>
 
             <VRow class="mt-4">
-              <!-- CLASSIFICAÇÃO -->
               <VCol cols="12" md="4">
                 <VSheet color="#fff8e1" class="pa-3 rounded-lg elevation-1 h-100">
                   <p class="font-weight-medium mb-2">Classificação dos Níveis</p>
@@ -73,7 +68,6 @@ function fechar() {
                 </VSheet>
               </VCol>
 
-              <!-- FÓRMULA E VARIÁVEIS -->
               <VCol cols="12" md="4">
                 <VSheet color="#e3f2fd" class="pa-3 rounded-lg elevation-1 h-100">
                   <p class="font-weight-medium mb-2">Fórmula e Variáveis</p>
@@ -92,7 +86,6 @@ function fechar() {
                 </VSheet>
               </VCol>
 
-              <!-- EXEMPLO -->
               <VCol cols="12" md="4">
                 <VSheet color="#e8f5e9" class="pa-3 rounded-lg elevation-1 h-100">
                   <p class="font-weight-medium mb-2">Exemplo Prático</p>
@@ -115,14 +108,12 @@ function fechar() {
           </div>
         </VWindowItem>
 
-        <!-- SEGURANÇA -->
         <VWindowItem value="seguranca">
           <div class="pa-4">
             <h3 class="text-h6 mb-2">Cálculo do Nível de Segurança</h3>
             <p>Combina a porcentagem de infrações com a média de excesso de velocidade.</p>
 
             <VRow class="mt-4">
-              <!-- CLASSIFICAÇÃO -->
               <VCol cols="12" md="4">
                 <VSheet color="#fff8e1" class="pa-3 rounded-lg elevation-1 h-100">
                   <p class="font-weight-medium mb-2">Classificação dos Níveis</p>
@@ -136,7 +127,6 @@ function fechar() {
                 </VSheet>
               </VCol>
 
-              <!-- FÓRMULA E VARIÁVEIS -->
               <VCol cols="12" md="4">
                 <VSheet color="#e3f2fd" class="pa-3 rounded-lg elevation-1 h-100">
                   <p class="font-weight-medium mb-2">Fórmula e Variáveis</p>
@@ -156,7 +146,6 @@ function fechar() {
                 </VSheet>
               </VCol>
 
-              <!-- EXEMPLO -->
               <VCol cols="12" md="4">
                 <VSheet color="#e8f5e9" class="pa-3 rounded-lg elevation-1 h-100">
                   <p class="font-weight-medium mb-2">Exemplo Prático</p>
@@ -181,14 +170,12 @@ function fechar() {
           </div>
         </VWindowItem>
 
-        <!-- GERAL -->
         <VWindowItem value="geral">
           <div class="pa-4">
             <h3 class="text-h6 mb-2">Cálculo do Nível Geral da Cidade</h3>
             <p>Média simples entre os índices de Tráfego e Segurança.</p>
 
             <VRow class="mt-4">
-              <!-- CLASSIFICAÇÃO -->
               <VCol cols="12" md="4">
                 <VSheet color="#fff8e1" class="pa-3 rounded-lg elevation-1 h-100">
                   <p class="font-weight-medium mb-2">Classificação dos Níveis</p>
@@ -202,7 +189,6 @@ function fechar() {
                 </VSheet>
               </VCol>
 
-              <!-- FÓRMULA E VARIÁVEIS -->
               <VCol cols="12" md="4">
                 <VSheet color="#e3f2fd" class="pa-3 rounded-lg elevation-1 h-100">
                   <p class="font-weight-medium mb-2">Fórmula e Variáveis</p>
@@ -222,7 +208,6 @@ function fechar() {
                 </VSheet>
               </VCol>
 
-              <!-- EXEMPLO -->
               <VCol cols="12" md="4">
                 <VSheet color="#e8f5e9" class="pa-3 rounded-lg elevation-1 h-100">
                   <p class="font-weight-medium mb-2">Exemplo Prático</p>

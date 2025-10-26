@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { RouterLink } from "vue-router";
 import logoSjc from "@/assets/logo-sjc.png";
+import DateTimeDisplay from "@/components/DateTime/DateTimeDisplay.vue";
 </script>
 
 <template>
@@ -18,6 +19,8 @@ import logoSjc from "@/assets/logo-sjc.png";
       <RouterLink to="/sobre" class="nav-item">Sobre</RouterLink>
       <RouterLink to="/cidadao" class="nav-item">Cidadão</RouterLink>
     </nav>
+
+    <DateTimeDisplay class="header-clock" />
   </header>
 </template>
 

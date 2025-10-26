@@ -106,7 +106,7 @@ const lineChartOption = computed(() => {
       },
     },
     title: {
-      text: `Velocidade durannte a ultima hora`,
+      text: `Velocidade durante a ultima hora`,
       align: "center",
       style: {
         fontSize: "16px",

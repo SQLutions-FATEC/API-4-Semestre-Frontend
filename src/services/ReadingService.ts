@@ -26,6 +26,7 @@ export interface VehicleDataParams {
   minutes?: number;
   timestamp?: string;
   regions?: string[];
+  signal?: AbortSignal;
 }
 
 const readingService = {
@@ -43,7 +44,8 @@ const readingService = {
     }
 
     return api.get<ReadingData[]>("/reading/address/region", {
-      params: requestParams
+      params: requestParams,
+      signal: params?.signal
     });
   },
 
@@ -58,7 +60,8 @@ const readingService = {
     }
 
     return api.get<ReadingData[]>("/reading", {
-      params: requestParams
+      params: requestParams,
+      signal: params?.signal
     });
   },
 };

@@ -25,6 +25,11 @@ const indexData = ref<IndexData | null>(null);
 const vehicleData = ref<ReadingData[] | null>(null);
 const dailyData = ref<DailyComparison | null>(null);
 
+// Controle de cancelamento de requisições
+let currentIndexController: AbortController | null = null;
+let currentVehicleController: AbortController | null = null;
+let currentDailyController: AbortController | null = null;
+
 const VEHICLE_COLORS = {
   "Carro": { bg: "rgba(59, 130, 246, 0.7)", border: "#3b82f6" },           // Azul
   "Moto": { bg: "rgba(34, 197, 94, 0.7)", border: "#22c55e" },             // Verde
@@ -101,6 +106,17 @@ function formatDateTimeLocal(timestamp: string): string {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
+function formatDateTimeDisplay(dateTimeString: string): string {
+  const date = new Date(dateTimeString);
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear();
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+
+  return `${day}/${month}/${year} às ${hours}:${minutes}`;
+}
+
 function getQueryParams() {
   if (startDateTime.value && endDateTime.value) {
     const start = new Date(startDateTime.value);
@@ -124,24 +140,31 @@ function getQueryParams() {
 watch(startDateTime, (newStart, oldStart) => {
   if (newStart !== oldStart && oldStart !== undefined && oldStart !== "") {
     userHasModifiedDateTime.value = true;
-    refreshAllData();
+    refreshDataWithoutDaily();
   }
 });
 
 watch(endDateTime, (newEnd, oldEnd) => {
   if (newEnd !== oldEnd && oldEnd !== undefined && oldEnd !== "") {
     userHasModifiedDateTime.value = true;
-    refreshAllData();
+    refreshDataWithoutDaily();
   }
 });
 
 function resetDateTimeFilters() {
   userHasModifiedDateTime.value = false;
   initializeDateTimePickers();
-  refreshAllData();
+  refreshDataWithoutDaily();
 }
 
 async function fetchVehicleData() {
+  if (currentVehicleController) {
+    currentVehicleController.abort();
+  }
+
+  currentVehicleController = new AbortController();
+  const signal = currentVehicleController.signal;
+
   isLoadingVehicleData.value = true;
   try {
     const queryParams = getQueryParams();
@@ -155,63 +178,118 @@ async function fetchVehicleData() {
 
     let response;
     if (selectedRegion.value === "São José dos Campos") {
-      response = await readingService.getCityData(params);
+      response = await readingService.getCityData({
+        ...params,
+        signal
+      });
     } else {
       response = await readingService.getRegionData({
         ...params,
-        regions: [selectedRegion.value]
+        regions: [selectedRegion.value],
+        signal
       });
     }
 
-    vehicleData.value = response.data;
+    if (signal.aborted) {
+      return false;
+    }
 
+    vehicleData.value = response.data;
     lastUpdate.value = new Date().toLocaleTimeString();
     return true;
-  } catch {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      return false;
+    }
     vehicleData.value = null;
     return false;
   } finally {
     isLoadingVehicleData.value = false;
+    if (currentVehicleController?.signal === signal) {
+      currentVehicleController = null;
+    }
   }
 }
 
 async function fetchIndexData() {
+  // Cancela requisição anterior se existir
+  if (currentIndexController) {
+    currentIndexController.abort();
+  }
+
+  currentIndexController = new AbortController();
+  const signal = currentIndexController.signal;
+
   isLoadingIndex.value = true;
   try {
     const queryParams = getQueryParams();
     let data: IndexData;
     if (selectedRegion.value === "São José dos Campos") {
-      data = await indexService.getCityIndex({ minutes: queryParams.indexMinutes });
+      data = await indexService.getCityIndex({
+        minutes: queryParams.indexMinutes,
+        signal
+      });
     } else {
-      data = await indexService.getRegionIndex(selectedRegion.value, { minutes: queryParams.indexMinutes });
+      data = await indexService.getRegionIndex(selectedRegion.value, {
+        minutes: queryParams.indexMinutes,
+        signal
+      });
     }
-    indexData.value = data;
 
+    if (signal.aborted) {
+      return false;
+    }
+
+    indexData.value = data;
     lastUpdate.value = new Date().toLocaleTimeString();
     return true;
-  } catch {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      return false;
+    }
     indexData.value = null;
     return false;
   } finally {
     isLoadingIndex.value = false;
+    if (currentIndexController?.signal === signal) {
+      currentIndexController = null;
+    }
   }
 }
 
 async function fetchDailyData() {
+  if (currentDailyController) {
+    currentDailyController.abort();
+  }
+
+  currentDailyController = new AbortController();
+  const signal = currentDailyController.signal;
+
   isLoadingDailyData.value = true;
   try {
     const data = await dailyDataService.getDailyComparison(selectedRegion.value);
+
+    if (signal.aborted) {
+      return false;
+    }
+
     dailyData.value = data;
 
     if (!lastUpdate.value || data.today.totalReadings > 0) {
       lastUpdate.value = new Date().toLocaleTimeString();
     }
     return true;
-  } catch {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      return false;
+    }
     dailyData.value = null;
     return false;
   } finally {
     isLoadingDailyData.value = false;
+    if (currentDailyController?.signal === signal) {
+      currentDailyController = null;
+    }
   }
 }
 
@@ -226,6 +304,19 @@ async function refreshAllData() {
 
   if (!indexDataSuccess && !vehicleDataSuccess && !dailyDataSuccess) {
     lastUpdate.value = "Erro de conexão com o servidor";
+  }
+}
+
+async function refreshDataWithoutDaily() {
+  refreshTrigger.value++;
+
+  const [indexDataSuccess, vehicleDataSuccess] = await Promise.all([
+    fetchIndexData(),
+    fetchVehicleData()
+  ]);
+
+  if (!indexDataSuccess && !vehicleDataSuccess) {
+    lastUpdate.value = "Erro de conexão com filtros aplicados";
   }
 }
 
@@ -418,6 +509,16 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
+  if (currentIndexController) {
+    currentIndexController.abort();
+  }
+  if (currentVehicleController) {
+    currentVehicleController.abort();
+  }
+  if (currentDailyController) {
+    currentDailyController.abort();
+  }
+
   if (intervalId) {
     clearInterval(intervalId);
   }
@@ -474,7 +575,7 @@ onUnmounted(() => {
           </div>
         </div>
         <div v-if="startDateTime && endDateTime" class="filter-status">
-          ⏰ Período ativo: {{ startDateTime }} até {{ endDateTime }}
+          ⏰ Período ativo: {{ formatDateTimeDisplay(startDateTime) }} até {{ formatDateTimeDisplay(endDateTime) }}
           <span v-if="!userHasModifiedDateTime" class="default-period">(padrão: 24h)</span>
         </div>
       </div>

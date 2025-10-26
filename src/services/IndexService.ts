@@ -13,7 +13,7 @@ interface AxiosError {
 }
 
 export const indexService = {
-  async getCityIndex(options?: { minutes?: number }): Promise<IndexData> {
+  async getCityIndex(options?: { minutes?: number; signal?: AbortSignal }): Promise<IndexData> {
     const startMinutes = options?.minutes || 5;
     const maxMinutes = options?.minutes || 30;
 
@@ -21,6 +21,7 @@ export const indexService = {
       try {
         const response = await api.get(`/index`, {
           params: { minutes },
+          signal: options?.signal
         });
         return response.data;
       } catch (error: unknown) {
@@ -33,7 +34,7 @@ export const indexService = {
     throw new Error('Não foi possível obter dados da cidade após tentativas');
   },
 
-  async getRegionIndex(region: string, options?: { minutes?: number }): Promise<IndexData> {
+  async getRegionIndex(region: string, options?: { minutes?: number; signal?: AbortSignal }): Promise<IndexData> {
     const startMinutes = options?.minutes || 5;
     const maxMinutes = options?.minutes || 30;
 
@@ -41,6 +42,7 @@ export const indexService = {
       try {
         const response = await api.get(`/index/region`, {
           params: { minutes, region },
+          signal: options?.signal
         });
         return response.data;
       } catch (error: unknown) {

@@ -251,20 +251,3 @@ h2 {
     width: 100%;
   }
 }
-
-.chart-container {
-  width: 100%;
-  max-width: 100%;
-  flex: 1;
-  min-height: $chartHeight;
-  min-width: 0;
-  position: relative;
-  background-color: $colorBackgroundWhite;
-  border-radius: $borderRadiusCard;
-  @include card-shadow(1);
-  padding: $spacingLg;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}

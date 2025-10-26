@@ -151,30 +151,26 @@ onUnmounted(() => {
             <select v-model="selectedVelocity" class="velocity-dropdown">
               <option value="Velocidade">Velocidade</option>
             </select>
-            <div class="chart-container">
-              <BaseChart
-                type="line"
-                title="Velocidade dos veículos por horário"
-                api-endpoint="/grafico-velocidade"
-                :refresh-trigger="refreshTrigger"
-                @data-updated="handleChartDataUpdated"
-                @loading-change="handleChartLoadingChange"
-                @error="handleChartError"
-              />
-            </div>
+            <BaseChart
+              type="line"
+              title="Velocidade dos veículos por horário"
+              api-endpoint="/grafico-velocidade"
+              :refresh-trigger="refreshTrigger"
+              @data-updated="handleChartDataUpdated"
+              @loading-change="handleChartLoadingChange"
+              @error="handleChartError"
+            />
           </div>
           <div class="graph-container">
-            <div class="chart-container">
-              <BaseChart
-                type="doughnut"
-                title="Percentual de veículos do dia"
-                api-endpoint="/grafico-porcentagem"
-                :refresh-trigger="refreshTrigger"
-                @data-updated="handleChartDataUpdated"
-                @loading-change="handleChartLoadingChange"
-                @error="handleChartError"
-              />
-            </div>
+            <BaseChart
+              type="doughnut"
+              title="Percentual de veículos do dia"
+              api-endpoint="/grafico-porcentagem"
+              :refresh-trigger="refreshTrigger"
+              @data-updated="handleChartDataUpdated"
+              @loading-change="handleChartLoadingChange"
+              @error="handleChartError"
+            />
           </div>
         </div>
       </div>

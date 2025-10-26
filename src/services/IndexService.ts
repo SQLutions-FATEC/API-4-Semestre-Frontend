@@ -13,14 +13,19 @@ interface AxiosError {
 }
 
 export const indexService = {
-  async getCityIndex(options?: { minutes?: number; signal?: AbortSignal }): Promise<IndexData> {
+  async getCityIndex(options?: { minutes?: number; timestamp?: string; signal?: AbortSignal }): Promise<IndexData> {
     const startMinutes = options?.minutes || 5;
     const maxMinutes = options?.minutes || 30;
 
     for (let minutes = startMinutes; minutes <= maxMinutes; minutes += 5) {
       try {
+        const params: Record<string, string> = { minutes: minutes.toString() };
+        if (options?.timestamp) {
+          params.timestamp = options.timestamp;
+        }
+
         const response = await api.get(`/index`, {
-          params: { minutes },
+          params,
           signal: options?.signal
         });
         return response.data;
@@ -34,14 +39,22 @@ export const indexService = {
     throw new Error('Não foi possível obter dados da cidade após tentativas');
   },
 
-  async getRegionIndex(region: string, options?: { minutes?: number; signal?: AbortSignal }): Promise<IndexData> {
+  async getRegionIndex(region: string, options?: { minutes?: number; timestamp?: string; signal?: AbortSignal }): Promise<IndexData> {
     const startMinutes = options?.minutes || 5;
     const maxMinutes = options?.minutes || 30;
 
     for (let minutes = startMinutes; minutes <= maxMinutes; minutes += 5) {
       try {
+        const params: Record<string, string> = {
+          minutes: minutes.toString(),
+          region
+        };
+        if (options?.timestamp) {
+          params.timestamp = options.timestamp;
+        }
+
         const response = await api.get(`/index/region`, {
-          params: { minutes, region },
+          params,
           signal: options?.signal
         });
         return response.data;
@@ -55,7 +68,6 @@ export const indexService = {
     throw new Error('Não foi possível obter dados da região após tentativas');
   },
 
-  // Pega o índice de um ou mais radares pelo ID
   async getRadarIndexes(radarIds: string[], minutes = 5): Promise<IndexData> {
     const response = await api.get(`/index/radar`, {
       params: { minutes, radars: radarIds },

@@ -125,15 +125,17 @@ function getQueryParams() {
 
     return {
       indexMinutes: userHasModifiedDateTime.value ? Math.min(diffInMinutes, 1440) : 5,
+      indexTimestamp: userHasModifiedDateTime.value ? timeService.convertDateTimeToServerFormat(endDateTime.value) : undefined,
       dataMinutes: diffInMinutes,
-      timestamp: timeService.convertDateTimeToServerFormat(endDateTime.value)
+      dataTimestamp: timeService.convertDateTimeToServerFormat(endDateTime.value)
     };
   }
 
   return {
     indexMinutes: 5,
+    indexTimestamp: undefined,
     dataMinutes: 1440,
-    timestamp: undefined
+    dataTimestamp: undefined
   };
 }
 
@@ -172,8 +174,8 @@ async function fetchVehicleData() {
       minutes: queryParams.dataMinutes
     };
 
-    if (queryParams.timestamp) {
-      params.timestamp = queryParams.timestamp;
+    if (queryParams.dataTimestamp) {
+      params.timestamp = queryParams.dataTimestamp;
     }
 
     let response;
@@ -212,7 +214,6 @@ async function fetchVehicleData() {
 }
 
 async function fetchIndexData() {
-  // Cancela requisição anterior se existir
   if (currentIndexController) {
     currentIndexController.abort();
   }
@@ -227,11 +228,13 @@ async function fetchIndexData() {
     if (selectedRegion.value === "São José dos Campos") {
       data = await indexService.getCityIndex({
         minutes: queryParams.indexMinutes,
+        timestamp: queryParams.indexTimestamp,
         signal
       });
     } else {
       data = await indexService.getRegionIndex(selectedRegion.value, {
         minutes: queryParams.indexMinutes,
+        timestamp: queryParams.indexTimestamp,
         signal
       });
     }

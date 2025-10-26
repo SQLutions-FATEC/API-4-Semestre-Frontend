@@ -81,7 +81,7 @@ const getChartOptions = (type: string, title: string) => {
         x: {
           title: {
             display: true,
-            text: "Horário",
+            text: "Período",
           },
           ticks: {
             autoSkip: false,
@@ -104,7 +104,7 @@ const getChartOptions = (type: string, title: string) => {
         x: {
           title: {
             display: true,
-            text: "Horário",
+            text: "Período",
           },
           ticks: {
             autoSkip: false,

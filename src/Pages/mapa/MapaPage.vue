@@ -6,5 +6,3 @@
     </main>
   </div>
 </template>
-<style lang="scss" scoped src="@/Pages/mapa/MapaPageStyle.scss">
-</style>

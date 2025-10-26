@@ -14,7 +14,7 @@ const startDateTime = ref<string>("");
 const endDateTime = ref<string>("");
 const serverTimeData = ref<TimeData | null>(null);
 const isDateTimeFilterActive = ref(false);
-const userHasModifiedDateTime = ref(false); // Rastreia se usuário modificou os filtros
+const userHasModifiedDateTime = ref(false);
 
 const isLoadingIndex = ref(false);
 const isLoadingVehicleData = ref(false);
@@ -25,7 +25,10 @@ const indexData = ref<IndexData | null>(null);
 const vehicleData = ref<ReadingData[] | null>(null);
 const dailyData = ref<DailyComparison | null>(null);
 
-// Controle de cancelamento de requisições
+const indexError = ref<string>("");
+const vehicleDataError = ref<string>("");
+const dailyDataError = ref<string>("");
+
 let currentIndexController: AbortController | null = null;
 let currentVehicleController: AbortController | null = null;
 let currentDailyController: AbortController | null = null;
@@ -106,28 +109,23 @@ function formatDateTimeLocal(timestamp: string): string {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
-function formatDateTimeDisplay(dateTimeString: string): string {
-  const date = new Date(dateTimeString);
-  const day = date.getDate().toString().padStart(2, '0');
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const year = date.getFullYear();
-  const hours = date.getHours().toString().padStart(2, '0');
-  const minutes = date.getMinutes().toString().padStart(2, '0');
-
-  return `${day}/${month}/${year} às ${hours}:${minutes}`;
-}
-
 function getQueryParams() {
   if (startDateTime.value && endDateTime.value) {
     const start = new Date(startDateTime.value);
     const end = new Date(endDateTime.value);
     const diffInMinutes = Math.floor((end.getTime() - start.getTime()) / (1000 * 60));
 
+    const indexMinutes = userHasModifiedDateTime.value ? Math.min(diffInMinutes, 1440) : 5;
+    const indexTimestamp = userHasModifiedDateTime.value ? timeService.convertDateTimeToServerFormat(endDateTime.value) : undefined;
+
+    const dataMinutes = diffInMinutes;
+    const dataTimestamp = timeService.convertDateTimeToServerFormat(endDateTime.value);
+
     return {
-      indexMinutes: userHasModifiedDateTime.value ? Math.min(diffInMinutes, 1440) : 5,
-      indexTimestamp: userHasModifiedDateTime.value ? timeService.convertDateTimeToServerFormat(endDateTime.value) : undefined,
-      dataMinutes: diffInMinutes,
-      dataTimestamp: timeService.convertDateTimeToServerFormat(endDateTime.value)
+      indexMinutes,
+      indexTimestamp,
+      dataMinutes,
+      dataTimestamp
     };
   }
 
@@ -142,6 +140,8 @@ function getQueryParams() {
 watch(startDateTime, (newStart, oldStart) => {
   if (newStart !== oldStart && oldStart !== undefined && oldStart !== "") {
     userHasModifiedDateTime.value = true;
+    indexError.value = "";
+    vehicleDataError.value = "";
     refreshDataWithoutDaily();
   }
 });
@@ -149,14 +149,19 @@ watch(startDateTime, (newStart, oldStart) => {
 watch(endDateTime, (newEnd, oldEnd) => {
   if (newEnd !== oldEnd && oldEnd !== undefined && oldEnd !== "") {
     userHasModifiedDateTime.value = true;
+    indexError.value = "";
+    vehicleDataError.value = "";
     refreshDataWithoutDaily();
   }
 });
 
 function resetDateTimeFilters() {
   userHasModifiedDateTime.value = false;
+  indexError.value = "";
+  vehicleDataError.value = "";
+  dailyDataError.value = "";
   initializeDateTimePickers();
-  refreshDataWithoutDaily();
+  refreshAllData();
 }
 
 async function fetchVehicleData() {
@@ -168,6 +173,8 @@ async function fetchVehicleData() {
   const signal = currentVehicleController.signal;
 
   isLoadingVehicleData.value = true;
+  vehicleDataError.value = "";
+
   try {
     const queryParams = getQueryParams();
     const params: { minutes: number; timestamp?: string } = {
@@ -203,7 +210,23 @@ async function fetchVehicleData() {
     if (error instanceof Error && error.name === 'AbortError') {
       return false;
     }
+
     vehicleData.value = null;
+
+    // Verificar tipo de erro
+    if (error && typeof error === 'object' && 'response' in error) {
+      const axiosError = error as { response?: { status: number } };
+      if (axiosError.response?.status === 404) {
+        vehicleDataError.value = "Não há dados para a região e o período selecionados";
+      } else if (axiosError.response?.status === 500) {
+        vehicleDataError.value = "Houve um erro ao buscar os dados";
+      } else {
+        vehicleDataError.value = "Erro de conexão com o servidor";
+      }
+    } else {
+      vehicleDataError.value = "Erro de conexão com o servidor";
+    }
+
     return false;
   } finally {
     isLoadingVehicleData.value = false;
@@ -222,35 +245,96 @@ async function fetchIndexData() {
   const signal = currentIndexController.signal;
 
   isLoadingIndex.value = true;
+  indexError.value = "";
+
   try {
     const queryParams = getQueryParams();
     let data: IndexData;
-    if (selectedRegion.value === "São José dos Campos") {
-      data = await indexService.getCityIndex({
-        minutes: queryParams.indexMinutes,
-        timestamp: queryParams.indexTimestamp,
-        signal
-      });
+
+    if (userHasModifiedDateTime.value) {
+      if (selectedRegion.value === "São José dos Campos") {
+        data = await indexService.getCityIndex({
+          minutes: queryParams.indexMinutes,
+          timestamp: queryParams.indexTimestamp,
+          signal
+        });
+      } else {
+        data = await indexService.getRegionIndex(selectedRegion.value, {
+          minutes: queryParams.indexMinutes,
+          timestamp: queryParams.indexTimestamp,
+          signal
+        });
+      }
     } else {
-      data = await indexService.getRegionIndex(selectedRegion.value, {
-        minutes: queryParams.indexMinutes,
-        timestamp: queryParams.indexTimestamp,
-        signal
-      });
+      let foundData = false;
+      let lastError: unknown = null;
+
+      for (let minutes = 5; minutes <= 30; minutes += 5) {
+        try {
+          if (selectedRegion.value === "São José dos Campos") {
+            data = await indexService.getCityIndex({
+              minutes,
+              timestamp: queryParams.indexTimestamp,
+              signal
+            });
+          } else {
+            data = await indexService.getRegionIndex(selectedRegion.value, {
+              minutes,
+              timestamp: queryParams.indexTimestamp,
+              signal
+            });
+          }
+          foundData = true;
+          break;
+        } catch (error: unknown) {
+          lastError = error;
+          if (error && typeof error === 'object' && 'response' in error) {
+            const axiosError = error as { response?: { status: number } };
+            if (axiosError.response?.status !== 404) {
+              break;
+            }
+          } else {
+            break;
+          }
+        }
+      }
+
+      if (!foundData) {
+        throw lastError;
+      }
     }
 
     if (signal.aborted) {
       return false;
     }
 
-    indexData.value = data;
+    indexData.value = data!;
     lastUpdate.value = new Date().toLocaleTimeString();
     return true;
   } catch (error: unknown) {
     if (error instanceof Error && error.name === 'AbortError') {
       return false;
     }
+
     indexData.value = null;
+
+    if (error && typeof error === 'object' && 'response' in error) {
+      const axiosError = error as { response?: { status: number } };
+      if (axiosError.response?.status === 404) {
+        if (userHasModifiedDateTime.value) {
+          indexError.value = "Não há dados para a região e o período selecionados";
+        } else {
+          indexError.value = "Não há dados para a região nos últimos 30 minutos";
+        }
+      } else if (axiosError.response?.status === 500) {
+        indexError.value = "Houve um erro ao buscar os dados";
+      } else {
+        indexError.value = "Erro de conexão com o servidor";
+      }
+    } else {
+      indexError.value = "Erro de conexão com o servidor";
+    }
+
     return false;
   } finally {
     isLoadingIndex.value = false;
@@ -269,6 +353,8 @@ async function fetchDailyData() {
   const signal = currentDailyController.signal;
 
   isLoadingDailyData.value = true;
+  dailyDataError.value = "";
+
   try {
     const data = await dailyDataService.getDailyComparison(selectedRegion.value);
 
@@ -286,7 +372,22 @@ async function fetchDailyData() {
     if (error instanceof Error && error.name === 'AbortError') {
       return false;
     }
+
     dailyData.value = null;
+
+    if (error && typeof error === 'object' && 'response' in error) {
+      const axiosError = error as { response?: { status: number } };
+      if (axiosError.response?.status === 404) {
+        dailyDataError.value = "Não há dados diários disponíveis";
+      } else if (axiosError.response?.status === 500) {
+        dailyDataError.value = "Houve um erro ao buscar os dados";
+      } else {
+        dailyDataError.value = "Erro de conexão com o servidor";
+      }
+    } else {
+      dailyDataError.value = "Erro de conexão com o servidor";
+    }
+
     return false;
   } finally {
     isLoadingDailyData.value = false;
@@ -328,6 +429,9 @@ function resetAllData() {
   vehicleData.value = null;
   dailyData.value = null;
   lastUpdate.value = "";
+  indexError.value = "";
+  vehicleDataError.value = "";
+  dailyDataError.value = "";
   isLoadingIndex.value = true;
   isLoadingVehicleData.value = true;
   isLoadingDailyData.value = true;
@@ -336,9 +440,18 @@ function resetAllData() {
 const chartDataForVolume = computed(() => {
   if (!vehicleData.value || vehicleData.value.length === 0 || isLoadingVehicleData.value) return null;
 
+  const firstDate = new Date(vehicleData.value[0].startTime);
+  const lastDate = new Date(vehicleData.value[vehicleData.value.length - 1].startTime);
+  const timeDiff = lastDate.getTime() - firstDate.getTime();
+  const daysDiff = timeDiff / (1000 * 60 * 60 * 24);
+  const isGroupedByDay = daysDiff > 3;
+
   const processedData = vehicleData.value.map(item => {
     const startTime = new Date(item.startTime);
-    const hourLabel = `${startTime.getHours().toString().padStart(2, '0')}:00`;
+
+    const label = isGroupedByDay
+      ? `${startTime.getDate().toString().padStart(2, '0')}/${(startTime.getMonth() + 1).toString().padStart(2, '0')}`
+      : `${startTime.getHours().toString().padStart(2, '0')}:00`;
 
     let vehicleCount: number;
     if (selectedVehicleType.value === "Todos") {
@@ -348,7 +461,7 @@ const chartDataForVolume = computed(() => {
     }
 
     return {
-      hour: hourLabel,
+      label,
       vehicleCount,
       timestamp: startTime.getTime()
     };
@@ -356,7 +469,7 @@ const chartDataForVolume = computed(() => {
 
   processedData.sort((a, b) => a.timestamp - b.timestamp);
 
-  const labels = processedData.map(item => item.hour);
+  const labels = processedData.map(item => item.label);
   const data = processedData.map(item => item.vehicleCount);
 
   const getVehicleColor = (vehicleType: string) => {
@@ -380,12 +493,21 @@ const chartDataForVolume = computed(() => {
 const chartDataForSpeed = computed(() => {
   if (!vehicleData.value || vehicleData.value.length === 0 || isLoadingVehicleData.value) return null;
 
+  const firstDate = new Date(vehicleData.value[0].startTime);
+  const lastDate = new Date(vehicleData.value[vehicleData.value.length - 1].startTime);
+  const timeDiff = lastDate.getTime() - firstDate.getTime();
+  const daysDiff = timeDiff / (1000 * 60 * 60 * 24);
+  const isGroupedByDay = daysDiff > 3;
+
   const processedData = vehicleData.value.map(item => {
     const startTime = new Date(item.startTime);
-    const hourLabel = `${startTime.getHours().toString().padStart(2, '0')}:00`;
+
+    const label = isGroupedByDay
+      ? `${startTime.getDate().toString().padStart(2, '0')}/${(startTime.getMonth() + 1).toString().padStart(2, '0')}`
+      : `${startTime.getHours().toString().padStart(2, '0')}:00`;
 
     return {
-      hour: hourLabel,
+      label,
       averageSpeed: item.averageSpeed,
       timestamp: startTime.getTime()
     };
@@ -393,7 +515,7 @@ const chartDataForSpeed = computed(() => {
 
   processedData.sort((a, b) => a.timestamp - b.timestamp);
 
-  const labels = processedData.map(item => item.hour);
+  const labels = processedData.map(item => item.label);
   const data = processedData.map(item => Math.round(item.averageSpeed * 100) / 100);
 
   return {
@@ -577,10 +699,6 @@ onUnmounted(() => {
             >
           </div>
         </div>
-        <div v-if="startDateTime && endDateTime" class="filter-status">
-          ⏰ Período ativo: {{ formatDateTimeDisplay(startDateTime) }} até {{ formatDateTimeDisplay(endDateTime) }}
-          <span v-if="!userHasModifiedDateTime" class="default-period">(padrão: 24h)</span>
-        </div>
       </div>
       <div class="main-content">
         <div class="graphs-section">
@@ -606,6 +724,11 @@ onUnmounted(() => {
             <div v-if="isLoadingIndex" class="indices-loading">
               <div class="chart-loading">
                 <span>🔄 Carregando índices...</span>
+              </div>
+            </div>
+            <div v-else-if="indexError" class="indices-loading">
+              <div class="chart-loading">
+                <span>❌ {{ indexError }}</span>
               </div>
             </div>
             <div v-else class="indices-loaded">
@@ -635,6 +758,9 @@ onUnmounted(() => {
                   :refresh-trigger="refreshTrigger"
                 />
               </div>
+              <div v-else-if="vehicleDataError" class="chart-loading">
+                <span>❌ {{ vehicleDataError }}</span>
+              </div>
               <div v-else class="chart-loading">
                 <span>🔄 Carregando dados de velocidade...</span>
               </div>
@@ -649,6 +775,9 @@ onUnmounted(() => {
                   :chart-data="chartDataForPercentage"
                   :refresh-trigger="refreshTrigger"
                 />
+              </div>
+              <div v-else-if="vehicleDataError" class="chart-loading">
+                <span>❌ {{ vehicleDataError }}</span>
               </div>
               <div v-else class="chart-loading">
                 <span>🔄 Carregando dados de porcentagem...</span>
@@ -678,15 +807,12 @@ onUnmounted(() => {
                   :refresh-trigger="refreshTrigger"
                 />
               </div>
+              <div v-else-if="vehicleDataError" class="chart-loading">
+                <span>❌ {{ vehicleDataError }}</span>
+              </div>
               <div v-else class="chart-loading">
                 <span>🔄 Carregando dados do volume...</span>
               </div>
-            </div>
-          </div>
-          <div class="graph-container">
-            <h2>Mapa</h2>
-            <div class="image-container">
-              <img :src="mapaSjc" alt="Mapa de São José dos Campos" class="graph-image" />
             </div>
           </div>
         </div>
@@ -697,6 +823,11 @@ onUnmounted(() => {
           <div v-if="isLoadingDailyData" class="indices-loading">
             <div class="chart-loading">
               <span>🔄 Carregando dados diários...</span>
+            </div>
+          </div>
+          <div v-else-if="dailyDataError" class="indices-loading">
+            <div class="chart-loading">
+              <span>❌ {{ dailyDataError }}</span>
             </div>
           </div>
           <div v-else class="daily-infos-container">

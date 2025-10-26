@@ -36,8 +36,8 @@ class DailyDataService {
       totalWeightedSpeed += item.averageSpeed * item.totalReadings;
       totalReadingsForSpeed += item.totalReadings;
 
-      if (item.averageSpeed > maxSpeed) {
-        maxSpeed = item.averageSpeed;
+      if (item.maxSpeed > maxSpeed) {
+        maxSpeed = item.maxSpeed;
       }
     });
 

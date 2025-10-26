@@ -4,18 +4,9 @@ import MapaLeaflet from "@/components/MapaLeaflet.vue";
 import iconeCamera from "@/assets/cam2.png";
 
 const informacoes = ref([
-  {
-    descricao: "Provável trânsito intenso na Av. dos Astronautas",
-    tipo: "trafego",
-  },
-  {
-    descricao: "Semáforo com defeito na Rua XV de Novembro",
-    tipo: "infraestrutura",
-  },
-  {
-    descricao: "Obra em andamento na Via Dutra - km 142",
-    tipo: "infraestrutura",
-  },
+  { descricao: "Provável trânsito intenso na Av. dos Astronautas", tipo: "trafego" },
+  { descricao: "Semáforo com defeito na Rua XV de Novembro", tipo: "infraestrutura" },
+  { descricao: "Obra em andamento na Via Dutra - km 142", tipo: "infraestrutura" },
 ]);
 
 // --- Mapa de Cores ---
@@ -188,6 +179,7 @@ onMounted(() => {
   fetchData();
 });
 </script>
+
 <template>
   <div class="dashboard-container">
     <main class="dashboard-content">
@@ -237,7 +229,6 @@ onMounted(() => {
           </div>
         </div>
 
-        <!-- Coluna Central: Índices -->
         <div class="center-column">
           <div class="indices-header">
             <h2>Índices</h2>
@@ -254,7 +245,6 @@ onMounted(() => {
           </div>
         </div>
 
-        <!-- Coluna Direita: Informações -->
         <div class="right-column">
           <h2>Informações</h2>
           <div class="info-cards">

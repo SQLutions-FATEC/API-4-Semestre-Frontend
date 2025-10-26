@@ -92,6 +92,7 @@ function fetchCitySummaryPromise(): Promise<boolean> {
         // Resolve a promise
         resolve(true);
       } catch (err) {
+        // eslint-disable-next-line no-console
         console.error("Falha ao buscar resumo da cidade:", err);
         citySummaryData.value = null;
         reject(err);
@@ -157,6 +158,7 @@ async function fetchData() {
 
   try {
     // 1. Executa todas as chamadas EM PARALELO
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [responseRegions, _] = await Promise.all(promises);
 
     // 2. Processa a resposta das Regiões
@@ -168,6 +170,7 @@ async function fetchData() {
 
     radarData.value = []
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error("Falha ao buscar dados do mapa:", err);
   }
 }

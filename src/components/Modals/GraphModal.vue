@@ -57,7 +57,7 @@ const navigationItems = ref([
     rectangleContent: "Estas são as colunas presentes no gráfico:",
     stats: [
       { label: "Volume de veículos", value: "Quantidade de veículos registrados" },
-      { label: "Pico Horário", value: "Horário dos registros" },
+      { label: "Hora", value: "Horário dos registros" },
     ],
     bottomTitle: "Descrição",
     bottomContent:

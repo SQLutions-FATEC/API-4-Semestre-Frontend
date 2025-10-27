@@ -6,7 +6,7 @@ import { indexService, type IndexData } from "@/services/IndexService";
 import readingService, { type ReadingData } from "@/services/ReadingService";
 import dailyDataService, { type DailyComparison } from "@/services/DailyDataService";
 import timeService, { type TimeData } from "@/services/TimeService";
-import GraphModal from "@/components/GraphModal.vue";
+import GraphModal from "@/components/Modals/GraphModal.vue";
 
 const modalOpen = ref(false);
 

@@ -1,0 +1,417 @@
+h2 {
+  @include heading(xsmall);
+  font-weight: 500;
+  color: $colorTextSecondary;
+}
+
+.dashboard-container {
+  width: 100%;
+  overflow: auto;
+}
+
+.dashboard-content {
+  padding: $contentPaddingMobile $contentPadding;
+  @include content-container;
+}
+
+.region-section {
+  margin-bottom: $spacingNone;
+}
+
+.region-label {
+  display: block;
+  @include label(small);
+  color: $colorTextMuted;
+}
+
+.region-selector {
+  @include flex-between;
+}
+
+.region-dropdown {
+  @include dropdown-base;
+  background-color: $colorBackgroundWhite;
+  border: $borderWidthThin solid $colorBorderGray;
+  border-radius: $borderRadiusSm;
+  padding: $dropdownPadding;
+  @include label(medium);
+  min-width: $dropdownMinWidth;
+  color: $colorTextPrimary;
+}
+
+.export-btn {
+  @include button-base;
+  background-color: $colorBackgroundWhite;
+  border: $borderWidthThin solid $colorBorderGray;
+  border-radius: $borderRadiusSm;
+  padding: $buttonPadding;
+  @include label(small);
+  gap: $spacingMd;
+  color: $colorTextPrimary;
+
+  &:hover {
+    background-color: $colorBackgroundHover;
+  }
+}
+
+.main-content {
+  @include flex-column;
+  gap: $contentPadding;
+  background-color: $colorBackgroundWhite;
+  padding: $mainContentPadding;
+  border-bottom-left-radius: $borderRadiusContent;
+  border-bottom-right-radius: $borderRadiusContent;
+  @include card-shadow(1);
+}
+
+.info-link-container {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+}
+
+.indices-section {
+  @include flex-column;
+  gap: $spacingMd;
+}
+
+.daily-infos-container {
+  display: flex;
+  gap: $indicesGap;
+  align-items: flex-start;
+}
+
+.indices-section {
+  @include flex-column;
+  gap: $spacingMd;
+}
+
+.indices-container {
+  padding: $spacingLg;
+  border-radius: $borderRadiusCard;
+  box-shadow: inset $spacingNone $spacingNone $shadowInsetBlur $colorShadowInset;
+}
+
+.indices-loaded {
+  display: flex;
+  gap: $indicesGap;
+  align-items: flex-start;
+}
+
+.indices-header {
+  @include flex-column;
+  gap: $spacingSm;
+}
+
+.index-card {
+  @include index-card-base;
+  background-color: $colorBackgroundWhite;
+  border-radius: $borderRadiusMd;
+  @include card-shadow(1);
+}
+
+.large-card {
+  width: $largeCardWidth;
+  height: $largeCardHeight;
+}
+
+.small-card {
+  width: $smallCardWidth;
+  height: $smallCardHeight;
+}
+
+.index-number {
+  @include heading(xxlarge);
+  font-size: $fontSizeCustomXLarge;
+  font-weight: bold;
+  color: $colorTextSecondary;
+  margin-bottom: $spacingMd;
+}
+
+.small-card .index-number {
+  @include heading(xlarge);
+  font-size: $fontSizeCustomLarge;
+  margin-bottom: $spacingSm;
+}
+
+.index-name {
+  @include label(medium);
+  color: $colorTextTertiary;
+  text-align: center;
+}
+
+.small-card .index-name {
+  @include label(small);
+}
+
+.gray {
+  border-bottom-color: $colorStatusGray;
+}
+
+.green {
+  border-bottom-color: $colorStatusGreen;
+}
+
+.yellow {
+  border-bottom-color: $colorStatusYellow;
+}
+
+.orange {
+  border-bottom-color: $colorStatusOrange;
+}
+
+.red {
+  border-bottom-color: $colorStatusRed;
+}
+
+.graphs-section {
+  display: flex;
+  gap: $cardGap;
+  align-items: stretch;
+  width: 100%;
+}
+
+.graph-container {
+  @include flex-column;
+  flex: 1 1 0;
+  gap: $spacingMd;
+  align-items: center;
+  min-height: 0;
+  min-width: 0;
+
+  h2 {
+    @include heading(xsmall);
+    color: $colorTextSecondary;
+    font-weight: 500;
+    text-align: center;
+    flex: 0 0 auto;
+  }
+}
+
+.graph-container-size-medium {
+  flex: 1.5 1 0;
+}
+
+.graph-container-size-large {
+  flex: 2 1 0;
+}
+
+.graph-container-header {
+  display: flex;
+  width: 100%;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.chart-container {
+  width: 100%;
+  max-width: 100%;
+  flex: 1;
+  min-height: $chartHeight;
+  min-width: 0;
+  position: relative;
+  background-color: $colorBackgroundWhite;
+  border-radius: $borderRadiusCard;
+  @include card-shadow(1);
+  padding: $spacingLg;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.velocity-dropdown {
+  @include dropdown-base;
+  background-color: $colorBackgroundWhite;
+  border: $borderWidthThin solid $colorBorderGray;
+  border-radius: $borderRadiusSm;
+  padding: $velocityDropdownPadding;
+  @include label(small);
+  font-size: inherit;
+  color: $colorTextPrimary;
+  align-self: flex-start;
+  flex: 0 0 auto;
+}
+
+.image-container {
+  border-radius: $borderRadiusCard;
+  overflow: hidden;
+  @include card-shadow(1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.graph-image {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  object-position: center;
+  border-radius: $borderRadiusCard;
+}
+
+.volume-chart {
+  width: 100%;
+  height: 100%;
+}
+
+/* Responsive Design */
+@media (max-width: $breakpointTablet) {
+  .home-content {
+    padding: $contentPaddingMobile;
+  }
+
+  .indices-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .small-indices {
+    grid-template-columns: 1fr;
+    width: 100%;
+    max-width: $largeCardWidth;
+  }
+
+  .region-selector {
+    flex-direction: column;
+    gap: $spacingLg;
+    align-items: flex-start;
+  }
+
+  .graphs-section {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .graph-container {
+    width: 100%;
+    max-width: 100%;
+    flex: none;
+  }
+
+  .image-container {
+    width: 100%;
+  }
+
+  .chart-container {
+    width: 100%;
+  }
+}
+
+// Estilos para loading e status
+.status-info {
+  .loading-indicator {
+    color: $colorTextMuted;
+    font-size: 0.9em;
+    margin-left: 8px;
+  }
+}
+
+.indices-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 120px;
+
+  .chart-loading {
+    text-align: center;
+    color: $colorTextMuted;
+  }
+}
+
+// Estilos para o filtro de data/hora
+.datetime-filter-section {
+  margin: $spacingLg 0;
+  padding: $spacingMd;
+  background-color: $colorBackgroundWhite;
+  border: $borderWidthThin solid $colorBorderGray;
+  border-radius: $borderRadiusSm;
+}
+
+.datetime-filter-header {
+  @include flex-between;
+  margin-bottom: $spacingMd;
+
+  h3 {
+    @include heading(xsmall);
+    font-weight: 500;
+    color: $colorTextPrimary;
+    margin: 0;
+  }
+}
+
+.reset-button {
+  @include button-base;
+  background-color: $colorBackgroundWhite;
+  border: $borderWidthThin solid $colorBorderGray;
+  border-radius: $borderRadiusSm;
+  padding: $spacingSm $spacingMd;
+  @include label(small);
+  color: $colorTextPrimary;
+  cursor: pointer;
+
+  &:hover {
+    background-color: $colorBackgroundHover;
+  }
+}
+
+.datetime-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacingMd;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.datetime-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: $spacingSm;
+
+  label {
+    @include label(small);
+    color: $colorTextMuted;
+    font-weight: 500;
+  }
+}
+
+.datetime-input {
+  @include dropdown-base;
+  background-color: $colorBackgroundWhite;
+  border: $borderWidthThin solid $colorBorderGray;
+  border-radius: $borderRadiusSm;
+  padding: $dropdownPadding;
+  @include label(medium);
+  color: $colorTextPrimary;
+
+  &:focus {
+    outline: none;
+    border-color: $colorPrimary;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+  }
+}
+
+.filter-status {
+  margin-top: $spacingMd;
+  padding: $spacingSm $spacingMd;
+  background-color: rgba(59, 130, 246, 0.1);
+  border: $borderWidthThin solid rgba(59, 130, 246, 0.2);
+  border-radius: $borderRadiusSm;
+  @include label(small);
+  color: $colorTextPrimary;
+  font-weight: 500;
+
+  .default-period {
+    color: $colorTextMuted;
+    font-weight: normal;
+    margin-left: $spacingSm;
+  }
+}

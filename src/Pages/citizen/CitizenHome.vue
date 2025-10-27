@@ -1,60 +1,114 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from "vue";
-import mapaSjc from "@/assets/mapa-sjc.png";
-
-const selectedRegion = ref("São José dos Campos");
-
-const indices = ref({
-  combinedIndex: 1,
-  trafficIndex: 1,
-  securityIndex: 1,
-  acessibilidade: 1,
-  infraestrutura: 1,
-});
+import iconeCamera from "@/assets/cam2.png";
+import MapaLeaflet from "@/components/MapaLeaflet.vue";
+import IndiceModal from "@/components/Modals/IndiceModal.vue";
+import { onMounted, ref } from "vue";
 
 const informacoes = ref([
-  {
-    descricao: "Provável trânsito intenso na Av. dos Astronautas",
-    tipo: "trafego",
-  },
-  {
-    descricao: "Semáforo com defeito na Rua XV de Novembro",
-    tipo: "infraestrutura",
-  },
-  {
-    descricao: "Obra em andamento na Via Dutra - km 142",
-    tipo: "infraestrutura",
-  },
+  { descricao: "Provável trânsito intenso na Av. dos Astronautas", tipo: "trafego" },
+  { descricao: "Semáforo com defeito na Rua XV de Novembro", tipo: "infraestrutura" },
+  { descricao: "Obra em andamento na Via Dutra - km 142", tipo: "infraestrutura" },
 ]);
 
-let intervalId: number | null = null;
+// --- Mapa de Cores ---
+const regionColorMap = {
+  Norte: "#e6194B", // Vermelho
+  Leste: "#3cb44b", // Verde
+  Centro: "#ffe119", // Amarelo
+  Sul: "#4363d8", // Azul
+  Sudeste: "#f58231", // Laranja
+  Oeste: "#911eb4", // Roxo
+  "São Francisco Xavier": "#46f0f0", // Ciano
+  default: "#a9a9a9", // Cinza Escuro (DarkGray)
+};
 
-async function fetchIndices() {
-  try {
-    const response = await fetch("http://localhost:5432/indexes?minutes=5");
-    const result = await response.json();
+// --- interfaces ---
 
-    if (result.success) {
-      indices.value = result.data;
-    } else {
-      //para caso o backend de errado
-      setDefaultIndices();
-    }
-  } catch {
-    // Se houver erro na requisiçã
-    setDefaultIndices();
-    alert("Erro ao buscar índices - valores padrão aplicados");
-  }
+interface citySummary {
+  name: string;
+  overall: number;
+  traffic: number;
+  security: number;
+  estado: string;
 }
 
-function setDefaultIndices() {
-  indices.value = {
-    combinedIndex: 1,
-    trafficIndex: 1,
-    securityIndex: 1,
-    acessibilidade: 2,
-    infraestrutura: 1,
-  };
+interface regionProps {
+  name: string;
+  overall: number;
+  traffic: number;
+  security: number;
+  estado: string;
+}
+
+// --- Estado dos Radares e Regioes (Dados da API) ---
+const radarData = ref([]);
+const regionData = ref([]);
+const isLoading = ref(true);
+const error = ref(null);
+
+// --- Refs para os dados da região clicada (Vão ser preenchidos pelo evento do mapa) ---
+const nomeRegiaoClicada = ref(<string | null>null);
+const indiceGeral = ref(<number | null>null);
+const indiceTrafego = ref(<number | null>null);
+const indiceSeguranca = ref(<number | null>null);
+const estadoRegiao = ref(<string | null>null);
+
+const citySummaryData = ref(<citySummary | null>null);
+
+// --- Função auxiliar para buscar e processar o resumo da cidade (usada no Promise.all) ---
+function fetchCitySummaryPromise(): Promise<boolean> {
+  return new Promise<boolean>((resolve, reject) => {
+    (async () => {
+      try {
+        // 1. Busca dos Índices
+        const responseIndex = await fetch("http://localhost:8080/index?minutes=10");
+        if (!responseIndex.ok) {
+          throw new Error(`Erro HTTP Índices: ${responseIndex.status}`);
+        }
+        const dataIndex = await responseIndex.json();
+
+        // 4. Formata e DEFINE os dados de resumo
+
+        citySummaryData.value = {
+          name: "Cidade Inteira",
+          overall: dataIndex.combinedIndex,
+          traffic: dataIndex.trafficIndex,
+          security: dataIndex.securityIndex,
+          estado:
+            (dataIndex.trafficIndex + dataIndex.securityIndex) / 2 == 1
+              ? "Ótimo"
+              : (dataIndex.trafficIndex + dataIndex.securityIndex) / 2 <= 3
+                ? "Bom"
+                : "Ruim",
+        };
+
+        nomeRegiaoClicada.value = citySummaryData.value.name;
+        indiceGeral.value = citySummaryData.value.overall;
+        indiceTrafego.value = citySummaryData.value.traffic;
+        indiceSeguranca.value = citySummaryData.value.security;
+        estadoRegiao.value = citySummaryData.value.estado;
+
+        // Resolve a promise
+        resolve(true);
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error("Falha ao buscar resumo da cidade:", err);
+        citySummaryData.value = null;
+        reject(err);
+      }
+    })();
+  });
+}
+
+function showCitySummary() {
+  if (citySummaryData.value) {
+    // Aplica os dados do resumo da cidade nas refs do dashboard
+    nomeRegiaoClicada.value = citySummaryData.value.name;
+    indiceGeral.value = citySummaryData.value.overall;
+    indiceTrafego.value = citySummaryData.value.traffic;
+    indiceSeguranca.value = citySummaryData.value.security;
+    estadoRegiao.value = citySummaryData.value.estado;
+  }
 }
 
 function getIndexClass(value: number): string {
@@ -66,34 +120,83 @@ function getIndexClass(value: number): string {
     case 3:
       return "orange";
     case 4:
+      return "dark-red";
+    case 5:
       return "red";
     default:
       return "gray";
   }
 }
 
-onMounted(() => {
-  fetchIndices();
-
-  //5 min
-  intervalId = setInterval(fetchIndices, 300000);
-});
-
-onUnmounted(() => {
-  if (intervalId) {
-    clearInterval(intervalId);
+// --- Função para lidar com o evento do Mapa Leaflet ---
+function handleRegionSelected(regionProps: regionProps | null) {
+  if (regionProps) {
+    // Recebe os dados da região clicada no componente filho
+    nomeRegiaoClicada.value = regionProps.name;
+    indiceGeral.value = regionProps.overall;
+    indiceTrafego.value = regionProps.traffic;
+    indiceSeguranca.value = regionProps.security;
+    estadoRegiao.value = regionProps.estado;
+  } else {
+    // Se a região for desclicada (clique no mapa vazio)
+    nomeRegiaoClicada.value = null;
+    indiceGeral.value = null;
+    indiceTrafego.value = null;
+    indiceSeguranca.value = null;
+    estadoRegiao.value = null;
   }
+}
+
+// --- Lógica de Chamadas de API ---
+async function fetchData() {
+  isLoading.value = true;
+  error.value = null;
+
+  const promises: [Promise<Response>, Promise<boolean>] = [
+    fetch("http://localhost:8080/regions"),
+    fetchCitySummaryPromise(),
+  ];
+
+  try {
+    // 1. Executa todas as chamadas EM PARALELO
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [responseRegions, _] = await Promise.all(promises);
+
+    // 2. Processa a resposta das Regiões
+    if (!responseRegions.ok) {
+      throw new Error(`Erro HTTP Regiões: ${responseRegions.status} ${responseRegions.statusText}`);
+    }
+    regionData.value = await responseRegions.json();
+    isLoading.value = false; // 3. Processa a resposta do Resumo da Cidade
+
+    radarData.value = [];
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("Falha ao buscar dados do mapa:", err);
+  }
+}
+
+const modalAberto = ref(false);
+const tipoModal = ref<"trafego" | "seguranca" | "geral">("trafego");
+
+function abrirModal(tipo: "trafego" | "seguranca" | "geral") {
+  tipoModal.value = tipo;
+  modalAberto.value = true;
+}
+
+onMounted(() => {
+  fetchData();
 });
 </script>
+
 <template>
   <div class="dashboard-container">
     <main class="dashboard-content">
       <div class="region-section">
-        <label class="region-label">Região selecionada</label>
         <div class="region-selector">
-          <select v-model="selectedRegion" class="region-dropdown">
-            <option value="São José dos Campos">São José dos Campos</option>
-          </select>
+          <button class="export-btn" :disabled="!citySummaryData" @click="showCitySummary">
+            Ver Resumo da Cidade
+          </button>
           <button class="export-btn">📊 Exportar relatório</button>
         </div>
       </div>
@@ -101,45 +204,65 @@ onUnmounted(() => {
       <div class="dashboard-layout">
         <div class="left-column">
           <div class="geral-section">
-            <div :class="['index-card', 'geral-card', getIndexClass(indices.combinedIndex)]">
-              <div class="index-number">{{ indices.combinedIndex }}</div>
+            <div
+              :class="['index-card', 'geral-card', getIndexClass(indiceGeral!)]"
+              @click="abrirModal('geral')"
+            >
+              <div class="index-number">{{ indiceGeral }}</div>
               <div class="index-name">Geral</div>
             </div>
           </div>
           <div class="map-section">
-            <h2>Mapa</h2>
-            <div class="image-container">
-              <img :src="mapaSjc" alt="Mapa de São José dos Campos" class="map-image" />
+            <h3>Mapa</h3>
+            <div class="image-container map-wrapper">
+              <MapaLeaflet
+                v-if="!isLoading && regionData.length > 0"
+                :region-data="regionData"
+                :radar-data="radarData"
+                :region-color-map="regionColorMap"
+                :icone-camera="iconeCamera"
+                @region-selected="handleRegionSelected"
+              />
+              <div
+                v-else
+                style="
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  height: 100%;
+                  color: #888;
+                  flex-direction: column;
+                "
+              >
+                <span v-if="error">Erro ao carregar dados.</span>
+                <span v-else-if="regionData.length === 0">Nenhuma região encontrada.</span>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Coluna Central: Índices -->
         <div class="center-column">
           <div class="indices-header">
-            <h2>Índices</h2>
+            <h2>Níveis</h2>
           </div>
           <div class="indices-grid">
-            <div :class="['index-card', 'medium-card', getIndexClass(indices.trafficIndex)]">
-              <div class="index-number">{{ indices.trafficIndex }}</div>
+            <div
+              :class="['index-card', 'medium-card', getIndexClass(indiceTrafego!)]"
+              @click="abrirModal('trafego')"
+            >
+              <div class="index-number">{{ indiceTrafego ?? "-" }}</div>
               <div class="index-name">Tráfego</div>
             </div>
-            <div :class="['index-card', 'medium-card', getIndexClass(indices.securityIndex)]">
-              <div class="index-number">{{ indices.securityIndex }}</div>
+            <div
+              :class="['index-card', 'medium-card', getIndexClass(indiceSeguranca!)]"
+              @click="abrirModal('seguranca')"
+            >
+              <div class="index-number">{{ indiceSeguranca ?? "-" }}</div>
               <div class="index-name">Segurança</div>
-            </div>
-            <div :class="['index-card', 'medium-card', getIndexClass(indices.acessibilidade)]">
-              <div class="index-number">{{ indices.acessibilidade }}</div>
-              <div class="index-name">Acessibilidade</div>
-            </div>
-            <div :class="['index-card', 'medium-card', getIndexClass(indices.infraestrutura)]">
-              <div class="index-number">{{ indices.infraestrutura }}</div>
-              <div class="index-name">Infraestrutura</div>
             </div>
           </div>
         </div>
 
-        <!-- Coluna Direita: Informações -->
         <div class="right-column">
           <h2>Informações</h2>
           <div class="info-cards">
@@ -149,318 +272,12 @@ onUnmounted(() => {
           </div>
         </div>
       </div>
+      <IndiceModal
+        :model-value="modalAberto"
+        :tipo="tipoModal"
+        @update:model-value="modalAberto = $event"
+      />
     </main>
   </div>
 </template>
-
-<style lang="scss" scoped>
-h2 {
-  @include heading(xsmall);
-  font-weight: 500;
-  color: $colorTextSecondary;
-}
-
-.dashboard-container {
-  width: 100%;
-  overflow: auto;
-}
-
-/* Main Content */
-.dashboard-content {
-  padding: $contentPaddingMobile $contentPadding;
-  @include content-container;
-}
-
-/* Region Section */
-.region-section {
-  margin-bottom: $spacingNone;
-}
-
-.region-label {
-  display: block;
-  @include label(small);
-  color: $colorTextMuted;
-}
-
-.region-selector {
-  @include flex-between;
-}
-
-.region-dropdown {
-  @include dropdown-base;
-  background-color: $colorBackgroundWhite;
-  border: $borderWidthThin solid $colorBorderGray;
-  border-radius: $borderRadiusSm;
-  padding: $dropdownPadding;
-  @include label(medium);
-  min-width: $dropdownMinWidth;
-  color: $colorTextPrimary;
-}
-
-.export-btn {
-  @include button-base;
-  background-color: $colorBackgroundWhite;
-  border: $borderWidthThin solid $colorBorderGray;
-  border-radius: $borderRadiusSm;
-  padding: $buttonPadding;
-  @include label(small);
-  gap: $spacingMd;
-  color: $colorTextPrimary;
-
-  &:hover {
-    background-color: $colorBackgroundHover;
-  }
-}
-
-/* Layout em 3 colunas */
-.dashboard-layout {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: $contentPadding;
-  background-color: $colorBackgroundWhite;
-  padding: $mainContentPadding;
-  border-bottom-left-radius: $borderRadiusContent;
-  border-bottom-right-radius: $borderRadiusContent;
-  @include card-shadow(1);
-}
-
-/* Coluna Esquerda */
-.left-column {
-  @include flex-column;
-  gap: $spacingLg;
-}
-
-.geral-section {
-  display: flex;
-  justify-content: center;
-}
-
-.geral-card {
-  width: 200px;
-  height: 200px;
-}
-
-.map-section {
-  @include flex-column;
-  gap: $spacingMd;
-
-  h2 {
-    text-align: center;
-  }
-}
-
-.map-image {
-  width: 100%;
-  height: auto;
-  max-height: 300px;
-  object-fit: contain;
-  border-radius: $borderRadiusCard;
-}
-
-/* Coluna Central */
-.center-column {
-  @include flex-column;
-  gap: $spacingMd;
-  height: 100%;
-}
-
-.indices-header {
-  @include flex-column;
-  gap: $spacingSm;
-  text-align: center;
-}
-
-.indices-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: $spacingMd;
-  justify-items: stretch;
-  align-items: stretch;
-  height: 100%;
-  flex: 1;
-}
-
-.medium-card {
-  width: 100%;
-  height: 100%;
-  min-height: 180px;
-  max-height: 220px;
-}
-
-/* Coluna Direita */
-.right-column {
-  @include flex-column;
-  gap: $spacingMd;
-
-  h2 {
-    text-align: center;
-  }
-}
-
-.info-cards {
-  @include flex-column;
-  gap: $spacingMd;
-}
-
-.info-card {
-  background-color: $colorBackgroundWhite;
-  border-radius: $borderRadiusMd;
-  padding: $spacingLg;
-  @include card-shadow(1);
-  border-left: 4px solid $colorStatusYellow;
-  transition: all 0.3s ease;
-
-  &:hover {
-    @include card-shadow(2);
-    transform: translateY(-2px);
-  }
-}
-
-.info-description {
-  @include label(medium);
-  color: $colorTextPrimary;
-  line-height: 1.5;
-  font-weight: 500;
-}
-
-/* Cards base */
-.index-card {
-  @include index-card-base;
-  background-color: $colorBackgroundWhite;
-  border-radius: $borderRadiusMd;
-  @include card-shadow(1);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: $spacingSm;
-  border-bottom: 4px solid;
-}
-
-.index-number {
-  @include heading(xxlarge);
-  font-size: $fontSizeCustomXLarge;
-  font-weight: bold;
-  color: $colorTextSecondary;
-}
-
-.medium-card .index-number {
-  @include heading(xxlarge);
-  font-size: 4rem;
-  font-weight: bold;
-}
-
-.index-name {
-  @include label(medium);
-  color: $colorTextTertiary;
-  text-align: center;
-}
-
-.medium-card .index-name {
-  @include label(medium);
-  font-size: 1rem;
-}
-
-/* Color variants */
-.gray {
-  border-bottom-color: $colorStatusGray;
-}
-
-.green {
-  border-bottom-color: $colorStatusGreen;
-}
-
-.yellow {
-  border-bottom-color: $colorStatusYellow;
-}
-
-.orange {
-  border-bottom-color: $colorStatusOrange;
-}
-
-.red {
-  border-bottom-color: $colorStatusRed;
-}
-
-.image-container {
-  border-radius: $borderRadiusCard;
-  overflow: hidden;
-  @include card-shadow(1);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-/* Status info */
-.status-info {
-  @include label(small);
-  text-align: center;
-
-  .loading {
-    color: $colorStatusYellow;
-  }
-
-  .last-update {
-    color: $colorTextMuted;
-  }
-
-  .no-update {
-    color: $colorTextMuted;
-  }
-}
-
-/* Responsive Design */
-@media (max-width: $breakpointTablet) {
-  .dashboard-content {
-    padding: $contentPaddingMobile;
-  }
-
-  .dashboard-layout {
-    grid-template-columns: 1fr;
-    gap: $spacingXl;
-  }
-
-  .indices-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: $spacingSm;
-    height: auto;
-  }
-
-  .medium-card {
-    width: 100%;
-    height: 140px;
-    min-height: 120px;
-  }
-
-  .medium-card .index-number {
-    font-size: 2.5rem;
-  }
-
-  .geral-card {
-    width: 150px;
-    height: 150px;
-  }
-
-  .region-selector {
-    flex-direction: column;
-    gap: $spacingLg;
-    align-items: flex-start;
-  }
-}
-
-@media (max-width: 480px) {
-  .indices-grid {
-    grid-template-columns: 1fr;
-    gap: $spacingMd;
-  }
-
-  .medium-card {
-    width: 100%;
-    height: 140px;
-  }
-
-  .medium-card .index-number {
-    font-size: 2.8rem;
-  }
-}
-</style>
+<style lang="scss" scoped src="@/Pages/citizen/CitizenHomeStyle.scss"></style>

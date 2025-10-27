@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import MapaLeaflet from "@/components/MapaLeaflet.vue";
 import iconeCamera from "@/assets/cam2.png";
+import MapaLeaflet from "@/components/MapaLeaflet.vue";
+import IndiceModal from "@/components/Modals/IndiceModal.vue";
+import { onMounted, ref } from "vue";
 
 const informacoes = ref([
   { descricao: "Provável trânsito intenso na Av. dos Astronautas", tipo: "trafego" },
@@ -38,7 +39,6 @@ interface regionProps {
   security: number;
   estado: string;
 }
-
 
 // --- Estado dos Radares e Regioes (Dados da API) ---
 const radarData = ref([]);
@@ -88,7 +88,6 @@ function fetchCitySummaryPromise(): Promise<boolean> {
         indiceSeguranca.value = citySummaryData.value.security;
         estadoRegiao.value = citySummaryData.value.estado;
 
-
         // Resolve a promise
         resolve(true);
       } catch (err) {
@@ -121,7 +120,7 @@ function getIndexClass(value: number): string {
     case 3:
       return "orange";
     case 4:
-      return "dark-red";;
+      return "dark-red";
     case 5:
       return "red";
     default:
@@ -170,11 +169,19 @@ async function fetchData() {
     regionData.value = await responseRegions.json();
     isLoading.value = false; // 3. Processa a resposta do Resumo da Cidade
 
-    radarData.value = []
+    radarData.value = [];
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error("Falha ao buscar dados do mapa:", err);
   }
+}
+
+const modalAberto = ref(false);
+const tipoModal = ref<"trafego" | "seguranca" | "geral">("trafego");
+
+function abrirModal(tipo: "trafego" | "seguranca" | "geral") {
+  tipoModal.value = tipo;
+  modalAberto.value = true;
 }
 
 onMounted(() => {
@@ -197,7 +204,10 @@ onMounted(() => {
       <div class="dashboard-layout">
         <div class="left-column">
           <div class="geral-section">
-            <div :class="['index-card', 'geral-card', getIndexClass(indiceGeral!)]">
+            <div
+              :class="['index-card', 'geral-card', getIndexClass(indiceGeral!)]"
+              @click="abrirModal('geral')"
+            >
               <div class="index-number">{{ indiceGeral }}</div>
               <div class="index-name">Geral</div>
             </div>
@@ -233,14 +243,20 @@ onMounted(() => {
 
         <div class="center-column">
           <div class="indices-header">
-            <h2>Índices</h2>
+            <h2>Níveis</h2>
           </div>
           <div class="indices-grid">
-            <div :class="['index-card', 'medium-card', getIndexClass(indiceTrafego!)]">
+            <div
+              :class="['index-card', 'medium-card', getIndexClass(indiceTrafego!)]"
+              @click="abrirModal('trafego')"
+            >
               <div class="index-number">{{ indiceTrafego ?? "-" }}</div>
               <div class="index-name">Tráfego</div>
             </div>
-            <div :class="['index-card', 'medium-card', getIndexClass(indiceSeguranca!)]">
+            <div
+              :class="['index-card', 'medium-card', getIndexClass(indiceSeguranca!)]"
+              @click="abrirModal('seguranca')"
+            >
               <div class="index-number">{{ indiceSeguranca ?? "-" }}</div>
               <div class="index-name">Segurança</div>
             </div>
@@ -256,6 +272,11 @@ onMounted(() => {
           </div>
         </div>
       </div>
+      <IndiceModal
+        :model-value="modalAberto"
+        :tipo="tipoModal"
+        @update:model-value="modalAberto = $event"
+      />
     </main>
   </div>
 </template>

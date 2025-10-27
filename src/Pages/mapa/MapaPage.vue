@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
 import iconeCamera from "@/assets/cam2.png";
 import MapaLeaflet from "@/components/MapaLeaflet.vue";
+import IndiceModal from "@/components/Modals/IndiceModal.vue";
+import { computed, onMounted, ref } from "vue";
 
 // --- Mapa de Cores ---
 const regionColorMap = {
@@ -198,7 +199,7 @@ function getIndexClass(value: number): string {
     case 3:
       return "orange";
     case 4:
-      return "dark-red";;
+      return "dark-red";
     case 5:
       return "red";
     default:
@@ -261,6 +262,14 @@ async function fetchData() {
     // eslint-disable-next-line no-console
     console.error("Falha ao buscar dados do mapa:", err);
   }
+}
+
+const modalAberto = ref(false);
+const tipoModal = ref<"trafego" | "seguranca" | "geral">("trafego");
+
+function abrirModal(tipo: "trafego" | "seguranca" | "geral") {
+  tipoModal.value = tipo;
+  modalAberto.value = true;
 }
 
 onMounted(() => {
@@ -346,22 +355,33 @@ onMounted(() => {
         </div>
 
         <div class="right-column">
-          <div :class="['index-card', getIndexClass(indiceGeral!)]">
+          <div :class="['index-card', getIndexClass(indiceGeral!)]" @click="abrirModal('trafego')">
             <span class="index-number">{{ indiceGeral ?? "-" }}</span>
             <span class="index-name">Geral</span>
           </div>
 
-          <div :class="['index-card', getIndexClass(indiceTrafego!)]">
+          <div
+            :class="['index-card', getIndexClass(indiceTrafego!)]"
+            @click="abrirModal('trafego')"
+          >
             <span class="index-number">{{ indiceTrafego ?? "-" }}</span>
             <span class="index-name">Tráfego</span>
           </div>
 
-          <div :class="['index-card', getIndexClass(indiceSeguranca!)]">
+          <div
+            :class="['index-card', getIndexClass(indiceSeguranca!)]"
+            @click="abrirModal('seguranca')"
+          >
             <span class="index-number">{{ indiceSeguranca ?? "-" }}</span>
             <span class="index-name">Segurança</span>
           </div>
         </div>
       </div>
+      <IndiceModal
+        :model-value="modalAberto"
+        :tipo="tipoModal"
+        @update:model-value="modalAberto = $event"
+      />
     </main>
   </div>
 </template>

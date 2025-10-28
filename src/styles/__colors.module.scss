@@ -1,0 +1,47 @@
+@use "sass:map";
+
+//colors
+
+//primary
+$colorPrimary: #0ea5e9;
+$colorPrimaryGradientStart: #000000;
+$colorPrimaryGradientMid: #000000;
+$colorPrimaryGradientEnd: #ff9d00;
+
+//secondary
+
+//background
+$colorBackgroundLight: #f5f5f5;
+$colorBackgroundWhite: #ffffff;
+$colorBackgroundTransparent: rgba(255, 255, 255, 0.1);
+$colorBackgroundTransparentActive: rgba(255, 255, 255, 0.15);
+$colorBackgroundYellow: #fef08a;
+$colorBackgroundHover: #f8f9fa;
+
+//border
+$colorBorderLight: rgba(255, 255, 255, 0.2);
+$colorBorderAccent: #ff9d00;
+$colorBorderGray: #ddd;
+
+//status colors
+$colorStatusGray: #9ca3af;
+$colorStatusGreen: #22c55e;
+$colorStatusYellow: #eab308;
+$colorStatusOrange: #f97316;
+$colorStatusRed: #ef4444;
+
+//shadow
+$colorShadowLight: rgba(0, 0, 0, 0.1);
+$colorShadowInset: rgba(0, 0, 0, 0.05);
+
+//icon
+
+//text
+$colorTextPrimary: #3a383a;
+$colorTextSecondary: #333;
+$colorTextTertiary: #555;
+$colorTextMuted: #666;
+$colorTextWhite: #ffffff;
+
+//brand
+$colorBrand: #ff9d00;

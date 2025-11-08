@@ -11,15 +11,17 @@ export interface VehicleTypeCounts {
 }
 
 export interface ReadingData {
-  startTime: string;
-  endTime: string;
-  readings: null;
-  totalReadings: number;
-  averageSpeed: number;
-  maxSpeed: number;
-  minSpeed: number;
-  index: null;
-  vehicleTypeCounts: VehicleTypeCounts;
+  timeInterval: string,
+  averageSpeed: number,
+  totalReadings: number,
+  endTime: string,
+  startTime: string,
+  maxSpeed: number,
+  minSpeed: number,
+  averageSpeedLimit: number,
+  speedingCount: number,
+  averageSpeedingAmount: number,
+  vehicleTypeCounts: VehicleTypeCounts,
 }
 
 export interface VehicleDataParams {
@@ -43,7 +45,7 @@ const readingService = {
       requestParams.timestamp = params.timestamp;
     }
 
-    return api.get<ReadingData[]>("/reading/address/region", {
+    return api.get<ReadingData[]>("/reading/series", {
       params: requestParams,
       signal: params?.signal
     });
@@ -59,7 +61,7 @@ const readingService = {
       requestParams.timestamp = params.timestamp;
     }
 
-    return api.get<ReadingData[]>("/reading", {
+    return api.get<ReadingData[]>("/reading/series", {
       params: requestParams,
       signal: params?.signal
     });

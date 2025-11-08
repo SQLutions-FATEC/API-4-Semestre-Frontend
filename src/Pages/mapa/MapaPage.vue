@@ -23,13 +23,16 @@ interface vehicleTypeCounts {
 }
 
 interface readings {
-  endtime: string;
-  readings: number;
-  totalreadings: number;
+  timeInterval: string;
   averageSpeed: number;
+  totalReadings: number;
+  endTime: string;
+  startTime: string;
   maxSpeed: number;
   minSpeed: number;
-  index: number;
+  averageSpeedLimit: number;
+  speedingCount: number;
+  averageSpeedingAmount: number;
   vehicleTypeCounts: vehicleTypeCounts;
 }
 
@@ -127,11 +130,11 @@ function fetchCitySummaryPromise(): Promise<boolean> {
         const dataIndex = await responseIndex.json();
 
         // 2. Busca das Leituras de Veículos
-        const responseVehicle = await fetch("http://localhost:8080/reading?minutes=60");
+        const responseVehicle = await fetch("http://localhost:8080/reading/series?minutes=59");
         if (!responseVehicle.ok) {
           throw new Error(`Erro HTTP Veículos: ${responseVehicle.status}`);
         }
-        const dataVehicleReadings = await responseVehicle.json();
+        const dataVehicleReadings: readings[] = await responseVehicle.json();
 
         // 3. AGREGAR A CONTAGEM DE VEÍCULOS
         let totalVehicleCounts: vehicleTypeCounts = {};

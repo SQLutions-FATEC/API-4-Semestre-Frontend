@@ -3,6 +3,8 @@ import iconeCamera from "@/assets/cam2.png";
 import MapaLeaflet from "@/components/MapaLeaflet.vue";
 import IndiceModal from "@/components/Modals/IndiceModal.vue";
 import { computed, onMounted, ref } from "vue";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 // --- Mapa de Cores ---
 const regionColorMap = {
@@ -362,6 +364,68 @@ function abrirModal(tipo: "trafego" | "seguranca" | "geral") {
   modalAberto.value = true;
 }
 
+async function exportarRelatorio() {
+  try {
+    const elemento = document.querySelector('.main-content') as HTMLElement;
+    if (!elemento) {
+      return;
+    }
+
+    const canvas = await html2canvas(elemento, {
+      useCORS: true,
+      allowTaint: false,
+      backgroundColor: '#ffffff',
+      // Diga ao html2canvas para ignorar o container do mapa
+      ignoreElements: (element) => {
+        // Ajuste esse seletor se necessário
+        return element.classList.contains('map-wrapper');
+      }
+    });
+
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const imgWidth = 210;
+    const pageHeight = 295;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    let heightLeft = imgHeight;
+
+    pdf.setFontSize(20);
+    pdf.text('Relatório de Monitoramento', 20, 20);
+
+    pdf.setFontSize(12);
+    const dataAtual = new Date().toLocaleDateString('pt-BR');
+    const horaAtual = new Date().toLocaleTimeString('pt-BR');
+    pdf.text(`Data: ${dataAtual}`, 20, 30);
+    pdf.text(`Hora: ${horaAtual}`, 20, 37);
+
+    if (nomeRegiaoClicada.value) {
+      pdf.text(`Região: ${nomeRegiaoClicada.value}`, 20, 44);
+    }
+
+    pdf.line(20, 50, 190, 50);
+
+    const imgData = canvas.toDataURL('image/png');
+
+    let position = 60;
+    pdf.addImage(imgData, 'PNG', 10, position, imgWidth - 20, (imgHeight * (imgWidth - 20)) / imgWidth);
+    heightLeft -= pageHeight;
+
+    while (heightLeft >= 0) {
+      position = heightLeft - imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 10, position, imgWidth - 20, (imgHeight * (imgWidth - 20)) / imgWidth);
+      heightLeft -= pageHeight;
+    }
+
+    const nomeArquivo = nomeRegiaoClicada.value
+      ? `relatorio-${nomeRegiaoClicada.value.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`
+      : `relatorio-geral-${new Date().toISOString().split('T')[0]}.pdf`;
+
+    pdf.save(nomeArquivo);
+  } catch {
+    alert('Erro ao exportar relatório. Tente novamente.');
+  }
+}
+
 onMounted(() => {
   fetchData();
 });
@@ -375,7 +439,7 @@ onMounted(() => {
           <button class="export-btn" :disabled="!citySummaryData" @click="showCitySummary">
             Ver Resumo da Cidade
           </button>
-          <button class="export-btn">📊 Exportar relatório</button>
+          <button class="export-btn" @click="exportarRelatorio">📊 Exportar relatório</button>
         </div>
       </div>
       <div class="main-content">

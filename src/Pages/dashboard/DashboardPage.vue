@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, watch } from "vue";
-import mapaSjc from "@/assets/mapa-sjc.png";
 import BaseChart from "@/components/BaseChart/BaseChart.vue";
 import { indexService, type IndexData } from "@/services/IndexService";
 import readingService from "@/services/ReadingService";
@@ -8,6 +7,7 @@ import dailyDataService, { type DailyComparison } from "@/services/DailyDataServ
 import timeService, { type TimeData } from "@/services/TimeService";
 import GraphModal from "@/components/Modals/GraphModal.vue";
 import type { ReadingAggregate } from "@/entities/ReadingAggregate";
+import { useReportExport } from "@/composables/useReportExport";
 
 const modalOpen = ref(false);
 
@@ -649,6 +649,12 @@ function getIndexClass(value: number): string {
   }
 }
 
+const { exportarRelatorio } = useReportExport();
+
+function handleExportarRelatorio() {
+  exportarRelatorio('.main-content', selectedRegion.value);
+}
+
 watch(selectedRegion, () => {
   resetAllData();
   userHasModifiedDateTime.value = false;
@@ -692,6 +698,7 @@ onUnmounted(() => {
               {{ region }}
             </option>
           </select>
+          <button class="export-btn" @click="handleExportarRelatorio">📊 Exportar relatório</button>
         </div>
       </div>
 

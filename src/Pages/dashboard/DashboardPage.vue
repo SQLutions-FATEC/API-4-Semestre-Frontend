@@ -3,10 +3,11 @@ import { ref, onMounted, onUnmounted, computed, watch } from "vue";
 import mapaSjc from "@/assets/mapa-sjc.png";
 import BaseChart from "@/components/BaseChart/BaseChart.vue";
 import { indexService, type IndexData } from "@/services/IndexService";
-import readingService, { type ReadingData } from "@/services/ReadingService";
+import readingService from "@/services/ReadingService";
 import dailyDataService, { type DailyComparison } from "@/services/DailyDataService";
 import timeService, { type TimeData } from "@/services/TimeService";
 import GraphModal from "@/components/Modals/GraphModal.vue";
+import type { ReadingAggregate } from "@/entities/ReadingAggregate";
 
 const modalOpen = ref(false);
 
@@ -33,7 +34,7 @@ const isLoadingDailyData = ref(false);
 const lastUpdate = ref<string>("");
 const refreshTrigger = ref(0);
 const indexData = ref<IndexData | null>(null);
-const vehicleData = ref<ReadingData[] | null>(null);
+const vehicleData = ref<ReadingAggregate[] | null>(null);
 const dailyData = ref<DailyComparison | null>(null);
 
 const indexError = ref<string>("");

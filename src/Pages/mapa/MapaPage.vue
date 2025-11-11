@@ -3,7 +3,8 @@ import iconeCamera from "@/assets/cam2.png";
 import MapaLeaflet from "@/components/MapaLeaflet.vue";
 import IndiceModal from "@/components/Modals/IndiceModal.vue";
 import { computed, onMounted, ref } from "vue";
-
+import type { VehicleTypeCounts } from "@/entities/VehicleTypeCounts";
+import type { ReadingAggregate } from "@/entities/ReadingAggregate";
 // --- Mapa de Cores ---
 const regionColorMap = {
   Norte: "#e6194B", // Vermelho
@@ -18,28 +19,13 @@ const regionColorMap = {
 
 // --- interfaces ---
 
-interface vehicleTypeCounts {
-  [key: string]: number;
-}
-
-interface readings {
-  endtime: string;
-  readings: number;
-  totalreadings: number;
-  averageSpeed: number;
-  maxSpeed: number;
-  minSpeed: number;
-  index: number;
-  vehicleTypeCounts: vehicleTypeCounts;
-}
-
 interface citySummary {
   name: string;
   overall: number;
   traffic: number;
   security: number;
   estado: string;
-  ListaCarros: vehicleTypeCounts;
+  ListaCarros: VehicleTypeCounts;
 }
 
 interface regionProps {
@@ -48,7 +34,7 @@ interface regionProps {
   traffic: number;
   security: number;
   estado: string;
-  ListaCarros: vehicleTypeCounts;
+  ListaCarros: VehicleTypeCounts;
 }
 // --- Estado dos Radares e Regioes (Dados da API) ---
 
@@ -65,7 +51,7 @@ const indiceGeral = ref(<number | null>null);
 const indiceTrafego = ref(<number | null>null);
 const indiceSeguranca = ref(<number | null>null);
 const estadoRegiao = ref(<string | null>null);
-const ListaCarros = ref(<vehicleTypeCounts | null>null);
+const ListaCarros = ref(<VehicleTypeCounts | null>null);
 
 const citySummaryData = ref(<citySummary | null>null);
 
@@ -127,19 +113,20 @@ function fetchCitySummaryPromise(): Promise<boolean> {
         const dataIndex = await responseIndex.json();
 
         // 2. Busca das Leituras de Veículos
-        const responseVehicle = await fetch("http://localhost:8080/reading?minutes=60");
+        const responseVehicle = await fetch("http://localhost:8080/reading/series?minutes=59");
         if (!responseVehicle.ok) {
           throw new Error(`Erro HTTP Veículos: ${responseVehicle.status}`);
         }
-        const dataVehicleReadings = await responseVehicle.json();
+        const dataVehicleReadings: ReadingAggregate[] = await responseVehicle.json();
 
         // 3. AGREGAR A CONTAGEM DE VEÍCULOS
-        let totalVehicleCounts: vehicleTypeCounts = {};
-        dataVehicleReadings.forEach((reading: readings) => {
+        let totalVehicleCounts: VehicleTypeCounts = {};
+        dataVehicleReadings.forEach((reading: ReadingAggregate) => {
           if (reading.vehicleTypeCounts) {
             for (const type in reading.vehicleTypeCounts) {
-              const count = reading.vehicleTypeCounts[type];
-              totalVehicleCounts[type] = (totalVehicleCounts[type] || 0) + count;
+              const t = type as keyof VehicleTypeCounts;
+              const count: number = reading.vehicleTypeCounts[t] || 0;
+              totalVehicleCounts[t] = (totalVehicleCounts[t] || 0) + count;
             }
           }
         });

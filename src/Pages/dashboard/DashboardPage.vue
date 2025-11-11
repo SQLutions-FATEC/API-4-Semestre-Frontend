@@ -652,7 +652,15 @@ function getIndexClass(value: number): string {
 const { exportarRelatorio } = useReportExport();
 
 function handleExportarRelatorio() {
-  exportarRelatorio('.main-content', selectedRegion.value);
+  exportarRelatorio(
+    '.main-content',
+    selectedRegion.value,
+    {
+      startDateTime: startDateTime.value,
+      endDateTime: endDateTime.value,
+      showAsRange: true
+    }
+  );
 }
 
 watch(selectedRegion, () => {

@@ -2,7 +2,15 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
 export function useReportExport() {
-  const exportarRelatorio = async (selector: string = '.main-content', regionName?: string) => {
+  const exportarRelatorio = async (
+    selector: string = '.main-content',
+    regionName?: string,
+    dateTimeInfo?: {
+      startDateTime?: string;
+      endDateTime?: string;
+      showAsRange?: boolean;
+    }
+  ) => {
     try {
       const elemento = document.querySelector(selector) as HTMLElement;
       if (!elemento) {
@@ -36,10 +44,18 @@ export function useReportExport() {
       pdf.text('Relatório de Monitoramento', margin, 20);
 
       pdf.setFontSize(12);
-      const dataAtual = new Date().toLocaleDateString('pt-BR');
-      const horaAtual = new Date().toLocaleTimeString('pt-BR');
-      pdf.text(`Data: ${dataAtual}`, margin, 30);
-      pdf.text(`Hora: ${horaAtual}`, margin, 37);
+
+      if (dateTimeInfo?.showAsRange && dateTimeInfo.startDateTime && dateTimeInfo.endDateTime) {
+        const dataInicial = new Date(dateTimeInfo.startDateTime).toLocaleString('pt-BR');
+        const dataFinal = new Date(dateTimeInfo.endDateTime).toLocaleString('pt-BR');
+        pdf.text(`Data/Hora Inicial: ${dataInicial}`, margin, 30);
+        pdf.text(`Data/Hora Final: ${dataFinal}`, margin, 37);
+      } else {
+        const dataAtual = new Date().toLocaleDateString('pt-BR');
+        const horaAtual = new Date().toLocaleTimeString('pt-BR');
+        pdf.text(`Data: ${dataAtual}`, margin, 30);
+        pdf.text(`Hora: ${horaAtual}`, margin, 37);
+      }
 
       if (regionName) {
         pdf.text(`Região: ${regionName}`, margin, 44);
@@ -71,25 +87,35 @@ export function useReportExport() {
 
       let renderedPx = 0;
 
-      const firstSliceHeightPx = Math.min(pxFirstPage, canvasHeightPx - renderedPx);
-      if (firstSliceHeightPx > 0) {
-        const firstSlice = sliceCanvas(canvas, renderedPx, firstSliceHeightPx);
+      if (canvasHeightPx <= pxFirstPage) {
+        const imgHeightMm = (canvasHeightPx * imgWidthMm) / canvasWidthPx;
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        pdf.addImage(imgData, 'JPEG', margin, headerHeight, imgWidthMm, imgHeightMm);
+      } else {
+        const firstSliceHeightPx = pxFirstPage;
+        const firstSlice = sliceCanvas(canvas, 0, firstSliceHeightPx);
         const firstData = firstSlice.toDataURL('image/jpeg', 0.95);
         const firstSliceHeightMm = (firstSliceHeightPx * imgWidthMm) / canvasWidthPx;
 
         pdf.addImage(firstData, 'JPEG', margin, headerHeight, imgWidthMm, firstSliceHeightMm);
-        renderedPx += firstSliceHeightPx;
-      }
+        renderedPx = firstSliceHeightPx;
 
-      while (renderedPx < canvasHeightPx) {
-        const sliceH = Math.min(pxOtherPage, canvasHeightPx - renderedPx);
-        const slice = sliceCanvas(canvas, renderedPx, sliceH);
-        const sliceData = slice.toDataURL('image/jpeg', 0.95);
-        const sliceHeightMm = (sliceH * imgWidthMm) / canvasWidthPx;
+        while (renderedPx < canvasHeightPx) {
+          const remainingPx = canvasHeightPx - renderedPx;
+          const sliceH = Math.min(pxOtherPage, remainingPx);
 
-        pdf.addPage();
-        pdf.addImage(sliceData, 'JPEG', margin, margin, imgWidthMm, sliceHeightMm);
-        renderedPx += sliceH;
+          if (sliceH <= 40) {
+            break;
+          }
+
+          const slice = sliceCanvas(canvas, renderedPx, sliceH);
+          const sliceData = slice.toDataURL('image/jpeg', 0.95);
+          const sliceHeightMm = (sliceH * imgWidthMm) / canvasWidthPx;
+
+          pdf.addPage();
+          pdf.addImage(sliceData, 'JPEG', margin, margin, imgWidthMm, sliceHeightMm);
+          renderedPx += sliceH;
+        }
       }
 
       const filename = `relatorio-monitoramento_${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.pdf`;

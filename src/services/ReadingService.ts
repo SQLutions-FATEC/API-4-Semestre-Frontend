@@ -1,28 +1,5 @@
 import api from "./api";
-
-export interface VehicleTypeCounts {
-  Indefinido?: number;
-  Van?: number;
-  Camionete?: number;
-  Ônibus?: number;
-  Moto?: number;
-  Carro?: number;
-  "Caminhão grande"?: number;
-}
-
-export interface ReadingData {
-  timeInterval: string,
-  averageSpeed: number,
-  totalReadings: number,
-  endTime: string,
-  startTime: string,
-  maxSpeed: number,
-  minSpeed: number,
-  averageSpeedLimit: number,
-  speedingCount: number,
-  averageSpeedingAmount: number,
-  vehicleTypeCounts: VehicleTypeCounts,
-}
+import type { ReadingAggregate } from "@/entities/ReadingAggregate";
 
 export interface VehicleDataParams {
   minutes?: number;
@@ -45,7 +22,7 @@ const readingService = {
       requestParams.timestamp = params.timestamp;
     }
 
-    return api.get<ReadingData[]>("/reading/series", {
+    return api.get<ReadingAggregate[]>("/reading/series", {
       params: requestParams,
       signal: params?.signal
     });
@@ -61,7 +38,7 @@ const readingService = {
       requestParams.timestamp = params.timestamp;
     }
 
-    return api.get<ReadingData[]>("/reading/series", {
+    return api.get<ReadingAggregate[]>("/reading/series", {
       params: requestParams,
       signal: params?.signal
     });

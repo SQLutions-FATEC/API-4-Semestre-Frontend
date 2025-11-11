@@ -1,4 +1,4 @@
-import type { Address } from "@/mock/entities/Address";
+import type { Address } from "@/entities/Address";
 import type { AxiosResponse } from "axios";
 import api from "./api";
 

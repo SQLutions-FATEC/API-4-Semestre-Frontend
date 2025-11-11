@@ -1,6 +1,6 @@
 import radarsData from "@/mock/seeds/radarSeeds.json";
 import { APIFailureWrapper, mockFlag } from "../utils";
-import type { Radar } from "@/mock/entities/Radar.ts";
+import type { Radar } from "@/entities/Radar.ts";
 
 const radars: Radar[] = [...radarsData];
 

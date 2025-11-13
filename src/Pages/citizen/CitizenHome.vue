@@ -197,7 +197,6 @@ onMounted(() => {
           <button class="export-btn" :disabled="!citySummaryData" @click="showCitySummary">
             Ver Resumo da Cidade
           </button>
-          <button class="export-btn">📊 Exportar relatório</button>
         </div>
       </div>
 

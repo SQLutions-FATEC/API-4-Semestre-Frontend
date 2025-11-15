@@ -1,16 +1,18 @@
-<!-- eslint-disable no-console -->
 <template>
   <div id="mapa-principal" />
 </template>
+
 <script setup>
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import "leaflet.heat";
 import Wkt from "wicket";
 import { onMounted, onBeforeUnmount, watch } from "vue";
 
 const props = defineProps({
   regionData: { type: Array, required: true },
   radarData: { type: Array, required: false, default: () => [] },
+  addressData: { type: Array, required: false, default: () => [] },
   regionColorMap: { type: Object, required: true },
   iconeCamera: { type: String, required: false, default: "" },
 });
@@ -25,10 +27,16 @@ const attribution = '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>
 // --- Variáveis de Instância ---
 let mapInstance = null;
 let activeLayer = null;
-let regionsLayerGroup = null; // Grupo de Regiões
-let radarsLayerGroup = null; // Grupo de Radares
-let baseTileLayer = null; // Camada de mapa base
-let layerControl = null; // NOVO: Instância do controle de camadas
+let regionsLayerGroup = null;
+let radarsLayerGroup = null;
+
+// NOVO: Três camadas de calor separadas
+let heatmapLayerBlue = null;
+let heatmapLayerOrange = null;
+let heatmapLayerRed = null;
+
+let baseTileLayer = null;
+let layerControl = null;
 
 // --- Função para selecionar/deselecionar regiões ---
 const defaultStyle = {
@@ -53,22 +61,18 @@ function selectRegion(currentProps) {
       props.regionColorMap[previousRegionName] || props.regionColorMap["default"];
 
     activeLayer.setStyle({ ...defaultStyle, fillColor: previousFillColor });
-  } // Zera o activeLayer antes de processar o novo clique, caso ele seja nulo (desclique no mapa)
-
-  activeLayer = null; // 2. LÓGICA DE MARCAR A NOVA CAMADA (SE EXISTIR)
+  }
+  activeLayer = null;
 
   if (currentProps) {
-    let currentLayer = currentProps.layer; // Se estiver sendo chamada pela inicialização (sem props.layer), encontra a camada
-
+    let currentLayer = currentProps.layer;
     if (!currentLayer && regionsLayerGroup) {
-      // ALTERADO: Adicionado check
       regionsLayerGroup.eachLayer((layer) => {
         if (layer.feature && layer.feature.properties.name === currentProps.name) {
           currentLayer = layer;
         }
       });
-    } // 2b. Aplica o destaque na camada atual e atualiza o activeLayer
-
+    }
     if (currentLayer) {
       const currentFillColor = currentProps.name
         ? props.regionColorMap[currentProps.name] || props.regionColorMap["default"]
@@ -76,10 +80,8 @@ function selectRegion(currentProps) {
 
       currentLayer.setStyle({ ...highlightStyle, fillColor: currentFillColor });
       currentLayer.bringToFront();
-
-      activeLayer = currentLayer; // Atualiza o activeLayer com a nova camada
-    } // 2c. Emite o evento para o pai
-
+      activeLayer = currentLayer;
+    } //Emite o evento para o pai
     emit("region-selected", {
       name: currentProps.name,
       overall: currentProps.overall,
@@ -89,17 +91,14 @@ function selectRegion(currentProps) {
       ListaCarros: currentProps.ListaCarros,
     });
   } else {
-    // 3. Emite o evento de desclique para o pai
+    // Emite o evento de desclique para o pai
     emit("region-selected", null);
   }
 }
 
 // --- Função para adicionar as regiões ao mapa ---
-// --- Função para adicionar as regiões ao mapa ---
 function addRegionsToMap(data) {
-  // ALTERADO: Apenas continua se o grupo de camadas já existir
-  if (!mapInstance || !regionsLayerGroup) return; // 1. Limpa as camadas antigas do grupo
-
+  if (!mapInstance || !regionsLayerGroup) return;
   regionsLayerGroup.clearLayers();
 
   const wkt = new Wkt.Wkt();
@@ -107,11 +106,7 @@ function addRegionsToMap(data) {
     try {
       wkt.read(region.areaRegiao);
       const geojsonGeometry = wkt.toJson();
-
       const estado = region.overallIndex == 1 ? "Ótimo" : region.overallIndex <= 3 ? "Bom" : "Ruim";
-
-      // ***** AQUI ESTÁ A CORREÇÃO *****
-      // O objeto properties estava com um comentário meu, agora está preenchido
       const geojsonFeature = {
         type: "Feature",
         properties: {
@@ -120,7 +115,7 @@ function addRegionsToMap(data) {
           security: region.securityIndex,
           overall: region.overallIndex,
           estado: estado,
-          ListaCarros: region.vehicleTypeCounts, // Esta linha estava faltando
+          ListaCarros: region.vehicleTypeCounts,
         },
         geometry: geojsonGeometry,
       };
@@ -132,15 +127,13 @@ function addRegionsToMap(data) {
           return { ...defaultStyle, fillColor: fillColor };
         },
         onEachFeature: function (feature, layer) {
-          const props = feature.properties; // Ao clique, EMITE e usa a própria camada do Leaflet para o destaque
-
+          const props = feature.properties;
           layer.on("click", (e) => {
-            // Passa a referência da camada Leaflet junto com as propriedades
             selectRegion({ ...props, layer: layer });
             L.DomEvent.stopPropagation(e);
           });
         },
-      }).addTo(regionsLayerGroup); // Adiciona ao Layer Group
+      }).addTo(regionsLayerGroup);
     } catch (e) {
       // eslint-disable-next-line no-console
       console.error(`Erro ao processar WKT para a região ${region.regionName}:`, e);
@@ -150,14 +143,8 @@ function addRegionsToMap(data) {
 
 // --- Adiciona os radares ao mapa ---
 function addRadarsToMap(radars) {
-  // ALTERADO: Apenas continua se o grupo de camadas já existir
-  if (!mapInstance || !radarsLayerGroup) return; // 1. Limpa as camadas antigas do grupo
-
+  if (!mapInstance || !radarsLayerGroup) return;
   radarsLayerGroup.clearLayers();
-
-  // ALTERADO: O grupo de camadas agora é criado no onMounted
-  /* if (radarsLayerGroup) { ... } else { ... }
-   */
 
   const radarIcon = L.icon({
     iconUrl: props.iconeCamera,
@@ -173,80 +160,129 @@ function addRadarsToMap(radars) {
 
       if (!isNaN(lat) && !isNaN(lon)) {
         const marker = L.marker([lat, lon], { icon: radarIcon });
-
         const popupContent =
           `<b>Endereço:</b> ${radar.address?.address ?? "N/A"}<br>` +
           `<b>Região:</b> ${radar.address?.region ?? "N/A"}<br>` +
           `<b>Velocidade Máxima:</b> ${radar.regulatedSpeed} km/h`;
         marker.bindPopup(popupContent);
-
-        marker.addTo(radarsLayerGroup); // Adiciona ao Layer Group
+        marker.addTo(radarsLayerGroup);
       }
     }
   });
 }
 
-// ALTERADO: Esta função agora SÓ atualiza os dados
+function addAddressesToMap(data) {
+  if (!mapInstance || !heatmapLayerBlue || !heatmapLayerOrange || !heatmapLayerRed) return; // 1. Cria arrays separados para cada cor
+
+  const heatPointsBlue = [];
+  const heatPointsOrange = [];
+  const heatPointsRed = [];
+
+  const fixedIntensity = 15.0;
+
+  data.forEach((address) => {
+    try {
+      const geojsonGeometry = JSON.parse(address.areaRuaGeoJson);
+
+      if (
+        geojsonGeometry.type === "LineString" &&
+        geojsonGeometry.coordinates &&
+        geojsonGeometry.coordinates.length > 0
+      ) {
+        const firstCoord = geojsonGeometry.coordinates[0];
+        const lon = firstCoord[0];
+        const lat = firstCoord[1];
+        const trafficIndex = address.trafficIndex;
+
+        if (!isNaN(lat) && !isNaN(lon)) {
+         if (trafficIndex === 3) {
+            heatPointsOrange.push([lat, lon, fixedIntensity]);
+          } else if(trafficIndex >=4) {
+            // 4 ou 5
+            heatPointsRed.push([lat, lon, fixedIntensity]);
+          }
+        }
+      }
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error(`Erro ao processar GeoJSON para ${address.nomeEndereco}:`, e);
+    }
+  });
+
+  heatmapLayerBlue.setLatLngs(heatPointsBlue);
+  heatmapLayerOrange.setLatLngs(heatPointsOrange);
+  heatmapLayerRed.setLatLngs(heatPointsRed);
+}
+
 function updateMapData() {
   addRegionsToMap(props.regionData);
   addRadarsToMap(props.radarData);
+  addAddressesToMap(props.addressData);
 }
 
-// Reage às mudanças nos dados das regiões ou radares
+// Reage às mudanças nos dados
 watch(
-  [() => props.regionData, () => props.radarData],
+  [() => props.regionData, () => props.radarData, () => props.addressData],
   () => {
-    updateMapData(); // ALTERADO: Chama a função de atualização
+    updateMapData();
   },
   { deep: true }
 );
 
 onMounted(() => {
-  // ALTERADO: Toda a lógica de criação do mapa foi movida para cá.
-  // Só cria o mapa se ele não existir
   if (!mapInstance) {
-    // 1. Cria o Mapa
+    // Cria o Mapa
     mapInstance = L.map("mapa-principal").setView(center, zoom);
 
-    // 2. Cria e adiciona a camada base (tiles)
     baseTileLayer = L.tileLayer(tileUrl, { attribution: attribution });
     baseTileLayer.addTo(mapInstance);
 
-    // 3. Cria os grupos de camadas (vazios por enquanto)
-    // E já os adiciona ao mapa para que o controle os veja
     regionsLayerGroup = L.layerGroup().addTo(mapInstance);
     radarsLayerGroup = L.layerGroup().addTo(mapInstance);
 
-    // 4. NOVO: Define os mapas base e as camadas de overlay
+    const heatOptions = {
+      radius: 50,
+      blur: 30,
+      maxZoom: 18,
+    };
+
+    heatmapLayerBlue = L.heatLayer([], {
+      ...heatOptions,
+      gradient: { 1.0: "blue" },
+    }).addTo(mapInstance);
+
+    heatmapLayerOrange = L.heatLayer([], {
+      ...heatOptions,
+      gradient: { 1.0: "orange" },
+    }).addTo(mapInstance);
+
+    heatmapLayerRed = L.heatLayer([], {
+      ...heatOptions,
+      gradient: { 1.0: "red" },
+    }).addTo(mapInstance);
+
     const baseMaps = {
       "Mapa Padrão": baseTileLayer,
-      // Você poderia adicionar outros tiles aqui, ex: "Satélite": sateliteLayer
     };
 
     const overlayMaps = {
       Regiões: regionsLayerGroup,
       Radares: radarsLayerGroup,
-    };
+      "Tráfego (Médio)": heatmapLayerOrange,
+      "Tráfego (Alto)": heatmapLayerRed,
+    }; // 6. Adiciona o controle de camadas ao mapa
 
-    // 5. NOVO: Adiciona o controle de camadas ao mapa
     layerControl = L.control.layers(baseMaps, overlayMaps).addTo(mapInstance);
-
-    // 6. Adiciona o listener de clique no mapa (para deselecionar)
-    mapInstance.on("click", () => {
-      selectRegion(null);
-    });
   }
 
-  // 7. Carrega os dados iniciais
-  updateMapData(); // Seleciona a primeira região (lógica original)
+  updateMapData();
 
   if (props.regionData.length > 0 && regionsLayerGroup) {
-    // ALTERADO: Check
     setTimeout(() => {
       regionsLayerGroup.eachLayer((layer) => {
         if (layer.feature && layer.feature.properties.name === props.regionData[0].regionName) {
           selectRegion({ ...layer.feature.properties, layer: layer });
-          return; // Para o loop
+          return;
         }
       });
     }, 100);
@@ -254,7 +290,6 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-  // NOVO: Remove o controle também
   if (layerControl) {
     layerControl.remove();
     layerControl = null;
@@ -263,10 +298,11 @@ onBeforeUnmount(() => {
     mapInstance.remove();
     mapInstance = null;
   }
-  // Grupos de camada não precisam de .remove(),
-  // pois são destruídos junto com o mapInstance
   regionsLayerGroup = null;
   radarsLayerGroup = null;
+  heatmapLayerBlue = null;
+  heatmapLayerOrange = null;
+  heatmapLayerRed = null;
   baseTileLayer = null;
 });
 </script>

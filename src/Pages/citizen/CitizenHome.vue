@@ -4,12 +4,6 @@ import MapaLeaflet from "@/components/MapaLeaflet.vue";
 import IndiceModal from "@/components/Modals/IndiceModal.vue";
 import { onMounted, ref } from "vue";
 
-const informacoes = ref([
-  { descricao: "Provável trânsito intenso na Av. dos Astronautas", tipo: "trafego" },
-  { descricao: "Semáforo com defeito na Rua XV de Novembro", tipo: "infraestrutura" },
-  { descricao: "Obra em andamento na Via Dutra - km 142", tipo: "infraestrutura" },
-]);
-
 // --- Mapa de Cores ---
 const regionColorMap = {
   Norte: "#e6194B", // Vermelho
@@ -39,8 +33,15 @@ interface regionProps {
   security: number;
   estado: string;
 }
+interface addressProps {
+  nomeEndereco: string;
+  areaRuaGeoJson: string;
+  trafficIndex: number;
+  message: string;
+}
 
 // --- Estado dos Radares e Regioes (Dados da API) ---
+const addressData = ref<addressProps[]>([]);
 const radarData = ref([]);
 const regionData = ref([]);
 const isLoading = ref(true);
@@ -152,21 +153,30 @@ async function fetchData() {
   isLoading.value = true;
   error.value = null;
 
-  const promises: [Promise<Response>, Promise<boolean>] = [
+  const promises: [Promise<Response>, Promise<boolean>, Promise<Response>] = [
     fetch("http://localhost:8080/regions"),
     fetchCitySummaryPromise(),
+    fetch("http://localhost:8080/address/heatmap"),
   ];
 
   try {
     // 1. Executa todas as chamadas EM PARALELO
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [responseRegions, _] = await Promise.all(promises);
+    const [responseRegions, _, responseAddresses] = await Promise.all(promises);
 
     // 2. Processa a resposta das Regiões
     if (!responseRegions.ok) {
       throw new Error(`Erro HTTP Regiões: ${responseRegions.status} ${responseRegions.statusText}`);
     }
     regionData.value = await responseRegions.json();
+
+    if (!responseAddresses.ok) {
+      throw new Error(
+        `Erro HTTP Endereços: ${responseAddresses.status} ${responseAddresses.statusText}`
+      );
+    }
+    addressData.value = await responseAddresses.json();
+
     isLoading.value = false; // 3. Processa a resposta do Resumo da Cidade
 
     radarData.value = [];
@@ -217,6 +227,7 @@ onMounted(() => {
             <div class="image-container map-wrapper">
               <MapaLeaflet
                 v-if="!isLoading && regionData.length > 0"
+                :address-data="addressData"
                 :region-data="regionData"
                 :radar-data="radarData"
                 :region-color-map="regionColorMap"
@@ -266,9 +277,13 @@ onMounted(() => {
         <div class="right-column">
           <h2>Informações</h2>
           <div class="info-cards">
-            <div v-for="(info, index) in informacoes" :key="index" class="info-card">
-              <div class="info-description">{{ info.descricao }}</div>
-            </div>
+            <template v-for="address in addressData" :key="address.areaRuaGeoJson">
+              <div v-if="address.trafficIndex >= 4" class="info-card">
+                <div class="info-description">
+                   {{ address.message }}.
+                </div>
+              </div>
+            </template>
           </div>
         </div>
       </div>

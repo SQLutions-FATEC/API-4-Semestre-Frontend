@@ -159,6 +159,7 @@ h2 {
   @include flex-column;
   gap: $spacingMd;
 
+
   h2 {
     text-align: center;
   }
@@ -167,6 +168,14 @@ h2 {
 .info-cards {
   @include flex-column;
   gap: $spacingMd;
+
+  max-height: 500px;
+
+  overflow-y: auto;
+
+  overflow-x: hidden;
+
+  padding-right: $spacingSm;
 }
 
 .info-card {

@@ -3,6 +3,7 @@ import iconeCamera from "@/assets/cam2.png";
 import MapaLeaflet from "@/components/MapaLeaflet.vue";
 import IndiceModal from "@/components/Modals/IndiceModal.vue";
 import { computed, onMounted, ref } from "vue";
+import { useReportExport } from "@/composables/useReportExport";
 
 // --- Mapa de Cores ---
 const regionColorMap = {
@@ -356,11 +357,17 @@ async function fetchData() {
 
 const modalAberto = ref(false);
 const tipoModal = ref<"trafego" | "seguranca" | "geral">("trafego");
+const { exportarRelatorio } = useReportExport();
 
 function abrirModal(tipo: "trafego" | "seguranca" | "geral") {
   tipoModal.value = tipo;
   modalAberto.value = true;
 }
+
+function handleExportarRelatorio() {
+  exportarRelatorio('.main-content', nomeRegiaoClicada.value || undefined);
+}
+
 
 onMounted(() => {
   fetchData();
@@ -375,7 +382,7 @@ onMounted(() => {
           <button class="export-btn" :disabled="!citySummaryData" @click="showCitySummary">
             Ver Resumo da Cidade
           </button>
-          <button class="export-btn">📊 Exportar relatório</button>
+          <button class="export-btn" @click="handleExportarRelatorio">📊 Exportar relatório</button>
         </div>
       </div>
       <div class="main-content">

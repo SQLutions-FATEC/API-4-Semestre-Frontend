@@ -2,9 +2,19 @@
 import iconeCamera from "@/assets/cam2.png";
 import MapaLeaflet from "@/components/MapaLeaflet.vue";
 import IndiceModal from "@/components/Modals/IndiceModal.vue";
-import { computed, onMounted, ref } from "vue";
+import { computed, ref } from "vue";
+import { useMapData } from "@/services/UseMapData";
 import type { VehicleTypeCounts } from "@/entities/VehicleTypeCounts";
-import type { ReadingAggregate } from "@/entities/ReadingAggregate";
+
+interface RegionProps {
+  name: string;
+  overall: number;
+  traffic: number;
+  security: number;
+  estado: string;
+  ListaCarros: VehicleTypeCounts;
+}
+
 // --- Mapa de Cores ---
 const regionColorMap = {
   Norte: "#e6194B", // Vermelho
@@ -17,35 +27,10 @@ const regionColorMap = {
   default: "#a9a9a9", // Cinza Escuro (DarkGray)
 };
 
-// --- interfaces ---
+// chama o service externo exclusivo para dados do mapa
+const { addressData, radarData, regionData, citySummaryData, isLoading, error } =
+  useMapData();
 
-interface citySummary {
-  name: string;
-  overall: number;
-  traffic: number;
-  security: number;
-  estado: string;
-  ListaCarros: VehicleTypeCounts;
-}
-
-interface regionProps {
-  name: string;
-  overall: number;
-  traffic: number;
-  security: number;
-  estado: string;
-  ListaCarros: VehicleTypeCounts;
-}
-// --- Estado dos Radares e Regioes (Dados da API) ---
-
-const radarData = ref([]);
-const isLoadingRadars = ref(true);
-const errorRadars = ref(null);
-const regionData = ref([]);
-const isLoading = ref(true);
-const error = ref(null);
-
-// --- Refs para os dados da região clicada (Vão ser preenchidos pelo evento do mapa) ---
 const nomeRegiaoClicada = ref(<string | null>null);
 const indiceGeral = ref(<number | null>null);
 const indiceTrafego = ref(<number | null>null);
@@ -53,15 +38,29 @@ const indiceSeguranca = ref(<number | null>null);
 const estadoRegiao = ref(<string | null>null);
 const ListaCarros = ref(<VehicleTypeCounts | null>null);
 
-const citySummaryData = ref(<citySummary | null>null);
+function showCitySummary() {
+  if (citySummaryData.value) {
+    nomeRegiaoClicada.value = citySummaryData.value.name;
+    indiceGeral.value = citySummaryData.value.overall;
+    indiceTrafego.value = citySummaryData.value.traffic;
+    indiceSeguranca.value = citySummaryData.value.security;
+    estadoRegiao.value = citySummaryData.value.estado;
+    ListaCarros.value = citySummaryData.value.ListaCarros;
+  }
+}
 
-// --- Para os dados do gráfico de pizza ---
+import { watch } from 'vue';
+watch(citySummaryData, (newSummary) => {
+    if (newSummary && !nomeRegiaoClicada.value) {
+        showCitySummary();
+    }
+}, { immediate: true });
+
 const piechartSeries = computed(() => {
   if (!ListaCarros.value) return [];
   return Object.values(ListaCarros.value);
 });
 
-// ... (Restante do pieChartOption) ...
 const pieChartOption = computed(() => {
   const labels = ListaCarros.value ? Object.keys(ListaCarros.value) : [];
 
@@ -100,83 +99,6 @@ const pieChartOption = computed(() => {
   };
 });
 
-// --- Função auxiliar para buscar e processar o resumo da cidade (usada no Promise.all) ---
-function fetchCitySummaryPromise(): Promise<boolean> {
-  return new Promise<boolean>((resolve, reject) => {
-    (async () => {
-      try {
-        // 1. Busca dos Índices
-        const responseIndex = await fetch("http://localhost:8080/index?minutes=10");
-        if (!responseIndex.ok) {
-          throw new Error(`Erro HTTP Índices: ${responseIndex.status}`);
-        }
-        const dataIndex = await responseIndex.json();
-
-        // 2. Busca das Leituras de Veículos
-        const responseVehicle = await fetch("http://localhost:8080/reading/series?minutes=59");
-        if (!responseVehicle.ok) {
-          throw new Error(`Erro HTTP Veículos: ${responseVehicle.status}`);
-        }
-        const dataVehicleReadings: ReadingAggregate[] = await responseVehicle.json();
-
-        // 3. AGREGAR A CONTAGEM DE VEÍCULOS
-        let totalVehicleCounts: VehicleTypeCounts = {};
-        dataVehicleReadings.forEach((reading: ReadingAggregate) => {
-          if (reading.vehicleTypeCounts) {
-            for (const type in reading.vehicleTypeCounts) {
-              const t = type as keyof VehicleTypeCounts;
-              const count: number = reading.vehicleTypeCounts[t] || 0;
-              totalVehicleCounts[t] = (totalVehicleCounts[t] || 0) + count;
-            }
-          }
-        });
-
-        // 4. Formata e DEFINE os dados de resumo
-
-        citySummaryData.value = {
-          name: "Cidade Inteira",
-          overall: dataIndex.combinedIndex,
-          traffic: dataIndex.trafficIndex,
-          security: dataIndex.securityIndex,
-          estado:
-            (dataIndex.trafficIndex + dataIndex.securityIndex) / 2 == 1
-              ? "Ótimo"
-              : (dataIndex.trafficIndex + dataIndex.securityIndex) / 2 <= 3
-                ? "Bom"
-                : "Ruim",
-          ListaCarros: totalVehicleCounts,
-        };
-
-        nomeRegiaoClicada.value = citySummaryData.value.name;
-        indiceGeral.value = citySummaryData.value.overall;
-        indiceTrafego.value = citySummaryData.value.traffic;
-        indiceSeguranca.value = citySummaryData.value.security;
-        estadoRegiao.value = citySummaryData.value.estado;
-        ListaCarros.value = citySummaryData.value.ListaCarros;
-
-        // Resolve a promise
-        resolve(true);
-      } catch (err) {
-        // eslint-disable-next-line no-console
-        console.error("Falha ao buscar resumo da cidade:", err);
-        citySummaryData.value = null;
-        reject(err);
-      }
-    })();
-  });
-}
-
-function showCitySummary() {
-  if (citySummaryData.value) {
-    // Aplica os dados do resumo da cidade nas refs do dashboard
-    nomeRegiaoClicada.value = citySummaryData.value.name;
-    indiceGeral.value = citySummaryData.value.overall;
-    indiceTrafego.value = citySummaryData.value.traffic;
-    indiceSeguranca.value = citySummaryData.value.security;
-    estadoRegiao.value = citySummaryData.value.estado;
-    ListaCarros.value = citySummaryData.value.ListaCarros;
-  }
-}
 function getIndexClass(value: number): string {
   switch (value) {
     case 1:
@@ -194,8 +116,7 @@ function getIndexClass(value: number): string {
   }
 }
 
-// --- Função para lidar com o evento do Mapa Leaflet ---
-function handleRegionSelected(regionProps: regionProps | null) {
+function handleRegionSelected(regionProps: RegionProps | null) {
   if (regionProps) {
     // Recebe os dados da região clicada no componente filho
     nomeRegiaoClicada.value = regionProps.name;
@@ -204,50 +125,6 @@ function handleRegionSelected(regionProps: regionProps | null) {
     indiceSeguranca.value = regionProps.security;
     estadoRegiao.value = regionProps.estado;
     ListaCarros.value = regionProps.ListaCarros;
-  } else {
-    // Se a região for desclicada (clique no mapa vazio)
-    nomeRegiaoClicada.value = null;
-    indiceGeral.value = null;
-    indiceTrafego.value = null;
-    indiceSeguranca.value = null;
-    estadoRegiao.value = null;
-    ListaCarros.value = null;
-  }
-}
-
-// --- Lógica de Chamadas de API ---
-async function fetchData() {
-  isLoading.value = true;
-  isLoadingRadars.value = true;
-  error.value = null;
-  errorRadars.value = null;
-
-  const promises: [Promise<Response>, Promise<boolean>, Promise<Response>] = [
-    fetch("http://localhost:8080/regions"),
-    fetchCitySummaryPromise(),
-    fetch("http://localhost:8080/radars"),
-  ];
-
-  try {
-    // 1. Executa todas as chamadas EM PARALELO
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [responseRegions, _, responseRadars] = await Promise.all(promises);
-
-    // 2. Processa a resposta das Regiões
-    if (!responseRegions.ok) {
-      throw new Error(`Erro HTTP Regiões: ${responseRegions.status} ${responseRegions.statusText}`);
-    }
-    regionData.value = await responseRegions.json();
-    isLoading.value = false; // 3. Processa a resposta do Resumo da Cidade
-
-    if (!responseRadars.ok) {
-      throw new Error(`Erro HTTP Radares: ${responseRadars.status} ${responseRadars.statusText}`);
-    }
-    radarData.value = await responseRadars.json(); // <-- Este é o passo crucial
-    isLoadingRadars.value = false;
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error("Falha ao buscar dados do mapa:", err);
   }
 }
 
@@ -258,10 +135,6 @@ function abrirModal(tipo: "trafego" | "seguranca" | "geral") {
   tipoModal.value = tipo;
   modalAberto.value = true;
 }
-
-onMounted(() => {
-  fetchData();
-});
 </script>
 
 <template>
@@ -316,7 +189,8 @@ onMounted(() => {
           <h3>Mapa</h3>
           <div class="image-container map-wrapper">
             <MapaLeaflet
-              v-if="!isLoading && !isLoadingRadars && regionData.length > 0"
+              v-if="!isLoading && regionData.length > 0"
+              :address-data="addressData"
               :region-data="regionData"
               :radar-data="radarData"
               :region-color-map="regionColorMap"
@@ -334,8 +208,8 @@ onMounted(() => {
                 flex-direction: column;
               "
             >
-              <span v-if="isLoading || isLoadingRadars">Carregando dados do mapa...</span>
-              <span v-else-if="error || errorRadars">Erro ao carregar dados.</span>
+              <span v-if="isLoading">Carregando dados do mapa...</span>
+              <span v-else-if="error">Erro ao carregar dados.</span>
               <span v-else-if="regionData.length === 0">Nenhuma região encontrada.</span>
             </div>
           </div>

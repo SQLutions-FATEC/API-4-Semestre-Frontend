@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, watch } from "vue";
-import mapaSjc from "@/assets/mapa-sjc.png";
 import BaseChart from "@/components/BaseChart/BaseChart.vue";
 import { indexService, type IndexData } from "@/services/IndexService";
 import readingService from "@/services/ReadingService";

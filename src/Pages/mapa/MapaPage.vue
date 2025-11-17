@@ -3,7 +3,7 @@ import iconeCamera from "@/assets/cam2.png";
 import MapaLeaflet from "@/components/MapaLeaflet.vue";
 import IndiceModal from "@/components/Modals/IndiceModal.vue";
 import { computed, ref } from "vue";
-import { useMapData } from "@/services/UseMapData";
+import { useMapData } from "@/services/useMapData";
 import type { VehicleTypeCounts } from "@/entities/VehicleTypeCounts";
 
 interface RegionProps {

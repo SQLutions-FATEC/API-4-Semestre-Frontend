@@ -3,8 +3,7 @@ import iconeCamera from "@/assets/cam2.png";
 import MapaLeaflet from "@/components/MapaLeaflet.vue";
 import IndiceModal from "@/components/Modals/IndiceModal.vue";
 import { computed, onMounted, ref, watch } from "vue";
-import { useMapData } from "@/services/useMapData";
-import { computed, onMounted, ref } from "vue";
+import { useMapData } from "@/composables/useMapData";
 import { useReportExport } from "@/composables/useReportExport";
 
 const regionColorMap = {

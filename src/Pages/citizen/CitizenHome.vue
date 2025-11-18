@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import iconeCamera from "@/assets/cam2.png";
+import questionMarkIcon from "@/assets/question-mark.png";
 import MapaLeaflet from "@/components/MapaLeaflet.vue";
 import IndiceModal from "@/components/Modals/IndiceModal.vue";
-import {  ref, watch } from "vue";
+import { ref, watch } from "vue";
 import { useMapData } from "@/composables/useMapData";
 
 const regionColorMap = {
@@ -23,7 +24,6 @@ interface regionProps {
   security: number;
   estado: string;
 }
-
 
 const {
   addressData, // Dados de address/heatmap
@@ -94,7 +94,6 @@ function abrirModal(tipo: "trafego" | "seguranca" | "geral") {
   modalAberto.value = true;
 }
 
-
 watch(
   citySummaryData,
   (newSummary) => {
@@ -161,7 +160,16 @@ watch(
 
         <div class="center-column">
           <div class="indices-header">
-            <h2>Níveis</h2>
+            <h2 style="display: flex; justify-content: center; gap: 16px">
+              Níveis
+              <img
+                :src="questionMarkIcon"
+                alt="?"
+                width="25"
+                lenght="25"
+                @click="abrirModal('trafego')"
+              />
+            </h2>
           </div>
           <div class="indices-grid">
             <div
@@ -186,9 +194,7 @@ watch(
           <div class="info-cards">
             <template v-for="address in addressData" :key="address.areaRuaGeoJson">
               <div v-if="address.trafficIndex >= 4" class="info-card">
-                <div class="info-description">
-                  {{ address.message }}.
-                </div>
+                <div class="info-description">{{ address.message }}.</div>
               </div>
             </template>
           </div>

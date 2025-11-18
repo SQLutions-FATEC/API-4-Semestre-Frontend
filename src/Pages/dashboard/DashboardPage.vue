@@ -8,6 +8,7 @@ import timeService, { type TimeData } from "@/services/TimeService";
 import GraphModal from "@/components/Modals/GraphModal.vue";
 import type { ReadingAggregate } from "@/entities/ReadingAggregate";
 import { useReportExport } from "@/composables/useReportExport";
+import questionMarkIcon from "@/assets/question-mark.png";
 
 const modalOpen = ref(false);
 
@@ -652,15 +653,11 @@ function getIndexClass(value: number): string {
 const { exportarRelatorio } = useReportExport();
 
 function handleExportarRelatorio() {
-  exportarRelatorio(
-    '.main-content',
-    selectedRegion.value,
-    {
-      startDateTime: startDateTime.value,
-      endDateTime: endDateTime.value,
-      showAsRange: true
-    }
-  );
+  exportarRelatorio(".main-content", selectedRegion.value, {
+    startDateTime: startDateTime.value,
+    endDateTime: endDateTime.value,
+    showAsRange: true,
+  });
 }
 
 watch(selectedRegion, () => {
@@ -870,7 +867,10 @@ onUnmounted(() => {
         </div>
         <div class="indices-section">
           <div class="indices-header">
-            <h2>Informações Diárias</h2>
+            <h2 style="display: flex; gap: 16px">
+              Informações Diárias
+              <img :src="questionMarkIcon" alt="?" width="25" lenght="25" @click="openModal" />
+            </h2>
           </div>
           <div v-if="isLoadingDailyData" class="indices-loading">
             <div class="chart-loading">

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import iconeCamera from "@/assets/cam2.png";
+import questionMarkIcon from "@/assets/question-mark.png";
 import MapaLeaflet from "@/components/MapaLeaflet.vue";
 import IndiceModal from "@/components/Modals/IndiceModal.vue";
 import { computed, onMounted, ref, watch } from "vue";
@@ -63,7 +64,6 @@ const ListaCarros = ref(<vehicleTypeCounts | null>null);
 
 const ListaSpeedTime = ref(<speedTime | null>null);
 const ListaSpeedMax = ref(<speedTime | null>null);
-
 
 const linechartSeries = computed(() => {
   if (!ListaSpeedTime.value || !ListaSpeedMax.value) return [];
@@ -221,9 +221,8 @@ function abrirModal(tipo: "trafego" | "seguranca" | "geral") {
 }
 
 function handleExportarRelatorio() {
-  exportarRelatorio('.main-content', nomeRegiaoClicada.value || undefined);
+  exportarRelatorio(".main-content", nomeRegiaoClicada.value || undefined);
 }
-
 
 onMounted(() => {
   fetchSpeedData();
@@ -254,7 +253,16 @@ watch(
       <div class="main-content">
         <div class="indices-section">
           <div class="indices-header">
-            <h2>Níveis</h2>
+            <h2 style="display: flex; gap: 16px">
+              Níveis
+              <img
+                :src="questionMarkIcon"
+                alt="?"
+                width="25"
+                lenght="25"
+                @click="abrirModal('trafego')"
+              />
+            </h2>
           </div>
           <div class="indices-container">
             <div

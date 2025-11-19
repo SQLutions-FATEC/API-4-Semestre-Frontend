@@ -16,6 +16,7 @@ import DateTimeDisplay from "@/components/DateTime/DateTimeDisplay.vue";
       <RouterLink to="/" class="nav-item">Home</RouterLink>
       <RouterLink to="/dashboards" class="nav-item">Dashboard</RouterLink>
       <RouterLink to="/mapa" class="nav-item">Mapa</RouterLink>
+      <RouterLink to="/notificacoes" class="nav-item">Avisos</RouterLink>
       <RouterLink to="/sobre" class="nav-item">Sobre</RouterLink>
       <RouterLink to="/cidadao" class="nav-item">Cidadão</RouterLink>
     </nav>

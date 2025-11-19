@@ -1,0 +1,25 @@
+h2 {
+  @include heading(xsmall);
+  font-weight: 500;
+  color: $colorTextSecondary;
+}
+
+.home-container {
+  width: 100%;
+  overflow: auto;
+}
+
+.home-content {
+  padding: $contentPaddingMobile $contentPadding;
+  @include content-container;
+}
+
+.main-content {
+  @include flex-column;
+  gap: $contentPadding;
+  background-color: $colorBackgroundWhite;
+  padding: $mainContentPadding;
+  border-radius: $borderRadiusContent;
+  @include card-shadow(1);
+}
+

@@ -1,6 +1,5 @@
 import { ref, onMounted } from "vue";
 import type { VehicleTypeCounts } from "../entities/VehicleTypeCounts";
-import type { ReadingAggregate } from "../entities/ReadingAggregate";
 
 // --- Interfaces (Reutilizáveis) ---
 
@@ -17,7 +16,7 @@ interface regionProps {
   traffic: number;
   security: number;
   estado: string;
-  ListaCarros: VehicleTypeCounts;
+  ListaCarros?: VehicleTypeCounts;
 }
 
 interface citySummary {
@@ -26,7 +25,7 @@ interface citySummary {
   traffic: number;
   security: number;
   estado: string;
-  ListaCarros: VehicleTypeCounts;
+  ListaCarros?: VehicleTypeCounts;
 }
 
 
@@ -47,23 +46,6 @@ export function useMapData() {
       }
       const dataIndex = await responseIndex.json();
 
-      const responseVehicle = await fetch("http://localhost:8080/reading/series?minutes=59");
-      if (!responseVehicle.ok) {
-        throw new Error(`Erro HTTP Veículos: ${responseVehicle.status}`);
-      }
-      const dataVehicleReadings: ReadingAggregate[] = await responseVehicle.json();
-
-      const totalVehicleCounts: VehicleTypeCounts = {};
-      dataVehicleReadings.forEach((reading: ReadingAggregate) => {
-        if (reading.vehicleTypeCounts) {
-          for (const type in reading.vehicleTypeCounts) {
-            const t = type as keyof VehicleTypeCounts;
-            const count: number = reading.vehicleTypeCounts[t] || 0;
-            totalVehicleCounts[t] = (totalVehicleCounts[t] || 0) + count;
-          }
-        }
-      });
-
       const overallAvg = (dataIndex.trafficIndex + dataIndex.securityIndex) / 2;
       const estado =
         overallAvg <= 1
@@ -78,7 +60,6 @@ export function useMapData() {
         traffic: dataIndex.trafficIndex,
         security: dataIndex.securityIndex,
         estado: estado,
-        ListaCarros: totalVehicleCounts,
       };
 
       return true; // Sucesso

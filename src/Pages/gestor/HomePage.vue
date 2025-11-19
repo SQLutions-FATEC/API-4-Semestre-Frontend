@@ -5,6 +5,7 @@ import MapaLeaflet from "@/components/MapaLeaflet.vue";
 import IndiceModal from "@/components/Modals/IndiceModal.vue";
 import { computed, onMounted, ref, watch } from "vue";
 import { useMapData } from "@/composables/useMapData";
+import { useManagerData } from "@/composables/useManagerData";
 import { useReportExport } from "@/composables/useReportExport";
 
 const regionColorMap = {
@@ -21,63 +22,50 @@ const regionColorMap = {
 interface vehicleTypeCounts {
   [key: string]: number;
 }
-interface speedTime {
-  [key: string]: number;
-}
-interface readings {
-  timeInterval: string;
-  averageSpeed: number;
-  totalReadings: number;
-  endTime: string;
-  startTime: string;
-  maxSpeed: number;
-  minSpeed: number;
-  averageSpeedLimit: number;
-  speedingCount: number;
-  averageSpeedingAmount: number;
-  vehicleTypeCounts: vehicleTypeCounts;
-}
 interface regionProps {
   name: string;
   overall: number;
   traffic: number;
   security: number;
   estado: string;
-  ListaCarros: vehicleTypeCounts;
+  ListaCarros?: vehicleTypeCounts;
 }
 
 const {
   addressData,
   radarData,
   regionData,
-  citySummaryData, // Contém ListaCarros, Overall, Traffic, Security, etc.
+  citySummaryData,
   isLoading,
   error,
 } = useMapData();
+
+const {
+  totalVehicleCounts,
+  speedMaxByTime,
+  speedAvgByTime,
+  fetchReadingData,
+} = useManagerData();
 
 const nomeRegiaoClicada = ref(<string | null>null);
 const indiceGeral = ref(<number | null>null);
 const indiceTrafego = ref(<number | null>null);
 const indiceSeguranca = ref(<number | null>null);
 const estadoRegiao = ref(<string | null>null);
-const ListaCarros = ref(<vehicleTypeCounts | null>null);
-
-const ListaSpeedTime = ref(<speedTime | null>null);
-const ListaSpeedMax = ref(<speedTime | null>null);
 
 const linechartSeries = computed(() => {
-  if (!ListaSpeedTime.value || !ListaSpeedMax.value) return [];
+  if (!speedAvgByTime.value || !speedMaxByTime.value) return [];
   return [
     {
       name: "Velocidade Média",
-      data: Object.entries(ListaSpeedTime.value!).map(([time, speed]) => ({
+      data: Object.entries(speedAvgByTime.value!).map(([time, speed]) => ({
         x: time,
         y: speed,
       })),
     },
     {
       name: "Velocidade Máxima",
-      data: Object.entries(ListaSpeedMax.value!).map(([time, speed]) => ({
+      data: Object.entries(speedMaxByTime.value!).map(([time, speed]) => ({
         x: time,
         y: speed,
       })),
@@ -105,12 +93,12 @@ const lineChartOption = computed(() => {
 });
 
 const piechartSeries = computed(() => {
-  if (!ListaCarros.value) return [];
-  return Object.values(ListaCarros.value);
+  if (!totalVehicleCounts.value || Object.keys(totalVehicleCounts.value).length === 0) return [];
+  return Object.values(totalVehicleCounts.value);
 });
 
 const pieChartOption = computed(() => {
-  const labels = ListaCarros.value ? Object.keys(ListaCarros.value) : [];
+  const labels = totalVehicleCounts.value ? Object.keys(totalVehicleCounts.value) : [];
 
   return {
     chart: { type: "pie" },
@@ -132,39 +120,6 @@ const pieChartOption = computed(() => {
   };
 });
 
-async function fetchSpeedData() {
-  try {
-    const responseVehicle = await fetch("http://localhost:8080/reading/series?minutes=59");
-    if (!responseVehicle.ok) {
-      throw new Error(`Erro HTTP Veículos: ${responseVehicle.status}`);
-    }
-    const dataVehicleReadings: readings[] = await responseVehicle.json();
-
-    // Processamento para Velocidade Máxima
-    let SpeedsTimeMax: speedTime = {};
-    dataVehicleReadings.forEach((reading: readings) => {
-      if (reading.maxSpeed && reading.endTime) {
-        const timePart = reading.endTime.split("T")[1];
-        SpeedsTimeMax[timePart] = Math.trunc(reading.maxSpeed);
-      }
-    });
-    ListaSpeedMax.value = SpeedsTimeMax;
-
-    // Processamento para Velocidade Média
-    let SpeedsTime: speedTime = {};
-    dataVehicleReadings.forEach((reading: readings) => {
-      if (reading.averageSpeed && reading.endTime) {
-        const timePart = reading.endTime.split("T")[1];
-        SpeedsTime[timePart] = Math.trunc(reading.averageSpeed);
-      }
-    });
-    ListaSpeedTime.value = SpeedsTime;
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error("Falha ao buscar dados de velocidade:", err);
-  }
-}
-
 function showCitySummary() {
   if (citySummaryData.value) {
     // Aplica os dados do resumo da cidade (do Composable) nas refs do dashboard
@@ -173,7 +128,6 @@ function showCitySummary() {
     indiceTrafego.value = citySummaryData.value.traffic;
     indiceSeguranca.value = citySummaryData.value.security;
     estadoRegiao.value = citySummaryData.value.estado;
-    ListaCarros.value = citySummaryData.value.ListaCarros;
   }
 }
 function getIndexClass(value: number): string {
@@ -200,14 +154,12 @@ function handleRegionSelected(regionProps: regionProps | null) {
     indiceTrafego.value = regionProps.traffic;
     indiceSeguranca.value = regionProps.security;
     estadoRegiao.value = regionProps.estado;
-    ListaCarros.value = regionProps.ListaCarros;
   } else {
     nomeRegiaoClicada.value = null;
     indiceGeral.value = null;
     indiceTrafego.value = null;
     indiceSeguranca.value = null;
     estadoRegiao.value = null;
-    ListaCarros.value = null;
   }
 }
 
@@ -225,7 +177,7 @@ function handleExportarRelatorio() {
 }
 
 onMounted(() => {
-  fetchSpeedData();
+  fetchReadingData();
 });
 
 watch(

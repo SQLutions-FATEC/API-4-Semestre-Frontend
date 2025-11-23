@@ -17,6 +17,7 @@ const api = axios.create({
 
 // Debug da configuração
 if (import.meta.env.DEV) {
+  // eslint-disable-next-line no-console
   console.log('🔧 API Configuration:', {
     baseURL,
     mode: import.meta.env.MODE,

@@ -77,6 +77,7 @@ const handleLogout = () => {
         <RouterLink to="/" class="nav-item">Home</RouterLink>
         <RouterLink to="/dashboards" class="nav-item">Dashboard</RouterLink>
         <RouterLink to="/mapa" class="nav-item">Mapa</RouterLink>
+        <RouterLink to="/gerir-usuarios" class="nav-item">Usuários</RouterLink>
       </template>
     </nav>    <div class="header-actions">
       <DateTimeDisplay class="header-clock" />

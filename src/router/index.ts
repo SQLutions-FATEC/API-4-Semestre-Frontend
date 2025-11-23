@@ -36,6 +36,12 @@ const router = createRouter({
       meta: { requiresAuth: false },
     },
     {
+      path: "/gerir-usuarios",
+      name: "GerirUsuarios",
+      component: () => import("../Pages/users/UserManagement.vue"),
+      meta: { requiresAuth: true },
+    },
+    {
       path: "/:pathMatch(.*)*",
       name: "NotFound",
       redirect: { name: "Cidadao" },

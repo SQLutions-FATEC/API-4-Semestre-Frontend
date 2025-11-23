@@ -363,6 +363,11 @@ const handleUserSubmit = async () => {
   } catch (error: any) {
     console.error('Erro ao salvar usuário:', error);
 
+    if (error instanceof Error && !error.response && !error.code) {
+      userError.value = error.message;
+      return;
+    }
+
     // Tratamento baseado na nova estrutura de erro do backend
     if (error.response?.status === 401) {
       // Backend retorna {"error": "Unauthorized", "message": "..."}

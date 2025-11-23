@@ -12,6 +12,7 @@ interface UpdateUserPayload {
   name: string;
   email: string;
   password?: string; // Opcional na edição
+  role?: string;
 }
 
 const userService = {
@@ -20,11 +21,17 @@ const userService = {
   create: (payload: Omit<CreateUserPayload, 'role'>) => {
     const createPayload: CreateUserPayload = {
       ...payload,
-      role: "Gestor" // Sempre "Gestor"
+      role: "Gestor"
     };
     return api.post<User>("/users", createPayload);
   },
-  update: (userId: number, payload: UpdateUserPayload) => api.put<User>(`/users/${userId}`, payload),
+  update: (userId: number, payload: UpdateUserPayload) => {
+    const updatePayload: UpdateUserPayload = {
+      ...payload,
+      role: payload.role || "Gestor"
+    };
+    return api.put<User>(`/users/${userId}`, updatePayload);
+  },
   delete: (userId: number) => api.delete<void>(`/users/${userId}`),
 };
 

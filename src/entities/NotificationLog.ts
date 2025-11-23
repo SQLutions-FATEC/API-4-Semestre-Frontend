@@ -1,11 +1,15 @@
+import type { User } from "./User";
 export interface NotificationLog {
   id: number;
-  messageText: string;
-  chatId: string;
-  success: boolean;
-  errorDetails: string | null;
+  user?: User;
+  message: string;
+  reportText?: string;
   indexType: string;
-  indexValue: number | null;
-  startAt: string | null;
-  completedAt: string | null;
+  indexValue: number;
+  emissionDate: string;
+  completionDate?: string;
 }
+
+export type NotificationLogUpdate = Partial<
+  Omit<NotificationLog, "id" | "user" | "reportText" | "completionDate">
+>;

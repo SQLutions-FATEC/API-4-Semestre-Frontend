@@ -1,12 +1,31 @@
 import api from "./api";
 import type { User } from "@/entities/User";
 
+interface CreateUserPayload {
+  name: string;
+  email: string;
+  password: string;
+  role: string;
+}
+
+interface UpdateUserPayload {
+  name: string;
+  email: string;
+  password?: string; // Opcional na edição
+}
+
 const userService = {
-  get: (userId: number) => api.get<User>(`/user/${userId}`),
-  getAll: () => api.get<User[]>("/user"),
-  create: (payload: Omit<User, "id">) => api.post<User>("/user", payload),
-  edit: (payload: User) => api.put<User>(`/user/${payload.id}`, payload),
-  delete: (userId: number) => api.delete<void>(`/user/${userId}`),
+  get: (userId: number) => api.get<User>(`/users/${userId}`),
+  getAll: () => api.get<User[]>("/users"),
+  create: (payload: Omit<CreateUserPayload, 'role'>) => {
+    const createPayload: CreateUserPayload = {
+      ...payload,
+      role: "Gestor" // Sempre "Gestor"
+    };
+    return api.post<User>("/users", createPayload);
+  },
+  update: (userId: number, payload: UpdateUserPayload) => api.put<User>(`/users/${userId}`, payload),
+  delete: (userId: number) => api.delete<void>(`/users/${userId}`),
 };
 
 export default userService;

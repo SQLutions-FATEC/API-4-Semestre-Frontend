@@ -27,11 +27,14 @@ class AuthService {
       return response.data;
     } catch (error: unknown) {
       if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as { response?: { status?: number; data?: { message?: string } } };
+        const axiosError = error as { response?: { status?: number; data?: { error?: string; message?: string } } };
+
+        // Com a nova estrutura do backend: {"error": "...", "message": "..."}
         if (axiosError.response?.status === 401) {
-          throw new Error('Credenciais inválidas');
+          // Backend retorna mensagens específicas como "Email não encontrado" ou "Senha incorreta"
+          throw new Error(axiosError.response.data?.message || 'Credenciais inválidas');
         } else if (axiosError.response?.status === 400) {
-          throw new Error('Dados de login inválidos');
+          throw new Error(axiosError.response.data?.message || 'Dados de login inválidos');
         } else if (axiosError.response?.data?.message) {
           throw new Error(axiosError.response.data.message);
         }
@@ -99,13 +102,22 @@ class AuthService {
       const payload = JSON.parse(atob(token.split('.')[1]));
       const now = Math.floor(Date.now() / 1000);
 
-      if (payload.exp && payload.exp < now) {
+      // Adiciona uma margem de 30 segundos para evitar problemas de timing
+      if (payload.exp && payload.exp < (now + 30)) {
+        if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
+          console.log('🔒 Token expirado ou prestes a expirar, removendo...');
+        }
         // Token expirado, remove dados
         this.removeToken();
         this.removeUserData();
         return false;
       }
     } catch (error) {
+      if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
+        console.log('🔒 Token inválido, removendo...', error);
+      }
       // Token inválido
       this.removeToken();
       this.removeUserData();

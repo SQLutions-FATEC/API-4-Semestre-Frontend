@@ -8,6 +8,12 @@
       </button>
     </header>
 
+    <!-- Mensagem de Sucesso -->
+    <div v-if="successMessage" class="success-notification">
+      <span class="success-icon">✓</span>
+      {{ successMessage }}
+    </div>
+
     <div class="user-list-container">
       <div class="user-table">
         <div class="table-header">
@@ -42,8 +48,15 @@
         </div>
       </div>
 
-      <div v-if="users.length === 0" class="empty-state">
-        <p>Nenhum usuário encontrado</p>
+      <div v-if="users.length === 0 && !loading" class="empty-state">
+        <div v-if="loadingError" class="error-state">
+          <p class="error-message">{{ loadingError }}</p>
+          <button class="btn-primary" @click="loadUsers">
+            <span class="icon">↻</span>
+            Tentar Novamente
+          </button>
+        </div>
+        <p v-else>Nenhum usuário encontrado</p>
       </div>
     </div>
 
@@ -167,10 +180,16 @@
 import { ref, onMounted } from 'vue';
 import type { User } from '@/entities/User';
 import { UserLevel } from '@/entities/UserLevel';
+import UserService from '@/services/UserService';
+import { useAuth } from '@/composables/useAuth';
+
+// Usar o composable de auth para verificar estado
+const { isAuthenticated, initializeAuth } = useAuth();
 
 // Estado da página
 const users = ref<User[]>([]);
 const loading = ref(false);
+const loadingError = ref('');
 
 // Estado dos modais
 const showUserModal = ref(false);
@@ -192,31 +211,37 @@ const editingUserId = ref<number | null>(null);
 // Mensagens de erro
 const userError = ref('');
 const deleteError = ref('');
+const successMessage = ref('');
 
-// Mock data para visualização
-const mockUsers: User[] = [
-  {
-    id: 1,
-    name: 'João Silva',
-    email: 'joao.silva@email.com',
-    password: '********',
-    level: UserLevel.MANAGER
-  },
-  {
-    id: 2,
-    name: 'Maria Santos',
-    email: 'maria.santos@email.com',
-    password: '********',
-    level: UserLevel.MANAGER
-  },
-  {
-    id: 3,
-    name: 'Pedro Costa',
-    email: 'pedro.costa@email.com',
-    password: '********',
-    level: UserLevel.MANAGER
+// Função para carregar usuários
+const loadUsers = async () => {
+  loading.value = true;
+  loadingError.value = '';
+
+  // Verificar autenticação antes de carregar
+  initializeAuth();
+  if (!isAuthenticated.value) {
+    loading.value = false;
+    loadingError.value = 'Você precisa estar logado para visualizar os usuários.';
+    return;
   }
-];
+
+  try {
+    const response = await UserService.getAll();
+    users.value = response.data;
+  } catch (error: any) {
+    console.error('Erro ao carregar usuários:', error);
+    users.value = [];
+
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      loadingError.value = 'Você não tem permissão para visualizar os usuários.';
+    } else {
+      loadingError.value = 'Erro ao carregar usuários. Tente recarregar a página.';
+    }
+  } finally {
+    loading.value = false;
+  }
+};
 
 // Modais
 const openCreateModal = () => {
@@ -228,6 +253,7 @@ const openCreateModal = () => {
     password: ''
   };
   userError.value = '';
+  successMessage.value = '';
   showUserModal.value = true;
 };
 
@@ -240,12 +266,14 @@ const openEditModal = (user: User) => {
     password: '' // Sempre deixar vazio para segurança
   };
   userError.value = '';
+  successMessage.value = '';
   showUserModal.value = true;
 };
 
 const closeUserModal = () => {
   showUserModal.value = false;
   userError.value = '';
+  successMessage.value = '';
   userForm.value = {
     name: '',
     email: '',
@@ -258,6 +286,7 @@ const closeUserModal = () => {
 const openDeleteModal = (user: User) => {
   userToDelete.value = user;
   deleteError.value = '';
+  successMessage.value = '';
   showDeleteModal.value = true;
 };
 
@@ -271,6 +300,13 @@ const closeDeleteModal = () => {
 const handleUserSubmit = async () => {
   if (isSubmitting.value) return;
 
+  // Verificar se ainda está autenticado
+  initializeAuth();
+  if (!isAuthenticated.value) {
+    userError.value = 'Sua sessão expirou. Faça login novamente.';
+    return;
+  }
+
   userError.value = '';
   isSubmitting.value = true;
 
@@ -282,41 +318,67 @@ const handleUserSubmit = async () => {
     if (!userForm.value.email.trim()) {
       throw new Error('Email é obrigatório');
     }
+
+    // Validação de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(userForm.value.email)) {
+      throw new Error('Email inválido');
+    }
+
     if (!isEditMode.value && !userForm.value.password.trim()) {
       throw new Error('Senha é obrigatória');
     }
 
-    // Simular operação
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    if (isEditMode.value) {
-      // Simular edição
-      const userIndex = users.value.findIndex(u => u.id === editingUserId.value);
-      if (userIndex !== -1) {
-        users.value[userIndex] = {
-          ...users.value[userIndex],
-          name: userForm.value.name,
-          email: userForm.value.email,
-          // Só atualizar senha se foi fornecida
-          ...(userForm.value.password && { password: '********' })
-        };
-      }
-    } else {
-      // Simular criação
-      const newUser: User = {
-        id: Math.max(...users.value.map(u => u.id), 0) + 1,
-        name: userForm.value.name,
-        email: userForm.value.email,
-        password: '********',
-        level: UserLevel.MANAGER
-      };
-      users.value.push(newUser);
+    // Validação de senha mínima
+    if (userForm.value.password.trim() && userForm.value.password.length < 6) {
+      throw new Error('Senha deve ter pelo menos 6 caracteres');
     }
 
+    if (isEditMode.value && editingUserId.value) {
+      // Editar usuário existente
+      const updatePayload: any = {
+        name: userForm.value.name,
+        email: userForm.value.email
+      };
+
+      // Só incluir senha se foi fornecida
+      if (userForm.value.password.trim()) {
+        updatePayload.password = userForm.value.password;
+      }
+
+      await UserService.update(editingUserId.value, updatePayload);
+    } else {
+      // Criar novo usuário
+      await UserService.create({
+        name: userForm.value.name,
+        email: userForm.value.email,
+        password: userForm.value.password
+      });
+    }
+
+    // Recarregar a lista de usuários
+    await loadUsers();
+
     closeUserModal();
-  } catch (error) {
-    if (error instanceof Error) {
-      userError.value = error.message;
+  } catch (error: any) {
+    console.error('Erro ao salvar usuário:', error);
+
+    // Tratamento baseado na nova estrutura de erro do backend
+    if (error.response?.status === 401) {
+      // Backend retorna {"error": "Unauthorized", "message": "..."}
+      userError.value = error.response.data?.message || 'Sua sessão expirou. Faça login novamente.';
+    } else if (error.response?.status === 403) {
+      // Backend retorna {"error": "Forbidden", "message": "Acesso negado..."}
+      userError.value = error.response.data?.message || 'Você não tem permissão para realizar esta ação.';
+    } else if (error.response?.data?.message) {
+      // Usar a mensagem específica do backend
+      userError.value = error.response.data.message;
+    } else if (error.response?.status === 409) {
+      userError.value = 'Este email já está em uso por outro usuário.';
+    } else if (error.response?.status === 400) {
+      userError.value = 'Dados inválidos. Verifique os campos e tente novamente.';
+    } else if (error.code === 'NETWORK_ERROR' || !error.response) {
+      userError.value = 'Erro de conexão. Verifique sua conexão com a internet.';
     } else {
       userError.value = 'Erro inesperado. Tente novamente.';
     }
@@ -328,20 +390,47 @@ const handleUserSubmit = async () => {
 const handleDeleteConfirm = async () => {
   if (isDeleting.value || !userToDelete.value) return;
 
+  // Verificar se ainda está autenticado
+  initializeAuth();
+  if (!isAuthenticated.value) {
+    deleteError.value = 'Sua sessão expirou. Faça login novamente.';
+    return;
+  }
+
   deleteError.value = '';
   isDeleting.value = true;
 
   try {
-    // Simular operação de exclusão
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Excluir usuário via API
+    await UserService.delete(userToDelete.value.id);
 
-    // Remover usuário da lista
-    users.value = users.value.filter(u => u.id !== userToDelete.value!.id);
+    // Recarregar a lista de usuários
+    await loadUsers();
+
+    // Mostrar mensagem de sucesso
+    successMessage.value = 'Usuário excluído com sucesso!';
+    setTimeout(() => { successMessage.value = ''; }, 3000);
 
     closeDeleteModal();
-  } catch (error) {
-    if (error instanceof Error) {
-      deleteError.value = error.message;
+  } catch (error: any) {
+    console.error('Erro ao excluir usuário:', error);
+
+    // Tratamento baseado na nova estrutura de erro do backend
+    if (error.response?.status === 401) {
+      // Backend retorna {"error": "Unauthorized", "message": "..."}
+      deleteError.value = error.response.data?.message || 'Sua sessão expirou. Faça login novamente.';
+    } else if (error.response?.status === 403) {
+      // Backend retorna {"error": "Forbidden", "message": "Acesso negado..."}
+      deleteError.value = error.response.data?.message || 'Você não tem permissão para excluir este usuário.';
+    } else if (error.response?.data?.message) {
+      // Usar a mensagem específica do backend
+      deleteError.value = error.response.data.message;
+    } else if (error.response?.status === 404) {
+      deleteError.value = 'Usuário não encontrado.';
+    } else if (error.response?.status === 409) {
+      deleteError.value = 'Não é possível excluir este usuário.';
+    } else if (error.code === 'NETWORK_ERROR' || !error.response) {
+      deleteError.value = 'Erro de conexão. Verifique sua conexão com a internet.';
     } else {
       deleteError.value = 'Erro inesperado. Tente novamente.';
     }
@@ -352,12 +441,7 @@ const handleDeleteConfirm = async () => {
 
 // Lifecycle
 onMounted(async () => {
-  loading.value = true;
-  // Simular carregamento
-  setTimeout(() => {
-    users.value = mockUsers;
-    loading.value = false;
-  }, 1000);
+  await loadUsers();
 });
 </script>
 
@@ -418,6 +502,41 @@ onMounted(async () => {
   }
 
   &:active {
+    transform: translateY(0);
+  }
+}
+
+.success-notification {
+  @include mixins.flex-center;
+  gap: spacers.$spacingSm;
+  background: rgba(34, 197, 94, 0.1);
+  color: #059669;
+  padding: spacers.$spacingMd;
+  border-radius: 8px;
+  margin-bottom: spacers.$spacingLg;
+  border-left: 4px solid #10b981;
+  font-weight: 500;
+  animation: slideIn 0.3s ease-out;
+
+  .success-icon {
+    @include mixins.flex-center;
+    width: 20px;
+    height: 20px;
+    background: #10b981;
+    color: white;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: bold;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
     transform: translateY(0);
   }
 }
@@ -552,6 +671,23 @@ onMounted(async () => {
   padding: spacers.$spacingXxl;
   color: colors.$colorStatusGray;
   font-size: 1.1rem;
+}
+
+.error-state {
+  @include mixins.flex-column-center;
+  gap: spacers.$spacingLg;
+  text-align: center;
+
+  .error-message {
+    color: #ef4444;
+    margin: 0;
+  }
+
+  .btn-primary {
+    .icon {
+      font-size: 1.2rem;
+    }
+  }
 }
 
 .loading-overlay {

@@ -44,7 +44,8 @@ api.interceptors.request.use(
         hasToken: !!token,
         tokenPrefix: token ? token.substring(0, 20) + '...' : 'N/A',
         authHeader: config.headers?.Authorization ? 'Bearer ' + (config.headers.Authorization as string).substring(7, 27) + '...' : 'None',
-        withCredentials: config.withCredentials
+        withCredentials: config.withCredentials,
+        timestamp: new Date().toISOString()
       });
     }
 
@@ -87,18 +88,47 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       if (import.meta.env.DEV) {
         // eslint-disable-next-line no-console
-        console.log('🔒 Token inválido ou expirado, fazendo logout...');
+        console.log('🔒 Erro 401 recebido:', {
+          url: error.config?.url,
+          method: error.config?.method?.toUpperCase(),
+          hasToken: !!localStorage.getItem('auth_token'),
+          errorType: error.response?.data?.error,
+          errorMessage: error.response?.data?.message,
+          fullErrorData: error.response?.data,
+          timestamp: new Date().toISOString()
+        });
       }
-      // Token expirado ou inválido
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('user_data');
 
-      // Redireciona para página principal se estiver em uma rota protegida
-      const currentPath = window.location.pathname;
-      const publicPaths = ['/cidadao', '/sobre'];
+      // Com a nova estrutura do backend, 401 sempre significa problema de autenticação
+      // O backend retorna {"error": "Unauthorized", "message": "..."}
+      const isLoginEndpoint = error.config?.url?.includes('/login');
 
-      if (!publicPaths.includes(currentPath)) {
-        window.location.href = '/cidadao';
+      // Não fazer logout automático apenas para erros de login
+      // Todos os outros 401 significam token inválido/expirado
+      if (!isLoginEndpoint) {
+        if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
+          console.log('🔒 Token inválido/expirado (401 fora de login), fazendo logout...', {
+            errorMessage: error.response?.data?.message,
+            hasToken: !!localStorage.getItem('auth_token')
+          });
+        }
+
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user_data');
+
+        // Redireciona para página principal se estiver em uma rota protegida
+        const currentPath = window.location.pathname;
+        const publicPaths = ['/cidadao', '/sobre'];
+
+        if (!publicPaths.includes(currentPath)) {
+          window.location.href = '/cidadao';
+        }
+      } else {
+        if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
+          console.log('🔒 Erro 401 no login, não fazendo logout automático');
+        }
       }
     }
     return Promise.reject(error);

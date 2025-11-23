@@ -29,4 +29,7 @@ app.use(createPinia());
 app.use(router);
 app.use(vuetify);
 
-app.mount("#app");
+// Aguardar router estar pronto antes de montar
+router.isReady().then(() => {
+  app.mount("#app");
+});

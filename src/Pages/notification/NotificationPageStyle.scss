@@ -23,3 +23,33 @@ h2 {
   @include card-shadow(1);
 }
 
+.notification-item{
+  padding-bottom: 8px;
+}
+
+.notification-info {
+  display: flex;
+  align-items: center;
+  gap: 8px; // Espaço entre os elementos
+  flex-wrap: wrap; // Permite quebra de linha se necessário
+  
+  .region, .index-type, .index-value, .start-date {
+    white-space: nowrap; // Evita quebra de texto dentro de cada span
+  }
+  
+  .notification-level {
+    margin-left: auto; // Isso empurra o elemento para o final da linha
+    display: flex;
+    align-items: center;
+    
+    .level-indicator {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 2px solid #fff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      display: inline-block;
+    }
+  }
+}
+

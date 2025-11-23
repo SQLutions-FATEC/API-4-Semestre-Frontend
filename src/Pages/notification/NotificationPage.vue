@@ -1,9 +1,57 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import type { NotificationLog } from "@/entities/NotificationLog";
+import NotificationReportModal from "@/components/Modals/NotificationReportModal.vue";
 
 const notifications = ref<NotificationLog[]>([]);
 const loading = ref<boolean>(true);
+
+const showReportModal = ref<boolean>(false);
+const selectedNotification = ref<NotificationLog | null>(null);
+
+const openReportModal = (notification: NotificationLog): void => {
+  selectedNotification.value = notification;
+  showReportModal.value = true;
+};
+
+const handleReportSubmit = async (data: {
+  reportText: string;
+  completionDate: string;
+}): Promise<void> => {
+  if (!selectedNotification.value) return;
+
+  try {
+    console.log("Enviando relatório para o backend:", {
+      notificationId: selectedNotification.value.id,
+      reportText: data.reportText,
+      completedAt: data.completionDate,
+    });
+
+    // Atualiza a notificação localmente
+    const notificationIndex = notifications.value.findIndex(
+      (n) => n.id === selectedNotification.value!.id
+    );
+
+    if (notificationIndex !== -1) {
+      notifications.value[notificationIndex] = {
+        ...notifications.value[notificationIndex],
+        reportText: data.reportText,
+        completionDate: data.completionDate,
+      };
+    }
+
+    //TODO
+    // await api.updateNotification(selectedNotification.value.id, {
+    //   reportText: data.reportText,
+    //   completedAt: data.completedAt
+
+    console.log("Relatório atualizado com sucesso!");
+  } catch (error) {
+    console.error("Erro ao atualizar relatório:", error);
+  } finally {
+    selectedNotification.value = null;
+  }
+};
 
 onMounted(async () => {
   try {
@@ -11,25 +59,20 @@ onMounted(async () => {
     notifications.value = [
       {
         id: 1,
-        messageText: "Alerta de temperatura alta detectada",
-        chatId: "chat_12345",
-        success: true,
-        errorDetails: null,
-        indexType: "TEMPERATURE",
-        indexValue: 35,
-        startAt: "2024-01-15T10:30:00",
-        completedAt: "2024-01-15T10:30:05",
+        message: "Alerta de temperatura alta detectada no servidor principal",
+        reportText: "Problema resolvido com reinicialização do sistema de refrigeração", // Relatório já feito
+        indexType: "Segurança",
+        indexValue: 3,
+        emissionDate: "2024-01-15T10:30:00",
+        completionDate: "2024-01-15T11:45:00",
       },
       {
         id: 2,
-        messageText: "Monitoramento de umidade normal",
-        chatId: "chat_67890",
-        success: false,
-        errorDetails: "Falha na conexão com o serviço de mensagens",
-        indexType: "HUMIDITY",
-        indexValue: 60,
-        startAt: "2024-01-15T11:15:00",
-        completedAt: "2024-01-15T11:15:10",
+        message: "Monitoramento de umidade normal com variações",
+        reportText: "",
+        indexType: "Volume",
+        indexValue: 5,
+        emissionDate: "2024-01-15T11:15:00",
       },
     ];
   } catch (error) {
@@ -44,12 +87,15 @@ const formatDateTime = (dateTime: string | null): string => {
   return new Date(dateTime).toLocaleString("pt-BR");
 };
 
-const getStatusClass = (success: boolean): string => {
-  return success ? "status-success" : "status-error";
-};
-
-const getStatusText = (success: boolean): string => {
-  return success ? "Sucesso" : "Erro";
+const getLevelColor = (indexValue: number): string => {
+  const colors = [
+    "#22c55e", // nível 1 - verde
+    "#84cc16", // nível 2
+    "#eab308", // nível 3
+    "#f97316", // nível 4
+    "#dc2626", // nível 5 - vermelho
+  ];
+  return colors[indexValue - 1] || "#6b7280";
 };
 </script>
 
@@ -58,45 +104,38 @@ const getStatusText = (success: boolean): string => {
     <main class="home-content">
       <div class="main-content">
         <div v-if="loading" class="loading">
-          <p>Carregando logs de notificação...</p>
+          <p>Carregando notificações...</p>
         </div>
 
         <div v-else-if="notifications.length > 0" class="notifications-container">
-          <h1>Logs de Notificação</h1>
-          <p class="subtitle">Histórico de envio de notificações</p>
+          <h1>Notificações</h1>
 
           <div class="notifications-list">
             <div
               v-for="notification in notifications"
               :key="notification.id"
               class="notification-item"
-              :class="getStatusClass(notification.success)"
+              @click="openReportModal(notification)"
             >
               <div class="notification-header">
-                <div class="status-indicator">
-                  <span class="status-badge" :class="getStatusClass(notification.success)">
-                    {{ getStatusText(notification.success) }}
-                  </span>
-                </div>
-                <div class="notification-info">
-                  <span class="index-type">{{ notification.indexType }}</span>
-                  <span class="index-value">Valor: {{ notification.indexValue || "N/A" }}</span>
-                </div>
+                <p class="message-text">
+                  {{ notification.message }}
+                </p>
               </div>
 
-              <div class="notification-body">
-                <p class="message-text">{{ notification.messageText }}</p>
-                <div class="chat-info"><strong>Chat ID:</strong> {{ notification.chatId }}</div>
-              </div>
-
-              <div class="notification-dates">
-                <small>Início: {{ formatDateTime(notification.startAt) }}</small>
-                <small>Conclusão: {{ formatDateTime(notification.completedAt) }}</small>
-              </div>
-
-              <div v-if="!notification.success && notification.errorDetails" class="error-details">
-                <strong>Detalhes do Erro:</strong>
-                <p>{{ notification.errorDetails }}</p>
+              <div class="notification-info">
+                <span class="index-type"> {{ notification.indexType }}</span>
+                <span class="index-value"> - Nível: {{ notification.indexValue || "N/A" }}</span>
+                <span class="start-date"
+                  >Início: {{ formatDateTime(notification.emissionDate) }}</span
+                >
+                <span class="notification-level">
+                  <span
+                    class="level-indicator"
+                    :style="{ backgroundColor: getLevelColor(notification.indexValue) }"
+                    :title="`Nível ${notification.indexValue}`"
+                  ></span>
+                </span>
               </div>
             </div>
           </div>
@@ -108,6 +147,14 @@ const getStatusText = (success: boolean): string => {
         </div>
       </div>
     </main>
+
+    <NotificationReportModal
+      v-model="showReportModal"
+      :original-message="selectedNotification?.message || ''"
+      :initial-report-text="selectedNotification?.reportText || ''"
+      :completed-at="selectedNotification?.completionDate || ''"
+      @submit="handleReportSubmit"
+    />
   </div>
 </template>
 

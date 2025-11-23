@@ -58,6 +58,189 @@
   }
 }
 
+.header-actions {
+  @include flex-center;
+  gap: $spacingMd;
+  height: 100%;
+  flex-shrink: 0;
+}
+
+.auth-button {
+  @include flex-center;
+  @include smooth-transition(all);
+  gap: $spacingSm;
+  padding: $spacingSm $spacingMd;
+  border: 2px solid $colorBorderLight;
+  border-radius: $borderRadiusMd;
+  background-color: $colorBackgroundTransparent;
+  color: $colorTextWhite;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  min-height: 40px;
+
+  &:hover {
+    background-color: $colorBackgroundTransparentActive;
+    border-color: $colorBorderAccent;
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.login-button {
+  .icon-login {
+    font-size: 16px;
+  }
+}
+
+.logout-button {
+  border-color: $colorStatusRed;
+  background-color: rgba(239, 68, 68, 0.1);
+
+  &:hover {
+    background-color: rgba(239, 68, 68, 0.2);
+    border-color: $colorStatusRed;
+  }
+
+  .icon-logout {
+    font-size: 16px;
+  }
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.modal-content {
+  background: $colorBackgroundWhite;
+  border-radius: $borderRadiusLg;
+  @include card-shadow(3);
+  min-width: 400px;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  @include flex-between;
+  padding: $spacingLg;
+  border-bottom: 1px solid $colorBorderGray;
+  background: linear-gradient(
+    to right,
+    $colorPrimaryGradientStart 0%,
+    $colorPrimaryGradientEnd 100%
+  );
+  border-radius: $borderRadiusLg $borderRadiusLg 0 0;
+}
+
+.modal-title {
+  color: $colorTextWhite;
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.modal-close-button {
+  background: none;
+  border: none;
+  color: $colorTextWhite;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  @include flex-center;
+  border-radius: 50%;
+  @include smooth-transition(background-color);
+
+  &:hover {
+    background-color: $colorBackgroundTransparent;
+  }
+}
+
+.login-form {
+  padding: $spacingLg;
+  display: flex;
+  flex-direction: column;
+  gap: $spacingMd;
+}
+
+.form-group {
+  @include flex-column;
+  gap: $spacingSm;
+}
+
+.form-label {
+  color: $colorTextPrimary;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.form-input {
+  padding: $spacingMd;
+  border: 1px solid $colorBorderGray;
+  border-radius: $borderRadiusSm;
+  font-size: 14px;
+  @include smooth-transition(border-color);
+
+  &:focus {
+    outline: none;
+    border-color: $colorPrimary;
+    box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.1);
+  }
+
+  &::placeholder {
+    color: $colorTextMuted;
+  }
+}
+
+.error-message {
+  color: $colorStatusRed;
+  font-size: 13px;
+  padding: $spacingSm;
+  background-color: rgba(239, 68, 68, 0.1);
+  border-radius: $borderRadiusSm;
+  border-left: 4px solid $colorStatusRed;
+}
+
+.submit-button {
+  @include smooth-transition(all);
+  padding: $spacingMd;
+  background: linear-gradient(
+    to right,
+    $colorPrimaryGradientStart 0%,
+    $colorPrimaryGradientEnd 100%
+  );
+  color: $colorTextWhite;
+  border: none;
+  border-radius: $borderRadiusSm;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: $spacingSm;
+
+  &:hover {
+    transform: translateY(-1px);
+    @include card-shadow(2);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
 @media (max-width: 768px) {
   .main-nav {
     flex-wrap: wrap;
@@ -67,12 +250,28 @@
     @include navbar(medium);
     padding: $spacingSm $spacingLg;
   }
+
+  .header-actions {
+    gap: $spacingSm;
+  }
+
+  .auth-button {
+    padding: $spacingSm;
+    font-size: 12px;
+    min-height: 36px;
+  }
+
+  .modal-content {
+    min-width: 320px;
+    margin: $spacingMd;
+  }
 }
 
 @media (max-width: 480px) {
   .main-header {
     flex-direction: column;
     height: auto;
+    padding: $spacingMd;
   }
 
   .logo-section {
@@ -96,5 +295,20 @@
     &.router-link-active {
       border-bottom: 2px solid $colorBorderAccent;
     }
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: space-between;
+    margin-top: $spacingSm;
+  }
+
+  .modal-content {
+    min-width: 280px;
+    margin: $spacingSm;
+  }
+
+  .login-form {
+    padding: $spacingMd;
   }
 }

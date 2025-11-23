@@ -26,8 +26,8 @@
           :disabled="isCompleted"
         ></v-textarea>
 
-        <div v-if="completedAt" class="completion-info">
-          <small>Relatório concluído em: {{ formatCompletionDate(completedAt) }}</small>
+        <div v-if="completionDate" class="completion-info">
+          <small>Relatório concluído em: {{ formatCompletionDate(completionDate) }}</small>
         </div>
       </v-card-text>
 
@@ -50,7 +50,7 @@ interface Props {
   modelValue: boolean;
   originalMessage?: string; // Mensagem original da notificação
   initialReportText?: string; // Texto do relatório existente
-  completedAt?: string | null;
+  completionDate?: string | null;
 }
 
 const props = defineProps<Props>();
@@ -58,7 +58,7 @@ const props = defineProps<Props>();
 // Emits
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];
-  submit: [data: { reportText: string; completedAt: string }];
+  submit: [data: { reportText: string; completionDate: string }];
 }>();
 
 // Data
@@ -68,7 +68,7 @@ const reportText = ref<string>(props.initialReportText || "");
 const showModal = ref<boolean>(props.modelValue);
 
 const isCompleted = computed<boolean>(() => {
-  return !!props.completedAt;
+  return !!props.completionDate;
 });
 
 // Watch para sincronizar com o prop
@@ -99,10 +99,10 @@ const close = (): void => {
 };
 
 const submit = (): void => {
-  const completedAt = new Date().toISOString(); // Data/hora atual em ISO
+  const completionDate = new Date().toISOString(); // Data/hora atual em ISO
   emit("submit", {
     reportText: reportText.value,
-    completedAt: completedAt,
+    completionDate: completionDate,
   });
   close();
 };

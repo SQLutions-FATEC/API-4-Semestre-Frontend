@@ -88,11 +88,11 @@
   &:active {
     transform: translateY(0);
   }
-}
 
-.login-button {
-  .icon-login {
-    font-size: 16px;
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none !important;
   }
 }
 
@@ -107,6 +107,16 @@
 
   .icon-logout {
     font-size: 16px;
+  }
+
+  .user-name {
+    font-weight: 600;
+    margin-right: $spacingXs;
+  }
+
+  .logout-text {
+    font-size: 12px;
+    opacity: 0.9;
   }
 }
 
@@ -231,13 +241,19 @@
   cursor: pointer;
   margin-top: $spacingSm;
 
-  &:hover {
+  &:hover:not(:disabled) {
     transform: translateY(-1px);
     @include card-shadow(2);
   }
 
-  &:active {
+  &:active:not(:disabled) {
     transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none !important;
   }
 }
 

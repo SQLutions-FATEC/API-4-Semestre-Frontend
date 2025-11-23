@@ -1,35 +1,63 @@
 <script setup lang="ts">
 import { RouterLink } from "vue-router";
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import logoSjc from "@/assets/logo-sjc.png";
 import DateTimeDisplay from "@/components/DateTime/DateTimeDisplay.vue";
+import { useAuth } from "@/composables/useAuth";
 
-const isAuthenticated = ref(false);
+const { isAuthenticated, userName, login, logout, initializeAuth } = useAuth();
+
 const showLoginModal = ref(false);
 const loginForm = ref({
-  username: '',
+  email: '',
   password: ''
 });
 const loginError = ref('');
+const isLoggingIn = ref(false);
+
+onMounted(() => {
+  initializeAuth();
+});
 
 const openLoginModal = () => {
   showLoginModal.value = true;
   loginError.value = '';
-  loginForm.value = { username: '', password: '' };
+  loginForm.value = { email: '', password: '' };
 };
 
 const closeLoginModal = () => {
   showLoginModal.value = false;
   loginError.value = '';
-  loginForm.value = { username: '', password: '' };
+  loginForm.value = { email: '', password: '' };
 };
 
-const handleLogin = () => {
-  loginError.value = 'Funcionalidade ainda não implementada.';
+const handleLogin = async () => {
+  if (isLoggingIn.value) return;
+
+  isLoggingIn.value = true;
+  loginError.value = '';
+
+  try {
+    await login({
+      email: loginForm.value.email,
+      password: loginForm.value.password
+    });
+
+    closeLoginModal();
+
+  } catch (error) {
+    if (error instanceof Error) {
+      loginError.value = error.message;
+    } else {
+      loginError.value = 'Erro inesperado. Tente novamente.';
+    }
+  } finally {
+    isLoggingIn.value = false;
+  }
 };
 
 const handleLogout = () => {
-  isAuthenticated.value = false;
+  logout();
 };
 </script>
 
@@ -59,7 +87,6 @@ const handleLogout = () => {
         type="button"
         @click="openLoginModal"
       >
-        <i class="icon-login">👤</i>
         Login
       </button>
 
@@ -67,10 +94,11 @@ const handleLogout = () => {
         v-else
         class="auth-button logout-button"
         type="button"
+        :title="`Logout - ${userName}`"
         @click="handleLogout"
       >
-        <i class="icon-logout">🚪</i>
-        Logout
+        <span class="user-name">{{ userName }}</span>
+        <span class="logout-text">Logout</span>
       </button>
     </div>
 
@@ -86,13 +114,14 @@ const handleLogout = () => {
 
         <form class="login-form" @submit.prevent="handleLogin">
           <div class="form-group">
-            <label for="username" class="form-label">Usuário:</label>
+            <label for="email" class="form-label">Email:</label>
             <input
-              id="username"
-              v-model="loginForm.username"
-              type="text"
+              id="email"
+              v-model="loginForm.email"
+              type="email"
               class="form-input"
-              placeholder="Digite seu usuário"
+              placeholder="Digite seu email"
+              :disabled="isLoggingIn"
               required
             />
           </div>
@@ -105,6 +134,7 @@ const handleLogout = () => {
               type="password"
               class="form-input"
               placeholder="Digite sua senha"
+              :disabled="isLoggingIn"
               required
             />
           </div>
@@ -113,8 +143,9 @@ const handleLogout = () => {
             {{ loginError }}
           </div>
 
-          <button type="submit" class="submit-button">
-            Entrar
+          <button type="submit" class="submit-button" :disabled="isLoggingIn">
+            <span v-if="isLoggingIn">Entrando...</span>
+            <span v-else>Entrar</span>
           </button>
         </form>
       </div>

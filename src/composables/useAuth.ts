@@ -1,4 +1,5 @@
 import { ref, computed } from 'vue';
+import { useRouter } from 'vue-router';
 import AuthService, { type LoginRequest, type LoginResponse } from '@/services/AuthService';
 
 // Authentication state
@@ -7,6 +8,8 @@ const currentUser = ref<Omit<LoginResponse, 'token' | 'type'> | null>(AuthServic
 const isLoading = ref<boolean>(false);
 
 export function useAuth() {
+  const router = useRouter();
+
   /**
    * Realiza login
    */
@@ -41,6 +44,8 @@ export function useAuth() {
     AuthService.logout();
     isAuthenticated.value = false;
     currentUser.value = null;
+
+    router.push({ name: 'Cidadao' });
   };
 
   /**
@@ -48,8 +53,20 @@ export function useAuth() {
    * Deve ser chamado na inicialização da aplicação
    */
   const initializeAuth = (): void => {
-    isAuthenticated.value = AuthService.isAuthenticated();
-    currentUser.value = AuthService.getUserData();
+    const authenticated = AuthService.isAuthenticated();
+    const userData = AuthService.getUserData();
+
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
+      console.log('Initializing auth:', {
+        authenticated,
+        userData,
+        token: !!localStorage.getItem('auth_token')
+      });
+    }
+
+    isAuthenticated.value = authenticated;
+    currentUser.value = userData;
   };
 
   /**

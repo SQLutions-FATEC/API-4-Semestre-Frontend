@@ -70,14 +70,15 @@ const handleLogout = () => {
     </div>
 
     <nav class="main-nav">
-      <RouterLink to="/" class="nav-item">Home</RouterLink>
-      <RouterLink to="/dashboards" class="nav-item">Dashboard</RouterLink>
-      <RouterLink to="/mapa" class="nav-item">Mapa</RouterLink>
       <RouterLink to="/sobre" class="nav-item">Sobre</RouterLink>
       <RouterLink to="/cidadao" class="nav-item">Cidadão</RouterLink>
-    </nav>
 
-    <div class="header-actions">
+      <template v-if="isAuthenticated">
+        <RouterLink to="/" class="nav-item">Home</RouterLink>
+        <RouterLink to="/dashboards" class="nav-item">Dashboard</RouterLink>
+        <RouterLink to="/mapa" class="nav-item">Mapa</RouterLink>
+      </template>
+    </nav>    <div class="header-actions">
       <DateTimeDisplay class="header-clock" />
 
       <!-- Login/Logout Button -->

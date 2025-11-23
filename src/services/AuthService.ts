@@ -88,7 +88,31 @@ class AuthService {
    */
   isAuthenticated(): boolean {
     const token = this.getToken();
-    return !!token;
+    const userData = this.getUserData();
+
+    if (!token || !userData) {
+      return false;
+    }
+
+    // Verifica se o token não expirou (básico)
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const now = Math.floor(Date.now() / 1000);
+
+      if (payload.exp && payload.exp < now) {
+        // Token expirado, remove dados
+        this.removeToken();
+        this.removeUserData();
+        return false;
+      }
+    } catch (error) {
+      // Token inválido
+      this.removeToken();
+      this.removeUserData();
+      return false;
+    }
+
+    return true;
   }
 
   /**

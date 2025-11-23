@@ -1,5 +1,6 @@
 import { ref, computed } from "vue";
 import type { VehicleTypeCounts } from "../entities/VehicleTypeCounts";
+import readingService from "@/services/ReadingService";
 
 interface SpeedTimeData {
   [key: string]: number;
@@ -68,11 +69,8 @@ export function useManagerData() {
     error.value = null;
 
     try {
-      const response = await fetch(`http://localhost:8080/reading/series?minutes=${minutes}`);
-      if (!response.ok) {
-        throw new Error(`Erro HTTP: ${response.status}`);
-      }
-      vehicleReadingData.value = await response.json();
+      const response = await readingService.getCityData({ minutes });
+      vehicleReadingData.value = response.data;
     } catch (err) {
       error.value = err as Error;
     } finally {

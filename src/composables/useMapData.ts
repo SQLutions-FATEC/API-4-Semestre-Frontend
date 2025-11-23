@@ -1,13 +1,19 @@
 import { ref, onMounted } from "vue";
 import type { VehicleTypeCounts } from "../entities/VehicleTypeCounts";
+import type { Radar } from "../entities/Radar";
+import { indexService } from "@/services/IndexService";
+import radarService from "@/services/RadarService";
+import api from "@/services/api";
 
 // --- Interfaces (Reutilizáveis) ---
 
 interface addressProps {
   nomeEndereco: string;
-  areaRuaGeoJson: string;
+  areaRuaGeoJson: string | null;
   trafficIndex: number;
-  message:string
+  securityIndex: number;
+  overallIndex: number;
+  message?: string;
 }
 
 interface regionProps {
@@ -31,7 +37,7 @@ interface citySummary {
 
 export function useMapData() {
   const addressData = ref<addressProps[]>([]);
-  const radarData = ref([]);
+  const radarData = ref<Radar[]>([]);
   const regionData = ref<regionProps[]>([]);
   const citySummaryData = ref<citySummary | null>(null);
 
@@ -40,11 +46,7 @@ export function useMapData() {
 
   async function fetchCitySummary() {
     try {
-      const responseIndex = await fetch("http://localhost:8080/index?minutes=10");
-      if (!responseIndex.ok) {
-        throw new Error(`Erro HTTP Índices: ${responseIndex.status}`);
-      }
-      const dataIndex = await responseIndex.json();
+      const dataIndex = await indexService.getCityIndex({ minutes: 10 });
 
       const overallAvg = (dataIndex.trafficIndex + dataIndex.securityIndex) / 2;
       const estado =
@@ -78,28 +80,70 @@ export function useMapData() {
 
     try {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const [responseRegions, responseRadars, responseAddresses, _citySummaryResult] = await Promise.all([
-        fetch("http://localhost:8080/regions"),
-        fetch("http://localhost:8080/radars"),
-        fetch("http://localhost:8080/address/heatmap"),
+      const [heatmapResponse, radarsResponse, _citySummaryResult] = await Promise.all([
+        api.get("/address/heatmap"),
+        radarService.getAll(),
         fetchCitySummary(), // Função que retorna uma Promise<boolean>
       ]);
 
       // 2. Processa as respostas
-      if (!responseRegions.ok) {
-        throw new Error(`Erro HTTP Regiões: ${responseRegions.status} ${responseRegions.statusText}`);
-      }
-      regionData.value = await responseRegions.json();
+      addressData.value = heatmapResponse.data;
+      radarData.value = radarsResponse.data;
 
-      if (!responseRadars.ok) {
-        throw new Error(`Erro HTTP Radares: ${responseRadars.status} ${responseRadars.statusText}`);
-      }
-      radarData.value = await responseRadars.json();
+      const regionMap = new Map<string, {
+        traffic: number[],
+        security: number[],
+        overall: number[],
+        count: number
+      }>();
 
-      if (!responseAddresses.ok) {
-        throw new Error(`Erro HTTP Endereços: ${responseAddresses.status} ${responseAddresses.statusText}`);
+      heatmapResponse.data.forEach((address: addressProps) => {
+        // Extrai a região do nome do endereço (parte após o último hífen)
+        const parts = address.nomeEndereco.split(' - ');
+        const region = parts.length > 1 ? parts[parts.length - 1].trim() : 'Região Desconhecida';
+
+        if (!regionMap.has(region)) {
+          regionMap.set(region, {
+            traffic: [],
+            security: [],
+            overall: [],
+            count: 0
+          });
+        }
+
+        const regionStats = regionMap.get(region)!;
+        regionStats.traffic.push(address.trafficIndex);
+        regionStats.security.push(address.securityIndex);
+        regionStats.overall.push(address.overallIndex);
+        regionStats.count++;
+      });
+
+      // Converte o Map em array de regionProps
+      regionData.value = Array.from(regionMap.entries()).map(([regionName, stats]) => {
+        const avgTraffic = stats.traffic.reduce((a, b) => a + b, 0) / stats.count;
+        const avgSecurity = stats.security.reduce((a, b) => a + b, 0) / stats.count;
+        const avgOverall = stats.overall.reduce((a, b) => a + b, 0) / stats.count;
+
+        const estado = avgOverall <= 1 ? "Ótimo" : avgOverall <= 3 ? "Bom" : "Ruim";
+
+        return {
+          name: regionName,
+          overall: Math.round(avgOverall * 100) / 100,
+          traffic: Math.round(avgTraffic * 100) / 100,
+          security: Math.round(avgSecurity * 100) / 100,
+          estado: estado
+        };
+      });
+
+      if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
+        console.log('🗺️ Dados processados:', {
+          addressCount: addressData.value.length,
+          radarCount: radarData.value.length,
+          regionCount: regionData.value.length,
+          regions: regionData.value
+        });
       }
-      addressData.value = await responseAddresses.json();
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error("Falha ao buscar dados do mapa:", err);

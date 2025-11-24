@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
+import timeService from '@/services/TimeService';
 import './DateTimeDisplayStyle.scss';
 
 const displayDate = ref('');
@@ -29,21 +30,14 @@ const updateDisplay = () => {
 
 const fetchTime = async () => {
   try {
-    const response = await fetch('http://localhost:8080/time');
+    const timeData = await timeService.getServerTime();
 
-    if (!response.ok) {
-      throw new Error(`Erro na requisição: ${response.statusText}`);
-    }
-
-    const data: string[] = await response.json();
-
-    if (data && data.length > 0) {
-      const lastTimeString = data[data.length - 1];
-      const newServerTime = new Date(lastTimeString);
+    if (timeData.currentServerTime) {
+      const newServerTime = new Date(timeData.currentServerTime);
 
       if (isNaN(newServerTime.getTime())) {
         // eslint-disable-next-line no-console
-        console.error('Data inválida recebida do endpoint:', lastTimeString);
+        console.error('Data inválida recebida do endpoint:', timeData.currentServerTime);
         displayDate.value = 'Data Inválida';
       } else {
         // Atualiza nossa "fonte da verdade"

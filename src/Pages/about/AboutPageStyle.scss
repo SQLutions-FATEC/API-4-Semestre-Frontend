@@ -1,6 +1,4 @@
-.sobre-container {
-  width: 100%;
-}
+
 
 .main-content {
   padding: $contentPaddingMobile $contentPadding;
@@ -16,4 +14,67 @@ h1 {
 p {
   @include paragraph(medium);
   color: $colorTextMuted;
+}
+
+.sobre-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 20px;
+}
+
+.info-card {
+  border: 1px solid #ccc; /* A borda cinza fina */
+  border-radius: 20px;    /* Bordas arredondadas */
+  padding: 50px;
+  max-width: 100%;       /* Limita a largura para não ficar esticado demais */
+  width: 100%;
+  background-color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;    /* Centraliza itens horizontalmente */
+}
+
+.texto-descritivo {
+  font-size: 1.2rem;
+  line-height: 1.6;
+  color: #333;
+  text-align: justify; /* O texto da imagem parece justificado ou alinhado à esquerda, mas justificado fica mais elegante no card */
+  margin-bottom: 60px; /* Espaço grande antes dos créditos */
+  font-family: sans-serif; /* Garanta que a fonte seja sem serifa */
+}
+
+.texto-creditos {
+  font-size: 0.9rem;
+  text-align: center;
+  color: #555;
+  margin-bottom: 20px;
+  max-width: 80%; /* Para quebrar a linha igual na imagem se necessário */
+}
+
+.logos-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 40px; /* Espaço entre os dois logos */
+  margin-top: 20px;
+
+  .logo {
+    height: 60px; /* Altura fixa para manter proporção, ajuste conforme necessário */
+    width: auto;
+    object-fit: contain;
+  }
+}
+
+/* Responsividade para celulares */
+@media (max-width: 768px) {
+  .info-card {
+    padding: 20px;
+  }
+
+  .texto-descritivo {
+    font-size: 1rem;
+    text-align: left;
+  }
 }

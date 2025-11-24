@@ -1,6 +1,6 @@
 import addressesData from "@/mock/seeds/addressSeeds.json";
 import { APIFailureWrapper, mockFlag } from "../utils";
-import type { Address } from "@/mock/entities/Address";
+import type { Address } from "@/entities/Address";
 
 const addresses: Address[] = [...addressesData];
 

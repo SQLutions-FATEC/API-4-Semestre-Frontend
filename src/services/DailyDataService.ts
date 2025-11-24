@@ -1,4 +1,5 @@
-import readingService, { type ReadingData } from './ReadingService';
+import readingService from './ReadingService';
+import type { ReadingAggregate } from '@/entities/ReadingAggregate';
 import timeService from './TimeService';
 
 export interface DailyData {
@@ -17,7 +18,7 @@ export interface DailyComparison {
 }
 
 class DailyDataService {
-  private calculateDailyStats(data: ReadingData[]): DailyData {
+  private calculateDailyStats(data: ReadingAggregate[]): DailyData {
     if (!data || data.length === 0) {
       return {
         totalReadings: 0,
@@ -79,8 +80,8 @@ class DailyDataService {
     twentyFourHoursAgoTimestamp: string
   ): Promise<DailyComparison> {
     try {
-      let todayData: ReadingData[];
-      let yesterdayData: ReadingData[];
+      let todayData: ReadingAggregate[];
+      let yesterdayData: ReadingAggregate[];
 
       if (region === "São José dos Campos") {
         // Dados da cidade toda
@@ -130,7 +131,7 @@ class DailyDataService {
   }
 
   private async fetchDailyDataFallback(region: string): Promise<DailyComparison> {
-    let currentData: ReadingData[];
+    let currentData: ReadingAggregate[];
 
     if (region === "São José dos Campos") {
       const response = await readingService.getCityData({ minutes: 1440 });

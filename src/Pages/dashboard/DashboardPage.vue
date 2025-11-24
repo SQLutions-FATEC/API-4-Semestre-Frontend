@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, watch } from "vue";
-import mapaSjc from "@/assets/mapa-sjc.png";
 import BaseChart from "@/components/BaseChart/BaseChart.vue";
 import { indexService, type IndexData } from "@/services/IndexService";
-import readingService, { type ReadingData } from "@/services/ReadingService";
+import readingService from "@/services/ReadingService";
 import dailyDataService, { type DailyComparison } from "@/services/DailyDataService";
 import timeService, { type TimeData } from "@/services/TimeService";
 import GraphModal from "@/components/Modals/GraphModal.vue";
+import type { ReadingAggregate } from "@/entities/ReadingAggregate";
+import { useReportExport } from "@/composables/useReportExport";
+import questionMarkIcon from "@/assets/question-mark.png";
 
 const modalOpen = ref(false);
 
@@ -33,7 +35,7 @@ const isLoadingDailyData = ref(false);
 const lastUpdate = ref<string>("");
 const refreshTrigger = ref(0);
 const indexData = ref<IndexData | null>(null);
-const vehicleData = ref<ReadingData[] | null>(null);
+const vehicleData = ref<ReadingAggregate[] | null>(null);
 const dailyData = ref<DailyComparison | null>(null);
 
 const indexError = ref<string>("");
@@ -648,6 +650,16 @@ function getIndexClass(value: number): string {
   }
 }
 
+const { exportarRelatorio } = useReportExport();
+
+function handleExportarRelatorio() {
+  exportarRelatorio(".main-content", selectedRegion.value, {
+    startDateTime: startDateTime.value,
+    endDateTime: endDateTime.value,
+    showAsRange: true,
+  });
+}
+
 watch(selectedRegion, () => {
   resetAllData();
   userHasModifiedDateTime.value = false;
@@ -691,6 +703,7 @@ onUnmounted(() => {
               {{ region }}
             </option>
           </select>
+          <button class="export-btn" @click="handleExportarRelatorio">📊 Exportar relatório</button>
         </div>
       </div>
 
@@ -854,7 +867,10 @@ onUnmounted(() => {
         </div>
         <div class="indices-section">
           <div class="indices-header">
-            <h2>Informações Diárias</h2>
+            <h2 style="display: flex; gap: 16px">
+              Informações Diárias
+              <img :src="questionMarkIcon" alt="?" width="25" lenght="25" @click="openModal" />
+            </h2>
           </div>
           <div v-if="isLoadingDailyData" class="indices-loading">
             <div class="chart-loading">

@@ -4,14 +4,135 @@ import axios from "axios";
 const baseURL =
   import.meta.env.MODE === "mock"
     ? "/" // modo mock (sem back)
-    : import.meta.env.VITE_API_URL || "http://localhost:8080"; // local por padrão
+    : "/api"; // Sempre usar proxy em desenvolvimento
 
 const api = axios.create({
   baseURL,
   headers: {
     "Content-Type": "application/json",
+    "Accept": "application/json",
   },
-  withCredentials: true, // importante para CORS com allowCredentials(true)
+  withCredentials: true,
 });
+
+// Debug da configuração
+if (import.meta.env.DEV) {
+  // eslint-disable-next-line no-console
+  console.log('🔧 API Configuration:', {
+    baseURL,
+    mode: import.meta.env.MODE,
+    viteApiUrl: import.meta.env.VITE_API_URL
+  });
+}
+
+// Interceptor para adicionar token de autenticação automaticamente
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      config.headers = config.headers || {};
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
+      console.log('🚀 Making request:', {
+        method: config.method?.toUpperCase(),
+        url: config.url,
+        baseURL: config.baseURL,
+        fullURL: `${config.baseURL}${config.url}`,
+        hasToken: !!token,
+        tokenPrefix: token ? token.substring(0, 20) + '...' : 'N/A',
+        authHeader: config.headers?.Authorization ? 'Bearer ' + (config.headers.Authorization as string).substring(7, 27) + '...' : 'None',
+        withCredentials: config.withCredentials,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    return config;
+  },
+  (error) => {
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
+      console.error('❌ Request interceptor error:', error);
+    }
+    return Promise.reject(error);
+  }
+);
+api.interceptors.response.use(
+  (response) => {
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
+      console.log('✅ Response received:', {
+        status: response.status,
+        url: response.config.url,
+        method: response.config.method?.toUpperCase()
+      });
+    }
+    return response;
+  },
+  (error) => {
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
+      console.error('❌ API Error:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        url: error.config?.url,
+        method: error.config?.method?.toUpperCase(),
+        message: error.message,
+        fullURL: error.config?.baseURL + error.config?.url,
+        headers: error.response?.headers
+      });
+    }
+
+    if (error.response?.status === 401) {
+      if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
+        console.log('🔒 Erro 401 recebido:', {
+          url: error.config?.url,
+          method: error.config?.method?.toUpperCase(),
+          hasToken: !!localStorage.getItem('auth_token'),
+          errorType: error.response?.data?.error,
+          errorMessage: error.response?.data?.message,
+          fullErrorData: error.response?.data,
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Com a nova estrutura do backend, 401 sempre significa problema de autenticação
+      // O backend retorna {"error": "Unauthorized", "message": "..."}
+      const isLoginEndpoint = error.config?.url?.includes('/login');
+
+      // Não fazer logout automático apenas para erros de login
+      // Todos os outros 401 significam token inválido/expirado
+      if (!isLoginEndpoint) {
+        if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
+          console.log('🔒 Token inválido/expirado (401 fora de login), fazendo logout...', {
+            errorMessage: error.response?.data?.message,
+            hasToken: !!localStorage.getItem('auth_token')
+          });
+        }
+
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user_data');
+
+        // Redireciona para página principal se estiver em uma rota protegida
+        const currentPath = window.location.pathname;
+        const publicPaths = ['/cidadao', '/sobre'];
+
+        if (!publicPaths.includes(currentPath)) {
+          window.location.href = '/cidadao';
+        }
+      } else {
+        if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
+          console.log('🔒 Erro 401 no login, não fazendo logout automático');
+        }
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default api;

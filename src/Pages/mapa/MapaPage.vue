@@ -2,8 +2,9 @@
 import iconeCamera from "@/assets/cam2.png";
 import MapaLeaflet from "@/components/MapaLeaflet.vue";
 import IndiceModal from "@/components/Modals/IndiceModal.vue";
-import { computed, ref } from "vue";
+import { computed, ref, onMounted } from "vue";
 import { useMapData } from "@/composables/useMapData";
+import { useManagerData } from "@/composables/useManagerData";
 import type { VehicleTypeCounts } from "@/entities/VehicleTypeCounts";
 
 interface RegionProps {
@@ -12,7 +13,7 @@ interface RegionProps {
   traffic: number;
   security: number;
   estado: string;
-  ListaCarros: VehicleTypeCounts;
+  ListaCarros?: VehicleTypeCounts;
 }
 
 // --- Mapa de Cores ---
@@ -31,12 +32,16 @@ const regionColorMap = {
 const { addressData, radarData, regionData, citySummaryData, isLoading, error } =
   useMapData();
 
+const {
+  totalVehicleCounts,
+  fetchReadingData,
+} = useManagerData();
+
 const nomeRegiaoClicada = ref(<string | null>null);
 const indiceGeral = ref(<number | null>null);
 const indiceTrafego = ref(<number | null>null);
 const indiceSeguranca = ref(<number | null>null);
 const estadoRegiao = ref(<string | null>null);
-const ListaCarros = ref(<VehicleTypeCounts | null>null);
 
 function showCitySummary() {
   if (citySummaryData.value) {
@@ -45,11 +50,15 @@ function showCitySummary() {
     indiceTrafego.value = citySummaryData.value.traffic;
     indiceSeguranca.value = citySummaryData.value.security;
     estadoRegiao.value = citySummaryData.value.estado;
-    ListaCarros.value = citySummaryData.value.ListaCarros;
   }
 }
 
 import { watch } from 'vue';
+
+onMounted(() => {
+  fetchReadingData();
+});
+
 watch(citySummaryData, (newSummary) => {
     if (newSummary && !nomeRegiaoClicada.value) {
         showCitySummary();
@@ -57,12 +66,12 @@ watch(citySummaryData, (newSummary) => {
 }, { immediate: true });
 
 const piechartSeries = computed(() => {
-  if (!ListaCarros.value) return [];
-  return Object.values(ListaCarros.value);
+  if (!totalVehicleCounts.value || Object.keys(totalVehicleCounts.value).length === 0) return [];
+  return Object.values(totalVehicleCounts.value);
 });
 
 const pieChartOption = computed(() => {
-  const labels = ListaCarros.value ? Object.keys(ListaCarros.value) : [];
+  const labels = totalVehicleCounts.value ? Object.keys(totalVehicleCounts.value) : [];
 
   return {
     chart: {
@@ -124,7 +133,6 @@ function handleRegionSelected(regionProps: RegionProps | null) {
     indiceTrafego.value = regionProps.traffic;
     indiceSeguranca.value = regionProps.security;
     estadoRegiao.value = regionProps.estado;
-    ListaCarros.value = regionProps.ListaCarros;
   }
 }
 

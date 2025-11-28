@@ -10,6 +10,35 @@ const loading = ref<boolean>(true);
 const showReportModal = ref<boolean>(false);
 const selectedNotification = ref<NotificationLog | null>(null);
 
+const createCriticalNotification = async (indexType: string, indexValue: number) => {
+  try {
+    const now = new Date();
+
+    indexType = "Segurança";
+    indexValue = 5;
+
+    const message =
+      `há um nivel critico de ${indexType}\n` +
+      `nivel de ${indexType}: ${indexValue}\n` +
+      `hora: ${now.toLocaleString("pt-BR")}`;
+
+    const payload = {
+      message,
+      indexType,
+      indexValue,
+      emissionDate: now.toISOString(),
+    };
+
+    const response = await notificationLogService.create(payload);
+
+    // Adiciona no topo da lista
+    notifications.value.unshift(response.data);
+  } catch (error) {
+    console.error("Erro ao criar notificação crítica:", error);
+    alert("Erro ao criar notificação crítica");
+  }
+};
+
 // Buscar notificações do backend
 const fetchNotifications = async (): Promise<void> => {
   try {
@@ -128,6 +157,10 @@ onMounted(() => {
           </div>
         </div>
 
+        <button class="btn-critical" @click="createCriticalNotification('Segurança', 5)">
+          🚨 Notificação Crítica
+        </button>
+
         <div v-if="loading" class="loading">
           <p>Carregando notificações...</p>
         </div>
@@ -152,9 +185,6 @@ onMounted(() => {
                   <button class="btn-view" @click.stop="openReportModal(notification)">
                     {{ isCompleted(notification) ? "Ver Relatório" : "Editar" }}
                   </button>
-                  <button class="btn-delete" @click.stop="deleteNotification(notification.id)">
-                    Excluir
-                  </button>
                 </div>
               </div>
 
@@ -166,7 +196,7 @@ onMounted(() => {
                     Emissão: {{ formatDateTime(notification.emissionDate) }}
                   </span>
                   <span v-if="isCompleted(notification)" class="date-info">
-                    Conclusão: {{ formatDateTime(notification.completionDate) }}
+                    Conclusão: {{ formatDateTime(notification.completionDate || "") }}
                   </span>
                 </div>
               </div>

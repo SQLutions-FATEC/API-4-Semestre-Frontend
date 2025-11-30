@@ -13,6 +13,7 @@ const selectedNotification = ref<NotificationLog | null>(null);
 
 const createCriticalNotification = async (indexType: string, indexValue: number) => {
   try {
+    const formatted = dayjs().format("YYYY-MM-DDTHH:mm:ss");
     const now = new Date();
 
     indexType = "SECURITY";
@@ -27,7 +28,7 @@ const createCriticalNotification = async (indexType: string, indexValue: number)
       messageText,
       indexType,
       indexValue,
-      emissionDate: dayjs().format("YYYY-MM-DDTHH:mm:ss"),
+      emissionDate: formatted,
     };
 
     const response = await notificationLogService.create(payload);

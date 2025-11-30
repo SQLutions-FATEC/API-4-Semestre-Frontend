@@ -3,6 +3,7 @@ import { ref, onMounted } from "vue";
 import type { NotificationLog } from "@/entities/NotificationLog";
 import NotificationReportModal from "@/components/Modals/NotificationReportModal.vue";
 import notificationLogService from "@/services/NotificationLogService";
+import dayjs from "dayjs";
 
 const notifications = ref<NotificationLog[]>([]);
 const loading = ref<boolean>(true);
@@ -14,19 +15,19 @@ const createCriticalNotification = async (indexType: string, indexValue: number)
   try {
     const now = new Date();
 
-    indexType = "Segurança";
+    indexType = "SECURITY";
     indexValue = 5;
 
-    const message =
+    const messageText =
       `há um nivel critico de ${indexType}\n` +
       `nivel de ${indexType}: ${indexValue}\n` +
       `hora: ${now.toLocaleString("pt-BR")}`;
 
     const payload = {
-      message,
+      messageText,
       indexType,
       indexValue,
-      emissionDate: now.toISOString(),
+      emissionDate: dayjs().format("YYYY-MM-DDTHH:mm:ss"),
     };
 
     const response = await notificationLogService.create(payload);
@@ -99,7 +100,7 @@ const getMockNotifications = (): NotificationLog[] => {
     {
       id: 1,
       user: 1,
-      message: "Alerta de temperatura alta detectada no servidor principal",
+      messageText: "Alerta de temperatura alta detectada no servidor principal",
       reportText: "Problema resolvido com reinicialização do sistema de refrigeração",
       indexType: "Segurança",
       indexValue: 4,
@@ -108,7 +109,7 @@ const getMockNotifications = (): NotificationLog[] => {
     },
     {
       id: 2,
-      message: "Monitoramento de umidade normal com variações",
+      messageText: "Monitoramento de umidade normal com variações",
       reportText: "",
       indexType: "Volume",
       indexValue: 4,
@@ -187,7 +188,7 @@ onMounted(() => {
               </div>
 
               <div class="notification-body" @click="openReportModal(notification)">
-                <p class="message-text">{{ notification.message }}</p>
+                <p class="messageText-text">{{ notification.messageText }}</p>
 
                 <div class="notification-details">
                   <span class="date-info">
@@ -219,7 +220,7 @@ onMounted(() => {
 
     <NotificationReportModal
       v-model="showReportModal"
-      :original-message="selectedNotification?.message || ''"
+      :original-message-text="selectedNotification?.messageText || ''"
       :initial-report-text="selectedNotification?.reportText || ''"
       :completion-date="selectedNotification?.completionDate || null"
       @submit="handleReportSubmit"

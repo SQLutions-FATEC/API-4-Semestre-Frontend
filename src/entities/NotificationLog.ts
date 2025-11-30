@@ -2,7 +2,7 @@ import type { User } from "./User";
 export interface NotificationLog {
   id: number;
   user?: User["id"];
-  message: string;
+  messageText: string;
   reportText?: string;
   indexType: string;
   indexValue: number;

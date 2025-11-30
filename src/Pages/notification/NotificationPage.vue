@@ -39,16 +39,14 @@ const handleReportSubmit = async (data: {
   if (!selectedNotification.value) return;
 
   try {
-    // Preparar dados para update
     const updateData = {
+      id: selectedNotification.value.id,
       reportText: data.reportText,
       completionDate: data.completionDate,
     };
 
-    // Chamar o service para atualizar
-    const response = await notificationLogService.update(selectedNotification.value.id, updateData);
+    const response = await notificationLogService.update(updateData);
 
-    // Atualizar a notificação localmente com os dados retornados do backend
     const updatedNotification = response.data;
     const notificationIndex = notifications.value.findIndex((n) => n.id === updatedNotification.id);
 

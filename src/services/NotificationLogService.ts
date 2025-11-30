@@ -11,9 +11,8 @@ const notificationLogService = {
     api.post("/logs", payload),
 
   update: (
-    logId: number,
-    payload: Partial<NotificationLog>
-  ): Promise<AxiosResponse<NotificationLog>> => api.put(`/logs/${logId}`, payload),
+    payload: Partial<NotificationLog> & { id: number }
+  ): Promise<AxiosResponse<NotificationLog>> => api.put(`/logs`, payload),
 
   delete: (logId: number): Promise<AxiosResponse<void>> => api.delete(`/logs/${logId}`),
 };

@@ -11,29 +11,10 @@ const loading = ref<boolean>(true);
 const showReportModal = ref<boolean>(false);
 const selectedNotification = ref<NotificationLog | null>(null);
 
-const createCriticalNotification = async (indexType: string, indexValue: number) => {
+const createCriticalNotification = async () => {
   try {
-    const formatted = dayjs().format("YYYY-MM-DDTHH:mm:ss");
-    const now = new Date();
+    const response = await notificationLogService.createTest();
 
-    indexType = "SECURITY";
-    indexValue = 5;
-
-    const messageText =
-      `há um nivel critico de ${indexType}\n` +
-      `nivel de ${indexType}: ${indexValue}\n` +
-      `hora: ${now.toLocaleString("pt-BR")}`;
-
-    const payload = {
-      messageText,
-      indexType,
-      indexValue,
-      emissionDate: formatted,
-    };
-
-    const response = await notificationLogService.create(payload);
-
-    // Adiciona no topo da lista
     notifications.value.unshift(response.data);
   } catch (error) {
     console.error("Erro ao criar notificação crítica:", error);
@@ -157,7 +138,7 @@ onMounted(() => {
           </div>
         </div>
 
-        <button class="btn-critical" @click="createCriticalNotification('Segurança', 5)">
+        <button class="btn-critical" @click="createCriticalNotification">
           🚨 Notificação Crítica
         </button>
 

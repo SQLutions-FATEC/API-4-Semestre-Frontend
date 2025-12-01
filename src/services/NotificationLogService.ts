@@ -7,8 +7,7 @@ const notificationLogService = {
 
   getAll: (): Promise<AxiosResponse<NotificationLog[]>> => api.get("/logs"),
 
-  create: (payload: Omit<NotificationLog, "id">): Promise<AxiosResponse<NotificationLog>> =>
-    api.post("/logs", payload),
+  createTest: (): Promise<AxiosResponse<NotificationLog>> => api.post("/logs/test"),
 
   update: (
     payload: Partial<NotificationLog> & { id: number }

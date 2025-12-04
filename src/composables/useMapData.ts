@@ -3,9 +3,19 @@ import type { VehicleTypeCounts } from "../entities/VehicleTypeCounts";
 import type { Radar } from "../entities/Radar";
 import { indexService } from "@/services/IndexService";
 import radarService from "@/services/RadarService";
+import regionService from "@/services/RegionService";
 import api from "@/services/api";
 
 // --- Interfaces (Reutilizáveis) ---
+
+interface RegionApiResponse {
+  regionName: string;
+  areaRegiao: string;
+  trafficIndex: number;
+  securityIndex: number;
+  overallIndex: number;
+  vehicleTypeCounts: { [key: string]: number };
+}
 
 interface addressProps {
   nomeEndereco: string;
@@ -17,12 +27,18 @@ interface addressProps {
 }
 
 interface regionProps {
+  regionName: string;
+  areaRegiao: string;
+  trafficIndex: number;
+  securityIndex: number;
+  overallIndex: number;
+  vehicleTypeCounts: VehicleTypeCounts;
+
   name: string;
   overall: number;
   traffic: number;
   security: number;
   estado: string;
-  ListaCarros?: VehicleTypeCounts;
 }
 
 interface citySummary {
@@ -80,9 +96,10 @@ export function useMapData() {
 
     try {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const [heatmapResponse, radarsResponse, _citySummaryResult] = await Promise.all([
+      const [heatmapResponse, radarsResponse, regionsResponse, _citySummaryResult] = await Promise.all([
         api.get("/address/heatmap"),
         radarService.getAll(),
+        regionService.getAll({ minutes: 10 }),
         fetchCitySummary(), // Função que retorna uma Promise<boolean>
       ]);
 
@@ -90,48 +107,22 @@ export function useMapData() {
       addressData.value = heatmapResponse.data;
       radarData.value = radarsResponse.data;
 
-      const regionMap = new Map<string, {
-        traffic: number[],
-        security: number[],
-        overall: number[],
-        count: number
-      }>();
-
-      heatmapResponse.data.forEach((address: addressProps) => {
-        // Extrai a região do nome do endereço (parte após o último hífen)
-        const parts = address.nomeEndereco.split(' - ');
-        const region = parts.length > 1 ? parts[parts.length - 1].trim() : 'Região Desconhecida';
-
-        if (!regionMap.has(region)) {
-          regionMap.set(region, {
-            traffic: [],
-            security: [],
-            overall: [],
-            count: 0
-          });
-        }
-
-        const regionStats = regionMap.get(region)!;
-        regionStats.traffic.push(address.trafficIndex);
-        regionStats.security.push(address.securityIndex);
-        regionStats.overall.push(address.overallIndex);
-        regionStats.count++;
-      });
-
-      // Converte o Map em array de regionProps
-      regionData.value = Array.from(regionMap.entries()).map(([regionName, stats]) => {
-        const avgTraffic = stats.traffic.reduce((a, b) => a + b, 0) / stats.count;
-        const avgSecurity = stats.security.reduce((a, b) => a + b, 0) / stats.count;
-        const avgOverall = stats.overall.reduce((a, b) => a + b, 0) / stats.count;
-
-        const estado = avgOverall <= 1 ? "Ótimo" : avgOverall <= 3 ? "Bom" : "Ruim";
+      regionData.value = regionsResponse.data.map((region: RegionApiResponse) => {
+        const estado = region.overallIndex <= 1 ? "Ótimo" : region.overallIndex <= 3 ? "Bom" : "Ruim";
 
         return {
-          name: regionName,
-          overall: Math.round(avgOverall * 100) / 100,
-          traffic: Math.round(avgTraffic * 100) / 100,
-          security: Math.round(avgSecurity * 100) / 100,
-          estado: estado
+          regionName: region.regionName,
+          areaRegiao: region.areaRegiao,
+          trafficIndex: region.trafficIndex,
+          securityIndex: region.securityIndex,
+          overallIndex: region.overallIndex,
+          vehicleTypeCounts: region.vehicleTypeCounts,
+
+          name: region.regionName,
+          overall: region.overallIndex,
+          traffic: region.trafficIndex,
+          security: region.securityIndex,
+          estado: estado,
         };
       });
 

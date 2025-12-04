@@ -42,6 +42,7 @@ const indiceGeral = ref(<number | null>null);
 const indiceTrafego = ref(<number | null>null);
 const indiceSeguranca = ref(<number | null>null);
 const estadoRegiao = ref(<string | null>null);
+const veiculosRegiaoSelecionada = ref<VehicleTypeCounts | null>(null);
 
 function showCitySummary() {
   if (citySummaryData.value) {
@@ -50,6 +51,7 @@ function showCitySummary() {
     indiceTrafego.value = citySummaryData.value.traffic;
     indiceSeguranca.value = citySummaryData.value.security;
     estadoRegiao.value = citySummaryData.value.estado;
+    veiculosRegiaoSelecionada.value = null;
   }
 }
 
@@ -66,12 +68,14 @@ watch(citySummaryData, (newSummary) => {
 }, { immediate: true });
 
 const piechartSeries = computed(() => {
-  if (!totalVehicleCounts.value || Object.keys(totalVehicleCounts.value).length === 0) return [];
-  return Object.values(totalVehicleCounts.value);
+  const vehicleData = veiculosRegiaoSelecionada.value || totalVehicleCounts.value;
+  if (!vehicleData || Object.keys(vehicleData).length === 0) return [];
+  return Object.values(vehicleData);
 });
 
 const pieChartOption = computed(() => {
-  const labels = totalVehicleCounts.value ? Object.keys(totalVehicleCounts.value) : [];
+  const vehicleData = veiculosRegiaoSelecionada.value || totalVehicleCounts.value;
+  const labels = vehicleData ? Object.keys(vehicleData) : [];
 
   return {
     chart: {
@@ -127,12 +131,19 @@ function getIndexClass(value: number): string {
 
 function handleRegionSelected(regionProps: RegionProps | null) {
   if (regionProps) {
-    // Recebe os dados da região clicada no componente filho
     nomeRegiaoClicada.value = regionProps.name;
     indiceGeral.value = regionProps.overall;
     indiceTrafego.value = regionProps.traffic;
     indiceSeguranca.value = regionProps.security;
     estadoRegiao.value = regionProps.estado;
+    veiculosRegiaoSelecionada.value = regionProps.ListaCarros || null;
+  } else {
+    nomeRegiaoClicada.value = null;
+    indiceGeral.value = null;
+    indiceTrafego.value = null;
+    indiceSeguranca.value = null;
+    estadoRegiao.value = null;
+    veiculosRegiaoSelecionada.value = null;
   }
 }
 

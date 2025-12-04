@@ -106,7 +106,7 @@ function addRegionsToMap(data) {
     try {
       wkt.read(region.areaRegiao);
       const geojsonGeometry = wkt.toJson();
-      const estado = region.overallIndex == 1 ? "Ótimo" : region.overallIndex <= 3 ? "Bom" : "Ruim";
+      const estado = region.overallIndex <= 1 ? "Ótimo" : region.overallIndex <= 3 ? "Bom" : "Ruim";
       const geojsonFeature = {
         type: "Feature",
         properties: {
@@ -130,7 +130,7 @@ function addRegionsToMap(data) {
           const props = feature.properties;
           layer.on("click", (e) => {
             selectRegion({ ...props, layer: layer });
-            L.DomEvent.stopPropagation(e);
+            e.originalEvent.regionClicked = true;
           });
         },
       }).addTo(regionsLayerGroup);
@@ -273,6 +273,12 @@ onMounted(() => {
     }; // 6. Adiciona o controle de camadas ao mapa
 
     layerControl = L.control.layers(baseMaps, overlayMaps).addTo(mapInstance);
+
+    mapInstance.on("click", (e) => {
+      if (!e.originalEvent.regionClicked) {
+        selectRegion(null);
+      }
+    });
   }
 
   updateMapData();
